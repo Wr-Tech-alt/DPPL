@@ -114,7 +114,7 @@
             <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
                 <div class="lg:col-span-2 grid-block bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-semibold text-lg">Laporan</h3>
+                        <h3 class="font-semibold text-lg">Pekerja</h3>
                         <a href="#" class="text-teal-600 hover:text-teal-800 text-sm font-medium">Lihat Semua</a>
                     </div>
                     <div class="overflow-x-auto">

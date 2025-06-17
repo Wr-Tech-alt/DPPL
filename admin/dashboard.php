@@ -51,21 +51,21 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="flex items-center p-2 text-gray-600 rounded-lg hover:bg-gray-100">
+                        <a href="lihat-fasilitas.php" class="flex items-center p-2 text-gray-600 rounded-lg hover:bg-gray-100">
                             <i class="fas fa-tasks mr-3"></i>
-                            <span>Tasks</span>
+                            <span>Fasilitas</span>
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="flex items-center p-2 text-gray-600 rounded-lg hover:bg-gray-100">
+                        <a href="lihat-pekerja.php" class="flex items-center p-2 text-gray-600 rounded-lg hover:bg-gray-100">
                             <i class="fas fa-envelope mr-3"></i>
-                            <span>Messages</span>
+                            <span>Pekerja</span>
                         </a>
                     </li>
                     <li>
                         <a href="#" class="flex items-center p-2 text-gray-600 rounded-lg hover:bg-gray-100">
                             <i class="fas fa-chart-bar mr-3"></i>
-                            <span>Reports</span>
+                            <span>Log</span>
                         </a>
                     </li>
                     <li>
