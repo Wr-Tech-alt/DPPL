@@ -34,7 +34,7 @@
         <!-- Sidebar -->
         <div class="sidebar bg-white w-64 border-r border-gray-200 flex flex-col">
             <div class="p-4 border-b border-gray-200">
-                <h1 class="text-xl font-bold text-blue-600">Office<span class="text-gray-700">Dash</span></h1>
+                <h1 class="text-xl font-bold text-blue-600">SI<span class="text-gray-700">Cepu</span></h1>
             </div>
             <nav class="flex-1 p-4">
                 <ul class="space-y-2">
@@ -45,9 +45,9 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="flex items-center p-2 text-gray-600 rounded-lg hover:bg-gray-100">
+                        <a href="lihat-laporan.php" class="flex items-center p-2 text-gray-600 rounded-lg hover:bg-gray-100">
                             <i class="fas fa-calendar-alt mr-3"></i>
-                            <span>Calendar</span>
+                            <span>Laporan</span>
                         </a>
                     </li>
                     <li>
