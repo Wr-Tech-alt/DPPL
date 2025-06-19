@@ -77,7 +77,7 @@ while ($data = $sql->fetch_assoc()) {
 				+
 			</h1>
 			<p>
-				<a href="?page=aduan_tambah">Tambah Aduan</a>
+				<a href="?page=aduan_tambah_form">Tambah Aduan</a>
 			</p>
 		</div>
 	</div>

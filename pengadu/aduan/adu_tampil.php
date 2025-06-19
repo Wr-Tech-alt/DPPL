@@ -74,7 +74,7 @@
           <?php
           }
           ?>
-          <a href="?page=aduan_tambah" class="btn btn-primary">
+          <a href="?page=aduan_tambah_form" class="btn btn-primary">
             <i class="glyphicon glyphicon-plus"></i> Tambah</a>
           <br>
           <br>

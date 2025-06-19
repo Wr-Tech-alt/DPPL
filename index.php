@@ -583,6 +583,9 @@ include "inc/koneksi.php";
                                 case 'aduan_tambah':
                                     include "pengadu/aduan/adu_tambah.php";
                                     break;
+                                case 'aduan_tambah_form':
+                                    include "pengadu/aduan/adu_tambah_form.php";
+                                    break;
                                 case 'aduan_ubah':
                                     include "pengadu/aduan/adu_ubah.php";
                                     break;
