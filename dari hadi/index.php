@@ -115,7 +115,7 @@ include "inc/koneksi.php";
 
         /* Navbar Atas (Top Navbar) */
         .navbar-cls-top {
-            background-color: #1890ff; /* Warna biru cerah */
+            background-color: #34495e; /* Ubah warna ini agar sama dengan sidebar */
             border-bottom: none;
             height: 60px;
             padding: 0 20px;
