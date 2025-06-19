@@ -307,7 +307,8 @@ p {
   background-color: #202020;
 }
 .navbar-cls-top {
-  background-image: linear-gradient(to right, #1471fc, #14bafc, #52caf9);
+  background-color: #202020; /* Ubah ke warna solid yang sama dengan sidebar */
+  background-image: none; /* Hapus properti gradient jika ada */
   border-bottom: none;
 }
 .navbar-cls-top .navbar-brand:hover {
@@ -396,11 +397,11 @@ p {
     font-size: 18px;
   }
   .navbar-cls-top {
-    background-image: linear-gradient(to right, #1471fc, #14bafc, #52caf9);
+    background-color: #202020; /* Ubah ke warna solid yang sama dengan sidebar */
+    background-image: none; /* Hapus properti gradient jika ada */
     height: 120px;
     border-radius: 0px;
   }
-
   .navbar-cls-top .navbar-brand {
     border-radius: 0px;
   }
