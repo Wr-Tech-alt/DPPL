@@ -1,6 +1,91 @@
 <?php
+// PHP login processing logic
+// session_start() HARUS berada di baris paling atas, sebelum output HTML apapun.
+session_start();
+
 // Include database connection file
 include "inc/koneksi.php";
+
+// Debugging: Set ini_set untuk menampilkan error PHP selama pengembangan
+// Pastikan untuk MENGHAPUS atau MENGUBAH ini di lingkungan produksi
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+if (isset($_POST['btnLogin'])) {
+  // Ambil username dan password dari form
+  $username = $_POST['username'];
+  $password = $_POST['password'];
+
+  // Debugging: Tampilkan nilai username dan password yang diterima dari form
+  // Hapus baris ini setelah debugging selesai
+  error_log("Attempting login with Username: " . $username . " and Password: " . $password);
+
+
+  // Sanitasi input untuk mencegah SQL Injection (penting!)
+  // Menggunakan real_escape_string untuk mengamankan string sebelum digunakan di query SQL
+  $username_clean = mysqli_real_escape_string($koneksi, $username);
+  $password_clean = mysqli_real_escape_string($koneksi, $password); // Jika password di database plain text
+
+  // SQL query to check username and password
+  // WARNING: Storing passwords in plain text is highly insecure.
+  // Consider using password_hash() and password_verify() for production.
+  $sql_login = "SELECT * FROM tb_pengguna WHERE username='" . $username_clean . "' AND password='" . $password_clean . "'";
+  
+  // Debugging: Tampilkan query SQL yang akan dieksekusi
+  // Hapus baris ini setelah debugging selesai
+  error_log("SQL Query: " . $sql_login);
+
+  $query_login = mysqli_query($koneksi, $sql_login);
+
+  // Cek apakah ada error saat menjalankan query
+  if (!$query_login) {
+      // Debugging: Tampilkan error database
+      error_log("Query Error: " . mysqli_error($koneksi));
+      echo "<script>
+                    Swal.fire({title: 'ERROR DATABASE',text: '" . mysqli_error($koneksi) . "',icon: 'error',confirmButtonText: 'OK'
+                    }).then((result) => {
+                        if (result.value) {
+                            window.location = 'index';
+                        }
+                    })</script>";
+      exit(); // Hentikan eksekusi jika query gagal
+  }
+
+  $data_login = mysqli_fetch_array($query_login, MYSQLI_BOTH);
+  $jumlah_login = mysqli_num_rows($query_login);
+
+  // Debugging: Tampilkan jumlah baris yang ditemukan
+  // Hapus baris ini setelah debugging selesai
+  error_log("Number of rows found: " . $jumlah_login);
+
+
+  if ($jumlah_login == 1) {
+    // Session already started at the very top of the file
+    $_SESSION["ses_id"] = $data_login["id_pengguna"];
+    $_SESSION["ses_nama"] = $data_login["nama_pengguna"];
+    $_SESSION["ses_level"] = $data_login["level"];
+    $_SESSION["ses_grup"] = $data_login["grup"];
+
+    // Display success message and redirect
+    echo "<script>
+                    Swal.fire({title: 'SUKSES',text: 'Login Berhasil!',icon: 'success',confirmButtonText: 'OK'
+                    }).then((result) => {
+                        if (result.value) {
+                            window.location = 'index'; // Redirect to index page
+                        }
+                    })</script>";
+  } else {
+    // Display failure message
+    echo "<script>
+                    Swal.fire({title: 'GAGAL',text: 'Username atau Password salah!',icon: 'error',confirmButtonText: 'OK'
+                    }).then((result) => {
+                        if (result.value) {
+                            window.location = 'index'; // Stay on login page or redirect to index
+                        }
+                    })</script>";
+  }
+}
 ?>
 
 
@@ -224,46 +309,5 @@ include "inc/koneksi.php";
 
   </body>
 </html>
-
-<?php
-// PHP login processing logic
-if (isset($_POST['btnLogin'])) {
-  // SQL query to check username and password
-  // WARNING: Storing passwords in plain text is highly insecure.
-  // Consider using password_hash() and password_verify() for production.
-  $sql_login = "SELECT * FROM tb_pengguna WHERE username='" . $_POST['username'] . "' AND password='" . $_POST['password'] . "'";
-  $query_login = mysqli_query($koneksi, $sql_login);
-  $data_login = mysqli_fetch_array($query_login, MYSQLI_BOTH);
-  $jumlah_login = mysqli_num_rows($query_login);
-
-
-  if ($jumlah_login == 1) {
-    // Start session and set session variables
-    session_start();
-    $_SESSION["ses_id"] = $data_login["id_pengguna"];
-    $_SESSION["ses_nama"] = $data_login["nama_pengguna"];
-    $_SESSION["ses_level"] = $data_login["level"];
-    $_SESSION["ses_grup"] = $data_login["grup"];
-
-    // Display success message and redirect
-    echo "<script>
-                    Swal.fire({title: 'SUKSES',text: 'Login Berhasil!',icon: 'success',confirmButtonText: 'OK'
-                    }).then((result) => {
-                        if (result.value) {
-                            window.location = 'index'; // Redirect to index page
-                        }
-                    })</script>";
-  } else {
-    // Display failure message
-    echo "<script>
-                    Swal.fire({title: 'GAGAL',text: 'Username atau Password salah!',icon: 'error',confirmButtonText: 'OK'
-                    }).then((result) => {
-                        if (result.value) {
-                            window.location = 'login'; // Stay on login page or redirect to index
-                        }
-                    })</script>";
-  }
-}
-?>
 
 <!-- END -->
