@@ -61,7 +61,7 @@
                 </h2>
                 <div class="h-1 w-24 bg-teal-500 mx-auto mb-8 rounded-full"></div>
                 
-                <form action="#" method="POST" class="space-y-6">
+                <form action="admin/" method="GET" class="space-y-6">
                     <div>
                         <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Nama Pengguna</label>
                         <input type="text" id="username" name="username" required class="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-teal-500 focus:border-teal-500 sm:text-base" placeholder="Masukkan nama pengguna">
