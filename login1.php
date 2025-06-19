@@ -259,7 +259,7 @@ if (isset($_POST['btnLogin'])) {
                     Swal.fire({title: 'GAGAL',text: 'Username atau Password salah!',icon: 'error',confirmButtonText: 'OK'
                     }).then((result) => {
                         if (result.value) {
-                            window.location = 'index'; // Stay on login page or redirect to index
+                            window.location = 'login'; // Stay on login page or redirect to index
                         }
                     })</script>";
   }
