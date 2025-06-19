@@ -1,11 +1,3 @@
-Tentu, mari kita rapikan kode koneksi database tersebut.
-
-Kesalahan dalam kode tersebut mungkin bukan pada sintaksnya (karena terlihat benar secara dasar), tetapi lebih pada praktik terbaik atau penanganan kesalahan.
-
-Berikut adalah beberapa cara untuk merapikan dan memperkuat kode koneksi database kamu:
-
-PHP
-
 <?php
 
 // Pastikan untuk mengganti dengan kredensial database yang sesuai di lingkungan produksi.
