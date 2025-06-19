@@ -17,7 +17,7 @@ include "inc/koneksi.php";
     <style>
         body {
             font-family: 'Lato', sans-serif; /* Use Lato as the primary font */
-            background-image: url('https://placehold.co/1920x1080/E0F2F7/000000?text=Background'); /* Placeholder image for background. Replace with 'images/background.png' if available */
+            background-image: url('images/background.png'); /* Placeholder image for background. Replace with 'images/background.png' if available */
             background-size: cover; /* Ensure the image covers the entire area */
             background-position: center; /* Center the image */
             background-attachment: fixed; /* Fixed background during scroll */
