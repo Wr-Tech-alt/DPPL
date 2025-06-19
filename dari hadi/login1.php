@@ -124,7 +124,7 @@ if (isset($_POST['btnLogin'])) {
                     Swal.fire({title: 'SUKSES',text: '',icon: 'success',confirmButtonText: 'OK'
                     }).then((result) => {
                         if (result.value) {
-                            window.location = 'dashboard';
+                            window.location = 'index';
                         }
                     })</script>";
   } else {
