@@ -1,63 +1,92 @@
 <?php
-// Pastikan koneksi dan session dimulai.
-// File koneksi.php sudah diubah untuk memulai session.
-include 'inc/koneksi.php';
+include "inc/koneksi.php"; // Pastikan inc/koneksi.php sudah memulai session
 
-$error_message = '';
+// ... (HTML bagian atas tetap sama) ...
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Menggunakan username untuk login, sesuai struktur baru
-    $username_input = mysqli_real_escape_string($conn, $_POST['email']); // Asumsi 'email' di form login sekarang adalah 'username'
-    $password_input = mysqli_real_escape_string($conn, $_POST['password']);
+if (isset($_POST['btnLogin'])) {
+    $username_input = $_POST['username'];
+    $password_input = $_POST['password'];
 
-    // Query untuk mengambil data pengguna berdasarkan username
-    // Kita butuh password (hashed) dan level
-    $sql = "SELECT id_pengguna, username, password, nama_lengkap, level FROM pengguna WHERE username = '$username_input'";
-    $result = mysqli_query($conn, $sql);
+    // Gunakan Prepared Statements untuk keamanan SQL Injection
+    $sql_login = "SELECT id_pengguna, username, password, nama_lengkap, level FROM pengguna WHERE username = ?";
+    
+    // Periksa apakah koneksi valid sebelum prepare
+    if ($koneksi === false) {
+        die("Koneksi database belum dibuat atau gagal.");
+    }
 
-    if (mysqli_num_rows($result) > 0) {
-        $user = mysqli_fetch_assoc($result);
+    $stmt = mysqli_prepare($koneksi, $sql_login);
+    
+    if ($stmt === false) {
+        die("Prepare failed: " . mysqli_error($koneksi));
+    }
 
-        // --- PENTING: Verifikasi Password ---
-        // Anda HARUS menggunakan password_verify() jika password di database Anda di-hash.
-        // Jika belum, ini adalah contoh untuk transisi. Segera hash password di DB!
-        // Jika password di database Anda saat ini masih polos (TIDAK AMAN):
-        if ($password_input == $user['password']) { // <<--- GANTI INI DENGAN password_verify() !!!
-        // Contoh jika sudah menggunakan password_hash() saat pendaftaran:
-        // if (password_verify($password_input, $user['password'])) {
+    mysqli_stmt_bind_param($stmt, "s", $username_input);
+    mysqli_stmt_execute($stmt);
+    $query_login = mysqli_stmt_get_result($stmt);
+    $data_login = mysqli_fetch_array($query_login, MYSQLI_ASSOC);
+    $jumlah_login = mysqli_num_rows($query_login);
 
+    if ($jumlah_login == 1) {
+        // --- PENTING: Verifikasi Password dengan password_verify() ---
+        if (password_verify($password_input, $data_login['password'])) {
             // Login berhasil
-            $_SESSION['loggedin'] = true;
-            $_SESSION['id_pengguna'] = $user['id_pengguna'];
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['nama_lengkap'] = $user['nama_lengkap'];
-            $_SESSION['level'] = $user['level']; // Simpan level ke session
+            $_SESSION["ses_id"] = $data_login["id_pengguna"];
+            $_SESSION["ses_username"] = $data_login["username"];
+            $_SESSION["ses_nama_lengkap"] = $data_login["nama_lengkap"];
+            $_SESSION["ses_level"] = $data_login["level"];
 
             // Redirect berdasarkan level
-            if ($user['level'] == 'admin') {
-                header("Location: default/admin.php"); // Arahkan ke dashboard admin
-            } elseif ($user['level'] == 'petugas') {
-                // Asumsi ada dashboard terpisah untuk petugas, atau mereka diarahkan ke admin dashboard
-                // Jika petugas juga mengakses admin_dashboard.php, maka tidak perlu elseif ini.
-                // Jika ada default/petugas.php, ganti ke situ
-                header("Location: default/admin.php"); // Contoh: Petugas juga diarahkan ke dashboard admin
-            } elseif ($user['level'] == 'masyarakat') {
-                header("Location: default/pengadu.php"); // Arahkan ke dashboard masyarakat/pelapor
+            $redirect_url = '';
+            if ($_SESSION["ses_level"] == 'admin') {
+                $redirect_url = 'default/admin.php'; // Arahkan ke dashboard admin
+            } elseif ($_SESSION["ses_level"] == 'petugas') {
+                $redirect_url = 'default/admin.php'; // Arahkan ke dashboard admin (atau default/petugas.php jika ada)
+            } elseif ($_SESSION["ses_level"] == 'masyarakat') {
+                $redirect_url = 'default/pengadu.php'; // Arahkan ke dashboard masyarakat/pelapor
             } else {
-                // Jika level tidak dikenal, log out dan arahkan ke login dengan error
-                session_unset();
-                session_destroy();
-                $error_message = "Level pengguna tidak dikenal.";
+                // Level tidak dikenal, seharusnya tidak terjadi jika enum sudah benar di DB
+                session_unset(); // Hapus semua variabel session
+                session_destroy(); // Hancurkan session
+                $redirect_url = 'login.php'; // Kembali ke login
+                echo "<script>
+                    Swal.fire({title: 'GAGAL', text: 'Level pengguna tidak dikenal.', icon: 'error', confirmButtonText: 'OK'})
+                    .then((result) => {
+                        if (result.value) {
+                            window.location = '" . $redirect_url . "';
+                        }
+                    })</script>";
+                exit(); // Penting untuk menghentikan eksekusi
             }
-            exit();
+
+            echo "<script>
+                Swal.fire({title: 'Login Berhasil!', text: 'Selamat datang " . htmlspecialchars($_SESSION["ses_nama_lengkap"]) . "!', icon: 'success', confirmButtonText: 'OK'})
+                .then((result) => {
+                    if (result.value) {
+                        window.location = '" . $redirect_url . "'; // Inilah yang diubah!
+                    }
+                })</script>";
         } else {
-            // Password salah
-            $error_message = "Username atau password salah.";
+            // Password tidak cocok
+            echo "<script>
+                Swal.fire({title: 'GAGAL', text: 'Username atau password salah.', icon: 'error', confirmButtonText: 'OK'})
+                .then((result) => {
+                    if (result.value) {
+                        window.location = 'login.php';
+                    }
+                })</script>";
         }
     } else {
         // Username tidak ditemukan
-        $error_message = "Username atau password salah.";
+        echo "<script>
+            Swal.fire({title: 'GAGAL', text: 'Username atau password salah.', icon: 'error', confirmButtonText: 'OK'})
+            .then((result) => {
+                if (result.value) {
+                    window.location = 'login.php';
+                }
+            })</script>";
     }
+    mysqli_stmt_close($stmt);
 }
 ?>
 <!DOCTYPE html>
