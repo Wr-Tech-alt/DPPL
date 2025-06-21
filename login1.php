@@ -1,17 +1,21 @@
 <?php
-include "inc/koneksi.php"; // Pastikan inc/koneksi.php sudah memulai session
+// Pastikan inc/koneksi.php sudah memulai session_start();
+// Jika tidak, tambahkan session_start(); di baris paling atas file ini.
+include "inc/koneksi.php"; // Ini diasumsikan sudah ada session_start() di dalamnya
 
-// ... (HTML bagian atas tetap sama) ...
+// Variabel untuk menyimpan pesan error (jika diperlukan untuk HTML langsung)
+$error_message = '';
 
 if (isset($_POST['btnLogin'])) {
-    $username_input = $_POST['username'];
-    $password_input = $_POST['password'];
+    $username_input = $_POST['username']; // Input dari form
+    $password_input = $_POST['password']; // Input dari form
 
     // Gunakan Prepared Statements untuk keamanan SQL Injection
+    // Menggunakan tb_pengguna dan nama_pengguna sesuai kode Anda yang terakhir diberikan
     $sql_login = "SELECT id_pengguna, username, password, nama_pengguna, level FROM tb_pengguna WHERE username = ?";
     
     // Periksa apakah koneksi valid sebelum prepare
-    if ($koneksi === false) {
+    if ($koneksi === false) { // Menggunakan $koneksi sesuai inc/koneksi.php Anda
         die("Koneksi database belum dibuat atau gagal.");
     }
 
@@ -29,26 +33,30 @@ if (isset($_POST['btnLogin'])) {
 
     if ($jumlah_login == 1) {
         // --- PENTING: Verifikasi Password dengan password_verify() ---
+        // Ini akan berhasil jika password di DB Anda sudah di-hash menggunakan password_hash()
         if (password_verify($password_input, $data_login['password'])) {
             // Login berhasil
             $_SESSION["ses_id"] = $data_login["id_pengguna"];
             $_SESSION["ses_username"] = $data_login["username"];
-            $_SESSION["ses_nama_pengguna"] = $data_login["nama_pengguna"];
+            // Menggunakan 'nama_pengguna' sesuai kode dan struktur yang Anda tunjukkan terakhir
+            $_SESSION["ses_nama"] = $data_login["nama_pengguna"]; 
+            // Menggunakan 'level' dengan kapitalisasi sesuai kode Anda
             $_SESSION["ses_level"] = $data_login["level"];
+            $_SESSION["loggedin"] = true; // Tambahkan ini untuk konsistensi cek login
 
-            // Redirect berdasarkan level
+            // Tentukan URL redirect_url tujuan berdasarkan level (sesuaikan dengan nilai Anda: 'Administrator', 'Petugas', 'Pengadu')
             $redirect_url = '';
             if ($_SESSION["ses_level"] == 'Administrator') {
-                $redirect_url = 'default/admin.php'; // Arahkan ke dashboard admin
+                $redirect_url = 'default/admin.php'; // Langsung ke dashboard admin
             } elseif ($_SESSION["ses_level"] == 'Petugas') {
-                $redirect_url = 'default/admin.php'; // Arahkan ke dashboard admin (atau default/petugas.php jika ada)
+                $redirect_url = 'default/tugas.php'; // Langsung ke dashboard petugas
             } elseif ($_SESSION["ses_level"] == 'Pengadu') {
-                $redirect_url = 'default/pengadu.php'; // Arahkan ke dashboard masyarakat/pelapor
+                $redirect_url = 'default/pengadu.php'; // Langsung ke dashboard masyarakat/pengadu
             } else {
-                // Level tidak dikenal, seharusnya tidak terjadi jika enum sudah benar di DB
+                // Level tidak dikenal (fallback)
                 session_unset(); // Hapus semua variabel session
                 session_destroy(); // Hancurkan session
-                $redirect_url = 'login1.php'; // Kembali ke login
+                $redirect_url = 'login1.php'; // Kembali ke login1.php jika level tidak valid
                 echo "<script>
                     Swal.fire({title: 'GAGAL', text: 'Level pengguna tidak dikenal.', icon: 'error', confirmButtonText: 'OK'})
                     .then((result) => {
@@ -59,20 +67,22 @@ if (isset($_POST['btnLogin'])) {
                 exit(); // Penting untuk menghentikan eksekusi
             }
 
+            // Eksekusi SweetAlert dan kemudian redirect ke URL yang ditentukan
             echo "<script>
-                Swal.fire({title: 'Login Berhasil!', text: 'Selamat datang " . htmlspecialchars($_SESSION["ses_nama_pengguna"]) . "!', icon: 'success', confirmButtonText: 'OK'})
+                Swal.fire({title: 'Login Berhasil!', text: 'Selamat datang " . htmlspecialchars($_SESSION["ses_nama"]) . "!', icon: 'success', confirmButtonText: 'OK'})
                 .then((result) => {
                     if (result.value) {
-                        window.location = '" . $redirect_url . "'; // Inilah yang diubah!
+                        window.location = '" . $redirect_url . "'; // LANGSUNG KE DASHBOARD MASING-MASING!
                     }
                 })</script>";
+            exit(); // Sangat penting untuk menghentikan eksekusi setelah SweetAlert & redirect
         } else {
             // Password tidak cocok
             echo "<script>
                 Swal.fire({title: 'GAGAL', text: 'Username atau password salah.', icon: 'error', confirmButtonText: 'OK'})
                 .then((result) => {
                     if (result.value) {
-                        window.location = 'login1.php';
+                        window.location = 'login1.php'; // Kembali ke login1.php
                     }
                 })</script>";
         }
@@ -82,7 +92,7 @@ if (isset($_POST['btnLogin'])) {
             Swal.fire({title: 'GAGAL', text: 'Username atau password salah.', icon: 'error', confirmButtonText: 'OK'})
             .then((result) => {
                 if (result.value) {
-                    window.location = 'login1.php';
+                    window.location = 'login1.php'; // Kembali ke login1.php
                 }
             })</script>";
     }
@@ -100,6 +110,7 @@ if (isset($_POST['btnLogin'])) {
     <link href="assets/css/custom.css" rel="stylesheet" />
     <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' />
     <link href="assets/css/signup.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@9/dist/sweetalert2.min.css">
 </head>
 <body>
     <div class="container">
@@ -123,7 +134,7 @@ if (isset($_POST['btnLogin'])) {
                                        <br />
                                      <div class="form-group input-group">
                                             <span class="input-group-addon"><i class="fa fa-tag"  ></i></span>
-                                            <input type="text" class="form-control" name="email" placeholder="Username Anda " required />
+                                            <input type="text" class="form-control" name="username" placeholder="Username Anda " required />
                                         </div>
                                         <div class="form-group input-group">
                                             <span class="input-group-addon"><i class="fa fa-lock"  ></i></span>
@@ -138,15 +149,10 @@ if (isset($_POST['btnLogin'])) {
                                             </span>
                                         </div>
                                      
-                                    <input type="submit" name="login" value="Login Sekarang" class="btn btn-primary ">
+                                    <input type="submit" name="btnLogin" value="Login Sekarang" class="btn btn-primary ">
                                     <hr />
                                     Belum Punya Akun ? <a href="signup.php" >Klik disini untuk daftar </a>
                                     </form>
-                                    <?php if (!empty($error_message)): ?>
-                                        <div class="alert alert-danger" style="margin-top: 20px;">
-                                            <?php echo $error_message; ?>
-                                        </div>
-                                    <?php endif; ?>
                             </div>
                            
                         </div>
@@ -161,6 +167,6 @@ if (isset($_POST['btnLogin'])) {
       <script src="assets/js/bootstrap.min.js"></script>
     <script src="assets/js/jquery.metisMenu.js"></script>
       <script src="assets/js/custom.js"></script>
-   
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
 </body>
 </html>
