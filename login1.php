@@ -1,21 +1,18 @@
 <?php
 // Pastikan inc/koneksi.php sudah memulai session_start();
 // Jika tidak, tambahkan session_start(); di baris paling atas file ini.
-include "inc/koneksi.php"; // Ini diasumsikan sudah ada session_start() di dalamnya
+include "inc/koneksi.php";
 
-// Variabel untuk menyimpan pesan error (jika diperlukan untuk HTML langsung)
+// Variabel untuk menyimpan pesan error (akan ditampilkan di HTML langsung)
 $error_message = '';
 
 if (isset($_POST['btnLogin'])) {
-    $username_input = $_POST['username']; // Input dari form
-    $password_input = $_POST['password']; // Input dari form
+    $username_input = $_POST['username'];
+    $password_input = $_POST['password'];
 
-    // Gunakan Prepared Statements untuk keamanan SQL Injection
-    // Menggunakan tb_pengguna dan nama_pengguna sesuai kode Anda yang terakhir diberikan
     $sql_login = "SELECT id_pengguna, username, password, nama_pengguna, level FROM tb_pengguna WHERE username = ?";
     
-    // Periksa apakah koneksi valid sebelum prepare
-    if ($koneksi === false) { // Menggunakan $koneksi sesuai inc/koneksi.php Anda
+    if ($koneksi === false) {
         die("Koneksi database belum dibuat atau gagal.");
     }
 
@@ -33,68 +30,41 @@ if (isset($_POST['btnLogin'])) {
 
     if ($jumlah_login == 1) {
         // --- PENTING: Verifikasi Password dengan password_verify() ---
-        // Ini akan berhasil jika password di DB Anda sudah di-hash menggunakan password_hash()
         if (password_verify($password_input, $data_login['password'])) {
             // Login berhasil
             $_SESSION["ses_id"] = $data_login["id_pengguna"];
             $_SESSION["ses_username"] = $data_login["username"];
-            // Menggunakan 'nama_pengguna' sesuai kode dan struktur yang Anda tunjukkan terakhir
             $_SESSION["ses_nama"] = $data_login["nama_pengguna"]; 
-            // Menggunakan 'level' dengan kapitalisasi sesuai kode Anda
             $_SESSION["ses_level"] = $data_login["level"];
-            $_SESSION["loggedin"] = true; // Tambahkan ini untuk konsistensi cek login
+            $_SESSION["loggedin"] = true; 
 
-            // Tentukan URL redirect_url tujuan berdasarkan level (sesuaikan dengan nilai Anda: 'Administrator', 'Petugas', 'Pengadu')
             $redirect_url = '';
             if ($_SESSION["ses_level"] == 'Administrator') {
-                $redirect_url = 'default/admin.php'; // Langsung ke dashboard admin
+                $redirect_url = 'default/admin.php';
             } elseif ($_SESSION["ses_level"] == 'Petugas') {
-                $redirect_url = 'default/tugas.php'; // Langsung ke dashboard petugas
+                $redirect_url = 'default/tugas.php'; // Atau 'default/admin.php' jika petugas pakai dashboard admin
             } elseif ($_SESSION["ses_level"] == 'Pengadu') {
-                $redirect_url = 'default/pengadu.php'; // Langsung ke dashboard masyarakat/pengadu
+                $redirect_url = 'default/pengadu.php';
             } else {
-                // Level tidak dikenal (fallback)
-                session_unset(); // Hapus semua variabel session
-                session_destroy(); // Hancurkan session
-                $redirect_url = 'login1.php'; // Kembali ke login1.php jika level tidak valid
-                echo "<script>
-                    Swal.fire({title: 'GAGAL', text: 'Level pengguna tidak dikenal.', icon: 'error', confirmButtonText: 'OK'})
-                    .then((result) => {
-                        if (result.value) {
-                            window.location = '" . $redirect_url . "';
-                        }
-                    })</script>";
-                exit(); // Penting untuk menghentikan eksekusi
+                // Level tidak dikenal
+                session_unset();
+                session_destroy();
+                header("Location: login1.php?error=level_tidak_dikenal"); // Redirect ke login1.php
+                exit();
             }
 
-            // Eksekusi SweetAlert dan kemudian redirect ke URL yang ditentukan
-            echo "<script>
-                Swal.fire({title: 'Login Berhasil!', text: 'Selamat datang " . htmlspecialchars($_SESSION["ses_nama"]) . "!', icon: 'success', confirmButtonText: 'OK'})
-                .then((result) => {
-                    if (result.value) {
-                        window.location = '" . $redirect_url . "'; // LANGSUNG KE DASHBOARD MASING-MASING!
-                    }
-                })</script>";
-            exit(); // Sangat penting untuk menghentikan eksekusi setelah SweetAlert & redirect
+            // --- REDIRECT LANGSUNG DARI PHP ---
+            header("Location: " . $redirect_url);
+            exit(); // SANGAT PENTING untuk menghentikan eksekusi script
         } else {
             // Password tidak cocok
-            echo "<script>
-                Swal.fire({title: 'GAGAL', text: 'Username atau password salah.', icon: 'error', confirmButtonText: 'OK'})
-                .then((result) => {
-                    if (result.value) {
-                        window.location = 'login1.php'; // Kembali ke login1.php
-                    }
-                })</script>";
+            header("Location: login1.php?error=password_salah"); // Redirect ke login1.php
+            exit();
         }
     } else {
         // Username tidak ditemukan
-        echo "<script>
-            Swal.fire({title: 'GAGAL', text: 'Username atau password salah.', icon: 'error', confirmButtonText: 'OK'})
-            .then((result) => {
-                if (result.value) {
-                    window.location = 'login1.php'; // Kembali ke login1.php
-                }
-            })</script>";
+        header("Location: login1.php?error=user_tidak_ditemukan"); // Redirect ke login1.php
+        exit();
     }
     mysqli_stmt_close($stmt);
 }
@@ -104,8 +74,7 @@ if (isset($_POST['btnLogin'])) {
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login Sistem Pengaduan</title>
-    <link href="assets/css/bootstrap.css" rel="stylesheet" />
+    <title>Login Sistem Pengaduan</title> <link href="assets/css/bootstrap.css" rel="stylesheet" />
     <link href="assets/css/font-awesome.css" rel="stylesheet" />
     <link href="assets/css/custom.css" rel="stylesheet" />
     <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' />
@@ -153,6 +122,20 @@ if (isset($_POST['btnLogin'])) {
                                     <hr />
                                     Belum Punya Akun ? <a href="signup.php" >Klik disini untuk daftar </a>
                                     </form>
+                                    <?php
+                                    // Tampilkan pesan error di sini jika ada parameter error di URL (dari redirect gagal)
+                                    if (isset($_GET['error'])) {
+                                        $error_msg_display = '';
+                                        if ($_GET['error'] == 'level_tidak_dikenal') {
+                                            $error_msg_display = 'Level pengguna tidak dikenal.';
+                                        } elseif ($_GET['error'] == 'password_salah') {
+                                            $error_msg_display = 'Username atau password salah.';
+                                        } elseif ($_GET['error'] == 'user_tidak_ditemukan') {
+                                            $error_msg_display = 'Username atau password salah.';
+                                        }
+                                        echo '<div class="alert alert-danger" style="margin-top: 20px;">' . htmlspecialchars($error_msg_display) . '</div>';
+                                    }
+                                    ?>
                             </div>
                            
                         </div>
