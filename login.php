@@ -1,63 +1,72 @@
 <?php
-// Pastikan koneksi dan session dimulai.
-// File koneksi.php sudah diubah untuk memulai session.
-include 'inc/koneksi.php';
+// Pastikan inc/koneksi.php sudah memulai session_start();
+// Jika tidak, tambahkan session_start(); di baris paling atas file ini.
+include "inc/koneksi.php";
 
+// Variabel untuk menyimpan pesan error (akan ditampilkan di HTML langsung)
 $error_message = '';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Menggunakan username untuk login, sesuai struktur baru
-    $username_input = mysqli_real_escape_string($conn, $_POST['email']); // Asumsi 'email' di form login sekarang adalah 'username'
-    $password_input = mysqli_real_escape_string($conn, $_POST['password']);
+if (isset($_POST['btnLogin'])) {
+    $username_input = $_POST['username'];
+    $password_input = $_POST['password'];
 
-    // Query untuk mengambil data pengguna berdasarkan username
-    // Kita butuh password (hashed) dan level
-    $sql = "SELECT id_pengguna, username, password, nama_lengkap, level FROM pengguna WHERE username = '$username_input'";
-    $result = mysqli_query($conn, $sql);
+    $sql_login = "SELECT id_pengguna, username, password, nama_pengguna, level FROM tb_pengguna WHERE username = ?";
+    
+    if ($koneksi === false) {
+        die("Koneksi database belum dibuat atau gagal.");
+    }
 
-    if (mysqli_num_rows($result) > 0) {
-        $user = mysqli_fetch_assoc($result);
+    $stmt = mysqli_prepare($koneksi, $sql_login);
+    
+    if ($stmt === false) {
+        die("Prepare failed: " . mysqli_error($koneksi));
+    }
 
-        // --- PENTING: Verifikasi Password ---
-        // Anda HARUS menggunakan password_verify() jika password di database Anda di-hash.
-        // Jika belum, ini adalah contoh untuk transisi. Segera hash password di DB!
-        // Jika password di database Anda saat ini masih polos (TIDAK AMAN):
-        if ($password_input == $user['password']) { // <<--- GANTI INI DENGAN password_verify() !!!
-        // Contoh jika sudah menggunakan password_hash() saat pendaftaran:
-        // if (password_verify($password_input, $user['password'])) {
+    mysqli_stmt_bind_param($stmt, "s", $username_input);
+    mysqli_stmt_execute($stmt);
+    $query_login = mysqli_stmt_get_result($stmt);
+    $data_login = mysqli_fetch_array($query_login, MYSQLI_ASSOC);
+    $jumlah_login = mysqli_num_rows($query_login);
 
+    if ($jumlah_login == 1) {
+        // --- PENTING: Verifikasi Password dengan password_verify() ---
+        if (password_verify($password_input, $data_login['password'])) {
             // Login berhasil
-            $_SESSION['loggedin'] = true;
-            $_SESSION['id_pengguna'] = $user['id_pengguna'];
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['nama_lengkap'] = $user['nama_lengkap'];
-            $_SESSION['level'] = $user['level']; // Simpan level ke session
+            $_SESSION["ses_id"] = $data_login["id_pengguna"];
+            $_SESSION["ses_username"] = $data_login["username"];
+            $_SESSION["ses_nama"] = $data_login["nama_pengguna"]; 
+            $_SESSION["ses_level"] = $data_login["level"];
+            $_SESSION["loggedin"] = true; 
 
-            // Redirect berdasarkan level
-            if ($user['level'] == 'admin') {
-                header("Location: default/admin.php"); // Arahkan ke dashboard admin
-            } elseif ($user['level'] == 'petugas') {
-                // Asumsi ada dashboard terpisah untuk petugas, atau mereka diarahkan ke admin dashboard
-                // Jika petugas juga mengakses admin_dashboard.php, maka tidak perlu elseif ini.
-                // Jika ada default/petugas.php, ganti ke situ
-                header("Location: default/admin.php"); // Contoh: Petugas juga diarahkan ke dashboard admin
-            } elseif ($user['level'] == 'masyarakat') {
-                header("Location: default/pengadu.php"); // Arahkan ke dashboard masyarakat/pelapor
+            $redirect_url = '';
+            if ($_SESSION["ses_level"] == 'Administrator') {
+                $redirect_url = 'default/admin.php';
+            } elseif ($_SESSION["ses_level"] == 'Petugas') {
+                $redirect_url = 'default/tugas.php'; // Atau 'default/admin.php' jika petugas pakai dashboard admin
+            } elseif ($_SESSION["ses_level"] == 'Pengadu') {
+                $redirect_url = 'default/pengadu.php';
             } else {
-                // Jika level tidak dikenal, log out dan arahkan ke login dengan error
+                // Level tidak dikenal
                 session_unset();
                 session_destroy();
-                $error_message = "Level pengguna tidak dikenal.";
+                header("Location: login1.php?error=level_tidak_dikenal"); // Redirect ke login1.php
+                exit();
             }
-            exit();
+
+            // --- REDIRECT LANGSUNG DARI PHP ---
+            header("Location: " . $redirect_url);
+            exit(); // SANGAT PENTING untuk menghentikan eksekusi script
         } else {
-            // Password salah
-            $error_message = "Username atau password salah.";
+            // Password tidak cocok
+            header("Location: login1.php?error=password_salah"); // Redirect ke login1.php
+            exit();
         }
     } else {
         // Username tidak ditemukan
-        $error_message = "Username atau password salah.";
+        header("Location: login1.php?error=user_tidak_ditemukan"); // Redirect ke login1.php
+        exit();
     }
+    mysqli_stmt_close($stmt);
 }
 ?>
 <!DOCTYPE html>
@@ -65,12 +74,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login Sistem Pengaduan</title>
-    <link href="assets/css/bootstrap.css" rel="stylesheet" />
+    <title>Login Sistem Pengaduan</title> <link href="assets/css/bootstrap.css" rel="stylesheet" />
     <link href="assets/css/font-awesome.css" rel="stylesheet" />
     <link href="assets/css/custom.css" rel="stylesheet" />
     <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' />
     <link href="assets/css/signup.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@9/dist/sweetalert2.min.css">
 </head>
 <body>
     <div class="container">
@@ -94,7 +103,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                        <br />
                                      <div class="form-group input-group">
                                             <span class="input-group-addon"><i class="fa fa-tag"  ></i></span>
-                                            <input type="text" class="form-control" name="email" placeholder="Username Anda " required />
+                                            <input type="text" class="form-control" name="username" placeholder="Username Anda " required />
                                         </div>
                                         <div class="form-group input-group">
                                             <span class="input-group-addon"><i class="fa fa-lock"  ></i></span>
@@ -109,15 +118,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                             </span>
                                         </div>
                                      
-                                    <input type="submit" name="login" value="Login Sekarang" class="btn btn-primary ">
+                                    <input type="submit" name="btnLogin" value="Login Sekarang" class="btn btn-primary ">
                                     <hr />
                                     Belum Punya Akun ? <a href="signup.php" >Klik disini untuk daftar </a>
                                     </form>
-                                    <?php if (!empty($error_message)): ?>
-                                        <div class="alert alert-danger" style="margin-top: 20px;">
-                                            <?php echo $error_message; ?>
-                                        </div>
-                                    <?php endif; ?>
+                                    <?php
+                                    // Tampilkan pesan error di sini jika ada parameter error di URL (dari redirect gagal)
+                                    if (isset($_GET['error'])) {
+                                        $error_msg_display = '';
+                                        if ($_GET['error'] == 'level_tidak_dikenal') {
+                                            $error_msg_display = 'Level pengguna tidak dikenal.';
+                                        } elseif ($_GET['error'] == 'password_salah') {
+                                            $error_msg_display = 'Username atau password salah.';
+                                        } elseif ($_GET['error'] == 'user_tidak_ditemukan') {
+                                            $error_msg_display = 'Username atau password salah.';
+                                        }
+                                        echo '<div class="alert alert-danger" style="margin-top: 20px;">' . htmlspecialchars($error_msg_display) . '</div>';
+                                    }
+                                    ?>
                             </div>
                            
                         </div>
@@ -132,6 +150,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       <script src="assets/js/bootstrap.min.js"></script>
     <script src="assets/js/jquery.metisMenu.js"></script>
       <script src="assets/js/custom.js"></script>
-   
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
 </body>
 </html>
