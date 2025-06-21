@@ -72,7 +72,7 @@ if (isset($_POST['btnLogin'])) {
                 Swal.fire({title: 'GAGAL', text: 'Username atau password salah.', icon: 'error', confirmButtonText: 'OK'})
                 .then((result) => {
                     if (result.value) {
-                        window.location = 'login.php';
+                        window.location = 'login1.php';
                     }
                 })</script>";
         }
@@ -82,7 +82,7 @@ if (isset($_POST['btnLogin'])) {
             Swal.fire({title: 'GAGAL', text: 'Username atau password salah.', icon: 'error', confirmButtonText: 'OK'})
             .then((result) => {
                 if (result.value) {
-                    window.location = 'login.php';
+                    window.location = 'login1.php';
                 }
             })</script>";
     }
