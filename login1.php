@@ -1,142 +1,137 @@
 <?php
-include "inc/koneksi.php";
-?>
+// Pastikan koneksi dan session dimulai.
+// File koneksi.php sudah diubah untuk memulai session.
+include 'inc/koneksi.php';
 
+$error_message = '';
 
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Menggunakan username untuk login, sesuai struktur baru
+    $username_input = mysqli_real_escape_string($conn, $_POST['email']); // Asumsi 'email' di form login sekarang adalah 'username'
+    $password_input = mysqli_real_escape_string($conn, $_POST['password']);
 
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login Admin SiCepu</title>
-  <!-- BOOTSTRAP STYLES-->
-  <link href="assets/css/bootstrap.css" rel="stylesheet" />
-  <!-- FONTAWESOME STYLES-->
-  <link href="assets/css/font-awesome.css" rel="stylesheet" />
-  <!-- CUSTOM STYLES-->
-  <link href="assets/css/style.css" rel="stylesheet" />
-  <!-- GOOGLE FONTS-->
-  <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' />
+    // Query untuk mengambil data pengguna berdasarkan username
+    // Kita butuh password (hashed) dan level
+    $sql = "SELECT id_pengguna, username, password, nama_lengkap, level FROM pengguna WHERE username = '$username_input'";
+    $result = mysqli_query($conn, $sql);
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    if (mysqli_num_rows($result) > 0) {
+        $user = mysqli_fetch_assoc($result);
 
-  <link rel="stylesheet" href="dist/swal/sweetalert2.min.css">
-  <style>
-    .swal2-popup {
-      font-size: 1.6rem !important;
+        // --- PENTING: Verifikasi Password ---
+        // Anda HARUS menggunakan password_verify() jika password di database Anda di-hash.
+        // Jika belum, ini adalah contoh untuk transisi. Segera hash password di DB!
+        // Jika password di database Anda saat ini masih polos (TIDAK AMAN):
+        if ($password_input == $user['password']) { // <<--- GANTI INI DENGAN password_verify() !!!
+        // Contoh jika sudah menggunakan password_hash() saat pendaftaran:
+        // if (password_verify($password_input, $user['password'])) {
+
+            // Login berhasil
+            $_SESSION['loggedin'] = true;
+            $_SESSION['id_pengguna'] = $user['id_pengguna'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['nama_lengkap'] = $user['nama_lengkap'];
+            $_SESSION['level'] = $user['level']; // Simpan level ke session
+
+            // Redirect berdasarkan level
+            if ($user['level'] == 'admin') {
+                header("Location: default/admin.php"); // Arahkan ke dashboard admin
+            } elseif ($user['level'] == 'petugas') {
+                // Asumsi ada dashboard terpisah untuk petugas, atau mereka diarahkan ke admin dashboard
+                // Jika petugas juga mengakses admin_dashboard.php, maka tidak perlu elseif ini.
+                // Jika ada default/petugas.php, ganti ke situ
+                header("Location: default/admin.php"); // Contoh: Petugas juga diarahkan ke dashboard admin
+            } elseif ($user['level'] == 'masyarakat') {
+                header("Location: default/pengadu.php"); // Arahkan ke dashboard masyarakat/pelapor
+            } else {
+                // Jika level tidak dikenal, log out dan arahkan ke login dengan error
+                session_unset();
+                session_destroy();
+                $error_message = "Level pengguna tidak dikenal.";
+            }
+            exit();
+        } else {
+            // Password salah
+            $error_message = "Username atau password salah.";
+        }
+    } else {
+        // Username tidak ditemukan
+        $error_message = "Username atau password salah.";
     }
-  </style>
-
-</head>
-
-<body class="login">
-  <div class="container">
-    <div class="row ">
-      <br>
-      <br>
-      <br>
-      <div class="col-md-4 col-md-offset-4 col-sm-6 col-sm-offset-3 col-xs-10 col-xs-offset-1">
-        <div class="panel panel-primary login-shadow">
-          <div class="panel-body">
-            <img src="assets/img/stmi.png" class="user-image img-responsive" />
-            <center>
-              <h2>
-                <b>SICEPU</b>
-              </h2>
-            </center>
-            <CENTER>Sistem Informasi Cepat Pengaduan Fasilitas Umum</CENTER>
-            <form action="" method="POST" enctype="multipart/form-data">
-              <br />
-              <div class="form-group input-group">
-                <span class="input-group-addon">
-                  <i class="fa fa-tag"></i>
-                </span>
-                <input type="text" class="form-control" value="" placeholder="username" name="username" id="username" />
-              </div>
-              <div class="form-group input-group">
-                <span class="input-group-addon">
-                  <i class="fa fa-lock"></i>
-                </span>
-                <input type="password" class="form-control" value="" placeholder="password" name="password" id="password" />
-              </div>
-
-              <button type="submit" class="btn btn-primary form-control" name="btnLogin" title="Masuk Sistem" id="clicker" />MASUK</button>
-              <br>
-              <br>
-              <!-- <CENTER>Belum Punya Akun? <a href="signup">Sign Up</a></CENTER> -->
-              <CENTER>SICEPU 2025</CENTER>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- <script>
-    var userValue = document.getElementById("username").value;
-    var passValue = document.getElementById("password").value;
-
-    if (userValue == "pengadu" && passValue == "123") {
-      var button = document.getElementById("clicker");
-      setInterval(
-        function() {
-          button.click()
-        }, 1000
-      )
-    }
-  </script> -->
-
-  <!-- SCRIPTS -AT THE BOTOM TO REDUCE THE LOAD TIME-->
-  <!-- JQUERY SCRIPTS -->
-  <script src="assets/js/jquery-1.10.2.js"></script>
-  <!-- BOOTSTRAP SCRIPTS -->
-  <script src="assets/js/bootstrap.min.js"></script>
-  <!-- METISMENU SCRIPTS -->
-  <script src="assets/js/jquery.metisMenu.js"></script>
-  <!-- CUSTOM SCRIPTS -->
-  <script src="assets/js/custom.js"></script>
-  <!-- SWAL -->
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
-
-</body>
-
-</html>
-
-<?php
-if (isset($_POST['btnLogin'])) {
-  $sql_login = "SELECT * FROM tb_pengguna WHERE username='" . $_POST['username'] . "' AND password='" . $_POST['password'] . "'";
-  $query_login = mysqli_query($koneksi, $sql_login);
-  $data_login = mysqli_fetch_array($query_login, MYSQLI_BOTH);
-  $jumlah_login = mysqli_num_rows($query_login);
-
-
-  if ($jumlah_login == 1) {
-    session_start();
-    $_SESSION["ses_id"] = $data_login["id_pengguna"];
-    $_SESSION["ses_nama"] = $data_login["nama_pengguna"];
-    $_SESSION["ses_level"] = $data_login["level"];
-    $_SESSION["ses_grup"] = $data_login["grup"];
-
-    echo "<script>
-                    Swal.fire({title: 'SUKSES',text: '',icon: 'success',confirmButtonText: 'OK'
-                    }).then((result) => {
-                        if (result.value) {
-                            window.location = 'index';
-                        }
-                    })</script>";
-  } else {
-    echo "<script>
-                    Swal.fire({title: 'GAGAL',text: '',icon: 'error',confirmButtonText: 'OK'
-                    }).then((result) => {
-                        if (result.value) {
-                            window.location = 'index';
-                        }
-                    })</script>";
-  }
 }
 ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Sistem Pengaduan</title>
+    <link href="assets/css/bootstrap.css" rel="stylesheet" />
+    <link href="assets/css/font-awesome.css" rel="stylesheet" />
+    <link href="assets/css/custom.css" rel="stylesheet" />
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' />
+    <link href="assets/css/signup.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="container">
+        <div class="row text-center ">
+            <div class="col-md-12">
+                <br /><br />
+                <h2> Sistem Pengaduan : Login</h2>
+                <h5>( Login Sendiri )</h5>
+                <br />
+            </div>
+        </div>
+         <div class="row ">
+               
+                <div class="col-md-4 col-md-offset-4 col-sm-6 col-sm-offset-3 col-xs-10 col-xs-offset-1">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                        <strong>  Masukkan Detail Login </strong>  
+                            </div>
+                            <div class="panel-body">
+                                <form role="form" action="" method="post">
+                                       <br />
+                                     <div class="form-group input-group">
+                                            <span class="input-group-addon"><i class="fa fa-tag"  ></i></span>
+                                            <input type="text" class="form-control" name="email" placeholder="Username Anda " required />
+                                        </div>
+                                        <div class="form-group input-group">
+                                            <span class="input-group-addon"><i class="fa fa-lock"  ></i></span>
+                                            <input type="password" class="form-control"  name="password" placeholder="Password Anda" required />
+                                        </div>
+                                    <div class="form-group">
+                                            <label class="checkbox-inline">
+                                                <input type="checkbox" /> Ingat Saya
+                                            </label>
+                                            <span class="pull-right">
+                                                   <a href="#" >Lupa Password ? </a> 
+                                            </span>
+                                        </div>
+                                     
+                                    <input type="submit" name="login" value="Login Sekarang" class="btn btn-primary ">
+                                    <hr />
+                                    Belum Punya Akun ? <a href="signup.php" >Klik disini untuk daftar </a>
+                                    </form>
+                                    <?php if (!empty($error_message)): ?>
+                                        <div class="alert alert-danger" style="margin-top: 20px;">
+                                            <?php echo $error_message; ?>
+                                        </div>
+                                    <?php endif; ?>
+                            </div>
+                           
+                        </div>
+                    </div>
+                
+                
+        </div>
+    </div>
 
-<!-- END -->
+
+     <script src="assets/js/jquery-1.10.2.js"></script>
+      <script src="assets/js/bootstrap.min.js"></script>
+    <script src="assets/js/jquery.metisMenu.js"></script>
+      <script src="assets/js/custom.js"></script>
+   
+</body>
+</html>
