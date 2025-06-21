@@ -48,7 +48,7 @@ if (isset($_POST['btnLogin'])) {
                 // Level tidak dikenal, seharusnya tidak terjadi jika enum sudah benar di DB
                 session_unset(); // Hapus semua variabel session
                 session_destroy(); // Hancurkan session
-                $redirect_url = 'login.php'; // Kembali ke login
+                $redirect_url = 'login1.php'; // Kembali ke login
                 echo "<script>
                     Swal.fire({title: 'GAGAL', text: 'Level pengguna tidak dikenal.', icon: 'error', confirmButtonText: 'OK'})
                     .then((result) => {
