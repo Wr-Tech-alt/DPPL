@@ -1,15 +1,15 @@
 ﻿<?php
-session_start(); // Pastikan session_start() ada di paling awal. Kode Anda sudah ada.
+session_start();
 
 // Cek apakah pengguna sudah login
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-    header("location: login.php"); // Arahkan ke halaman login jika belum login
+    header("location: login1.php"); // Arahkan ke login1.php
     exit();
 }
 
 // Ambil data session
 $data_id = $_SESSION["ses_id"];
-$data_nama = $_SESSION["ses_nama_lengkap"]; // Sesuaikan dengan nama lengkap
+$data_nama = $_SESSION["ses_nama"]; // --- PERBAIKI: Ganti dari ses_nama_lengkap ke ses_nama ---
 $data_level = $_SESSION["ses_level"];
 // $data_grup = $_SESSION["ses_grup"]; // Hapus ini jika tidak ada di session lagi
 
