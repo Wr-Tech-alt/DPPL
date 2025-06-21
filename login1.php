@@ -8,7 +8,7 @@ if (isset($_POST['btnLogin'])) {
     $password_input = $_POST['password'];
 
     // Gunakan Prepared Statements untuk keamanan SQL Injection
-    $sql_login = "SELECT id_pengguna, username, password, nama_lengkap, level FROM pengguna WHERE username = ?";
+    $sql_login = "SELECT id_pengguna, username, password, nama_pengguna, level FROM tb_pengguna WHERE username = ?";
     
     // Periksa apakah koneksi valid sebelum prepare
     if ($koneksi === false) {
@@ -33,16 +33,16 @@ if (isset($_POST['btnLogin'])) {
             // Login berhasil
             $_SESSION["ses_id"] = $data_login["id_pengguna"];
             $_SESSION["ses_username"] = $data_login["username"];
-            $_SESSION["ses_nama_lengkap"] = $data_login["nama_lengkap"];
+            $_SESSION["ses_nama_pengguna"] = $data_login["nama_pengguna"];
             $_SESSION["ses_level"] = $data_login["level"];
 
             // Redirect berdasarkan level
             $redirect_url = '';
-            if ($_SESSION["ses_level"] == 'admin') {
+            if ($_SESSION["ses_level"] == 'Administrator') {
                 $redirect_url = 'default/admin.php'; // Arahkan ke dashboard admin
-            } elseif ($_SESSION["ses_level"] == 'petugas') {
+            } elseif ($_SESSION["ses_level"] == 'Petugas') {
                 $redirect_url = 'default/admin.php'; // Arahkan ke dashboard admin (atau default/petugas.php jika ada)
-            } elseif ($_SESSION["ses_level"] == 'masyarakat') {
+            } elseif ($_SESSION["ses_level"] == 'Pengadu') {
                 $redirect_url = 'default/pengadu.php'; // Arahkan ke dashboard masyarakat/pelapor
             } else {
                 // Level tidak dikenal, seharusnya tidak terjadi jika enum sudah benar di DB
@@ -60,7 +60,7 @@ if (isset($_POST['btnLogin'])) {
             }
 
             echo "<script>
-                Swal.fire({title: 'Login Berhasil!', text: 'Selamat datang " . htmlspecialchars($_SESSION["ses_nama_lengkap"]) . "!', icon: 'success', confirmButtonText: 'OK'})
+                Swal.fire({title: 'Login Berhasil!', text: 'Selamat datang " . htmlspecialchars($_SESSION["ses_nama_pengguna"]) . "!', icon: 'success', confirmButtonText: 'OK'})
                 .then((result) => {
                     if (result.value) {
                         window.location = '" . $redirect_url . "'; // Inilah yang diubah!
