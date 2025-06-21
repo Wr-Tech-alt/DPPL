@@ -1,14 +1,17 @@
 ﻿<?php
+session_start(); // Pastikan session_start() ada di paling awal. Kode Anda sudah ada.
 
-session_start();
-if (isset($_SESSION['ses_nama']) == "") {
-    header("location: login");
-} else {
-    $data_id = $_SESSION["ses_id"];
-    $data_nama = $_SESSION["ses_nama"];
-    $data_level = $_SESSION["ses_level"];
-    $data_grup = $_SESSION["ses_grup"];
+// Cek apakah pengguna sudah login
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+    header("location: login.php"); // Arahkan ke halaman login jika belum login
+    exit();
 }
+
+// Ambil data session
+$data_id = $_SESSION["ses_id"];
+$data_nama = $_SESSION["ses_nama_lengkap"]; // Sesuaikan dengan nama lengkap
+$data_level = $_SESSION["ses_level"];
+// $data_grup = $_SESSION["ses_grup"]; // Hapus ini jika tidak ada di session lagi
 
 include "inc/koneksi.php";
 
@@ -368,7 +371,8 @@ include "inc/koneksi.php";
                     </li>
 
                     <?php
-                    if ($data_level == "Administrator") {
+                    // Pastikan nama level sesuai dengan yang ada di database Anda: 'admin', 'petugas', 'masyarakat'
+                    if ($data_level == "admin") { // Menggunakan 'admin'
                     ?>
                         <li>
                             <a href="?page=admin-def">
@@ -419,7 +423,7 @@ include "inc/koneksi.php";
                         </li>
 
                     <?php
-                    } elseif ($data_level == "Petugas") {
+                    } elseif ($data_level == "petugas") { // Menggunakan 'petugas'
                     ?>
                         <li>
                             <a href="?page=petugas-def">
@@ -443,15 +447,13 @@ include "inc/koneksi.php";
                             </ul>
                         </li>
                     <?php
-                    } elseif ($data_level == "Pengadu") {
+                    } elseif ($data_level == "masyarakat") { // Menggunakan 'masyarakat'
                     ?>
 
                         <li>
                             <a href="?page=pengadu">
                                 <i class="fa fa-dashboard fa-2x"></i> Dashboard</a>
                         </li>
-
-
                         <li>
                             <a href="?page=aduan_view">
                                 <i class="fa fa-bell fa-2x"></i> Pengaduan
@@ -476,7 +478,7 @@ include "inc/koneksi.php";
             <div class="profile-logout-section">
                 <div class="profile-avatar">
                     <i class="fa fa-user"></i> </div>
-                <a href="logout" onclick="return confirm('Apakah anda yakin ingin keluar dari aplikasi ini ?')" class="logout-btn">
+                <a href="logout.php" onclick="return confirm('Apakah anda yakin ingin keluar dari aplikasi ini ?')" class="logout-btn">
                     <i class="fa fa-sign-out"></i> Logout
                 </a>
             </div>
@@ -490,6 +492,7 @@ include "inc/koneksi.php";
                             <p style="margin-top: -10px;">MENGGUNAKAN REALTIME NOTIFIKASI TELEGRAM</p>
                         </h4>
                         <?php
+                        // Ini adalah router utama
                         if (isset($_GET['page'])) {
                             $hal = $_GET['page'];
 
@@ -498,13 +501,13 @@ include "inc/koneksi.php";
                                     include "default/admin.php";
                                     break;
                                 case 'petugas-def':
-                                    include "default/tugas.php";
+                                    include "default/tugas.php"; // Ini adalah dashboard untuk petugas
                                     break;
                                 case 'pengadu':
-                                    include "default/pengadu.php";
+                                    include "default/pengadu.php"; // Ini adalah dashboard untuk pengadu
                                     break;
 
-                                    //User
+                                //User Admin (pengguna)
                                 case 'user_data':
                                     include "admin/pengguna/pengguna_tampil.php";
                                     break;
@@ -521,7 +524,7 @@ include "inc/koneksi.php";
                                     include "admin/pengguna/pengguna_hapus.php";
                                     break;
 
-                                    //jenis
+                                //Jenis Aduan Admin
                                 case 'jenis_view':
                                     include "admin/jenis/jenis_tampil.php";
                                     break;
@@ -535,7 +538,7 @@ include "inc/koneksi.php";
                                     include "admin/jenis/jenis_hapus.php";
                                     break;
 
-                                    //pengadu
+                                //Pengadu Admin (data pengadu)
                                 case 'pengadu_view':
                                     include "admin/pengadu/pengadu_tampil.php";
                                     break;
@@ -549,7 +552,7 @@ include "inc/koneksi.php";
                                     include "admin/pengadu/pengadu_hapus.php";
                                     break;
 
-                                    //aduan admin
+                                //Aduan Admin / Petugas
                                 case 'aduan_admin':
                                     include "admin/aduan/adu_tampil.php";
                                     break;
@@ -563,27 +566,29 @@ include "inc/koneksi.php";
                                     include "admin/aduan/adu_ubah.php";
                                     break;
 
-                                    //telegram
+                                //Telegram Admin
                                 case 'telegram':
                                     include "admin/telegram/telegram.php";
                                     break;
 
+                                //Laporan Admin
                                 case 'laporan':
                                     include "admin/laporan/laporan.php";
                                     break;
-                                    //logout
+                                
+                                //Logout
                                 case 'logout':
                                     include "logout.php";
                                     break;
 
-                                    //aduan
-                                case 'aduan_view':
+                                //Aduan Masyarakat (Pengadu)
+                                case 'aduan_view': // Melihat riwayat aduan sendiri
                                     include "pengadu/aduan/adu_tampil.php";
                                     break;
-                                case 'aduan_tambah':
+                                case 'aduan_tambah': // Proses tambah aduan (setelah form)
                                     include "pengadu/aduan/adu_tambah.php";
                                     break;
-                                case 'aduan_tambah_form':
+                                case 'aduan_tambah_form': // Form untuk menambah aduan
                                     include "pengadu/aduan/adu_tambah_form.php";
                                     break;
                                 case 'aduan_ubah':
@@ -593,19 +598,36 @@ include "inc/koneksi.php";
                                     include "pengadu/aduan/adu_hapus.php";
                                     break;
 
-
-                                    //default
+                                //Default (jika tidak ada parameter 'page' di URL)
                                 default:
-                                    echo "<center><h1> ERROR !</h1></center>";
+                                    // Arahkan ke dashboard berdasarkan level pengguna saat ini
+                                    if ($data_level == "admin") {
+                                        include "default/admin.php";
+                                    } elseif ($data_level == "petugas") {
+                                        include "default/tugas.php";
+                                    } elseif ($data_level == "masyarakat") { // Sesuaikan dengan 'masyarakat'
+                                        include "default/pengadu.php";
+                                    } else {
+                                        // Fallback jika level tidak dikenal, bisa ke halaman error atau logout
+                                        echo "<center><h1>Level Pengguna Tidak Dikenal!</h1></center>";
+                                        // header("location: logout.php"); // Atau langsung logout
+                                        // exit();
+                                    }
                                     break;
                             }
                         } else {
-                            if ($data_level == "Administrator") {
+                            // Jika tidak ada parameter 'page', arahkan ke dashboard berdasarkan level
+                            if ($data_level == "admin") {
                                 include "default/admin.php";
-                            } elseif ($data_level == "Petugas") {
+                            } elseif ($data_level == "petugas") {
                                 include "default/tugas.php";
-                            } elseif ($data_level == "Pengadu") {
+                            } elseif ($data_level == "masyarakat") { // Sesuaikan dengan 'masyarakat'
                                 include "default/pengadu.php";
+                            } else {
+                                // Fallback jika level tidak dikenal saat pertama kali akses index.php
+                                echo "<center><h1>Level Pengguna Tidak Dikenal!</h1></center>";
+                                // header("location: logout.php"); // Atau langsung logout
+                                // exit();
                             }
                         }
                         ?>
