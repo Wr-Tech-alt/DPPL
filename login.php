@@ -44,8 +44,6 @@ if (isset($_POST['login_submit'])) {
                 var_dump($user);
                 echo "</pre>";
 
-                // Menggunakan perbandingan plain text password (INSECURE - HANYA UNTUK DEMO/TESTING)
-                // SANGAT DISARANKAN untuk menggunakan password_verify() setelah melakukan password_hash() saat registrasi.
                 echo "DEBUG: Comparing password. DB: '" . htmlspecialchars($user['password']) . "' vs Input: '" . htmlspecialchars($password) . "'<br>";
                 if ($password === $user['password']) { // Plain text password comparison
                     echo "DEBUG: Password comparison: MATCH<br>";
@@ -74,13 +72,12 @@ if (isset($_POST['login_submit'])) {
                             $redirect_url = "dashboard/dashboard_pengadu.php";
                             echo "DEBUG: Redirecting Pengadu to: " . $redirect_url . "<br>";
                             break;
-                        // default:
-                        //     $redirect_url = "default_dashboard.php"; // Pastikan path ini benar atau ganti
-                        //     echo "DEBUG: Redirecting unknown role '" . $user['Role'] . "' to: " . $redirect_url . "<br>";
-                            // break;
+                        default:
+                            $redirect_url = "default_dashboard.php"; // Pastikan path ini benar atau ganti
+                            echo "DEBUG: Redirecting unknown role '" . $user['Role'] . "' to: " . $redirect_url . "<br>";
+                            break;
                     }
                     
-                    // Lakukan redirect hanya jika ada URL tujuan
                     if (!empty($redirect_url)) {
                         header("Location: " . $redirect_url);
                         exit(); // Hentikan eksekusi script setelah redirect
