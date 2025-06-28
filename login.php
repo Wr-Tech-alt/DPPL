@@ -1,29 +1,18 @@
 <?php
-// login.php (Combined Login Form and Processing)
-
 session_start(); // Start a PHP session at the very beginning of the page
 
-// Include your database connection file
-// Make sure 'inc/koneksi.php' is the correct path to your database connection.
-// Based on your code, it's now 'inc/koneksi.php' instead of 'db_connection.php'
-require_once 'inc/koneksi.php'; 
+require_once 'inc/koneksi.php';
 
-$error_message = ''; // Initialize error message
+$error_message = '';
 
-// Check if the form was submitted via POST
 if (isset($_POST['login_submit'])) {
-    // *** CHANGED: Get 'nama' from POST instead of 'iduser' ***
     $nama = $conn->real_escape_string($_POST['nama']);
     $password = $conn->real_escape_string($_POST['password']);
 
-    // Basic input validation
-    if (empty($nama) || empty($password)) { // *** CHANGED: Error message refers to Nama Pengguna ***
+    if (empty($nama) || empty($password)) {
         $error_message = "Nama Pengguna dan Password harus diisi.";
     } else {
-        // Prepare a SQL query to select user data by 'nama'.
-        // *** CHANGED: WHERE clause to 'nama = ?' ***
         $stmt = $conn->prepare("SELECT iduser, Role, password, nama FROM pengguna WHERE nama = ?");
-        // *** CHANGED: Bind 'nama' instead of 'iduser' ***
         $stmt->bind_param("s", $nama);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -31,49 +20,49 @@ if (isset($_POST['login_submit'])) {
         if ($result->num_rows === 1) {
             $user = $result->fetch_assoc();
 
-            // --- SECURITY WARNING: Password Hashing is CRITICAL for production ---
-            // As discussed, this part is for demonstration with plain text passwords.
-            // In a real application, replace this with:
-            // if (password_verify($password, $user['password'])) { ... }
-            // ---------------------------------------------------------------------
-
-            if ($password === $user['password']) { // Plain text password comparison (INSECURE)
-                // Password matches, login successful
+            // Menggunakan perbandingan plain text password (INSECURE - HANYA UNTUK DEMO/TESTING)
+            // SANGAT DISARANKAN untuk menggunakan password_verify() setelah melakukan password_hash() saat registrasi.
+            if ($password === $user['password']) { // Plain text password comparison
                 $_SESSION['loggedin'] = true;
                 $_SESSION['iduser'] = $user['iduser'];
                 $_SESSION['nama'] = $user['nama'];
                 $_SESSION['role'] = $user['Role'];
 
-                // Redirect based on user role
                 switch ($user['Role']) {
                     case 'Admin':
-                        // *** CHANGED: Redirect path for Admin ***
-                        header("Location:dashboard/dashboard_admin.php");
+                        // Path yang benar untuk Dashboard Admin
+                        header("Location: dashboard/dashboard_admin.php");
+                        break;
+                    case 'Petugas': // Tambahkan case untuk role Petugas
+                        // Path yang benar untuk Dashboard Petugas
+                        header("Location: dashboard/dashboard_petugas.php");
                         break;
                     case 'Pengadu':
-                        header("Location: pengadu_dashboard.php");
+                        // Path yang benar untuk Dashboard Pengadu
+                        header("Location: dashboard/dashboard_pengadu.php");
                         break;
                     default:
-                        // Fallback for any other roles not specifically handled
-                        header("Location: default_dashboard.php"); // Ensure this file exists or remove
+                        // Fallback jika ada role lain yang tidak spesifik
+                        // Pastikan file default_dashboard.php ini ada di direktori utama,
+                        // atau sesuaikan path-nya jika berada di folder dashboard
+                        header("Location: default_dashboard.php"); // Atau dashboard/default_dashboard.php
                         break;
                 }
-                exit(); // Stop script execution after redirection
+                exit();
 
             } else {
-                // Password does not match
                 $error_message = "Password salah.";
             }
         } else {
-            // User (nama) not found
-            $error_message = "Nama Pengguna tidak ditemukan."; // *** CHANGED: Error message refers to Nama Pengguna ***
+            $error_message = "Nama Pengguna tidak ditemukan.";
         }
 
-        $stmt->close(); // Close the prepared statement
+        $stmt->close();
     }
-    $conn->close(); // Close the database connection
+    $conn->close();
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
