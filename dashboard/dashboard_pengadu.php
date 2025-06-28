@@ -1,120 +1,208 @@
 <?php
-require_once 'config.php'; //
-require_once 'user_agent_parser.php'; // pastikan ada getBrowser() & getPlatform()
+session_start();
+include "../inc/koneksi.php"; // Sesuaikan path jika diperlukan
 
-$error_message = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username_form = $_POST['username'];
-    $password_form = $_POST['password'];
-
-    $stmt = $conn->prepare("SELECT * FROM user WHERE UserName = ?");
-    $stmt->bind_param("s", $username_form);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
-    $stmt->close();
-
-    if ($user && password_verify($password_form, $user['PassWord'])) {
-        session_regenerate_id(true); // Penting untuk keamanan
-        $currentSessionId = session_id(); // ID sesi baru setelah regenerate
-
-        $userAgent = $_SERVER['HTTP_USER_AGENT'];
-        $currentBrowser = getBrowser($userAgent); //
-        $currentPlatform = getPlatform($userAgent); //
-        $currentUserIP = $_SERVER['REMOTE_ADDR'];
-
-        // Cek browser & OS terakhir dari DB
-        $lastBrowser = $user['LastBrowser'] ?? '';
-        $lastOS = $user['LastOS'] ?? '';
-        // Anda mungkin ingin menambahkan pengecekan IP juga di sini jika logikanya begitu
-        // $lastIP = $user['IPAddress'] ?? '';
-        $isFirstLogin = empty($lastBrowser) && empty($lastOS); // Anggap login pertama jika LastBrowser dan LastOS kosong
-
-        // Kondisi untuk meminta PIN: bukan login pertama DAN (browser beda ATAU OS beda)
-        // Anda bisa tambahkan pengecekan IP di sini: || $currentUserIP !== $lastIP
-        if (!$isFirstLogin && ($currentBrowser !== $lastBrowser || $currentPlatform !== $lastOS)) {
-            // Simpan semua informasi yang dibutuhkan untuk pin_auth.php
-            $_SESSION['pending_user_id'] = $user['IdUserPrimary'];
-            $_SESSION['pending_session_id'] = $currentSessionId; // Simpan ID sesi baru ini
-            $_SESSION['pending_ip'] = $currentUserIP;
-            $_SESSION['pending_browser'] = $currentBrowser;
-            $_SESSION['pending_platform'] = $currentPlatform;
-            $_SESSION['pending_username'] = $user['UserName']; // Simpan username jika perlu di pin_auth.php
-            $_SESSION['requested_page'] = 'dashboard.php'; //
-            $_SESSION['pin_attempt'] = 0; // reset percobaan PIN
-
-            // PENTING: JANGAN UPDATE DATABASE DI SINI. Update dilakukan setelah PIN berhasil.
-            // HAPUS blok ini:
-            /*
-            $stmt = $conn->prepare("UPDATE user SET Session = ?, IPAddress = ? WHERE IdUserPrimary = ?");
-            $stmt->bind_param("ssi", $currentSessionId, $currentUserIP, $user['IdUserPrimary']);
-            $stmt->execute();
-            $stmt->close();
-            */
-
-            header("Location: pin_auth.php");
-            exit();
-        }
-
-        // Lolos verifikasi (perangkat sama atau login pertama), update semua info dan masuk dashboard
-        // Untuk login pertama, LastBrowser dan LastOS akan diisi dengan info saat ini
-        $stmt = $conn->prepare("UPDATE user SET Session = ?, IPAddress = ?, LastBrowser = ?, LastOS = ? WHERE IdUserPrimary = ?"); //
-        $stmt->bind_param("ssssi", $currentSessionId, $currentUserIP, $currentBrowser, $currentPlatform, $user['IdUserPrimary']); //
-        $stmt->execute(); //
-        $stmt->close(); //
-
-        // Set session utama setelah semua aman
-        $_SESSION['user_id'] = $user['IdUserPrimary']; //
-        $_SESSION['username'] = $user['UserName']; //
-        // Sebaiknya simpan juga IP, Browser, OS yang terverifikasi ke session untuk auth_check.php
-        $_SESSION['verified_ip'] = $currentUserIP;
-        $_SESSION['verified_browser'] = $currentBrowser;
-        $_SESSION['verified_os'] = $currentPlatform;
-        // $_SESSION['current_session_id_for_user'] = $currentSessionId; // Ini bisa jadi redundant jika auth_check.php membandingkan session_id() dengan DB
-
-        header("Location: dashboard.php"); //
-        exit();
-    } else {
-        $error_message = "Username atau password yang Anda masukkan salah!"; //
-    }
+// Cek apakah user sudah login sebagai pengadu
+if (!isset($_SESSION['loggedin']) || $_SESSION['role'] !== 'Pengadu') {
+    header("Location: ../login.php");
+    exit();
 }
+
+$id_user = $_SESSION['iduser'];
+$nama_user = $_SESSION['nama'];
+
+// Query untuk mendapatkan riwayat aduan pengguna
+$sql_riwayat_aduan = "
+    SELECT 
+        p.idpengaduan,
+        jp.jenis AS jenis_aduan,
+        p.waktu_aduan,
+        p.judul,
+        p.status
+    FROM pengaduan p
+    JOIN jenis_pengaduan jp ON p.idjenis = jp.idstatus
+    WHERE p.iduser = ?
+    ORDER BY p.waktu_aduan DESC"; // Diurutkan dari yang terbaru
+
+$stmt_riwayat = $koneksi->prepare($sql_riwayat_aduan);
+if ($stmt_riwayat === FALSE) {
+    die("Error preparing statement: " . $koneksi->error);
+}
+$stmt_riwayat->bind_param("i", $id_user);
+$stmt_riwayat->execute();
+$result_riwayat = $stmt_riwayat->get_result();
+
+$aduan_exist = $result_riwayat->num_rows > 0;
+
 ?>
 
 <!DOCTYPE html>
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <link rel="stylesheet" href="style.css">
-    <title>Login Pengguna</title>
-    <style>
-        .error {
-            color: red;
-            border: 1px solid red;
-            padding: 10px;
-            margin-bottom: 15px;
-        }
-    </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Pengadu</title>
+    <link href="../assets/css/bootstrap.css" rel="stylesheet" />
+    <link href="../assets/css/font-awesome.css" rel="stylesheet" />
+    <link href="../assets/js/dataTables/dataTables.bootstrap.css" rel="stylesheet" />
+    <link href="../assets/css/custom.css" rel="stylesheet" />
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' />
+    <script src="../assets/js/jquery-1.10.2.js"></script>
+    <script src="../assets/js/jquery.metisMenu.js"></script>
 </head>
 <body>
-    <h2 class="form-title">🔐 Login Aplikasi</h2>
+    <div id="wrapper">
+        <nav class="navbar navbar-default navbar-cls-top " role="navigation" style="margin-bottom: 0">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="dashboard_pengadu.php">SiCepu</a>
+            </div>
+            <div class="namalevel">Selamat Datang, <?php echo $nama_user; ?> (Pengadu)</div>
+            <div class="profile-logout-section">
+                <div class="search-box">
+                    <input type="text" placeholder="Cari...">
+                    <i class="fa fa-search"></i>
+                </div>
+                <div class="profile-avatar"><i class="fa fa-user"></i></div>
+                <a href="../logout.php" class="logout-btn"><i class="fa fa-sign-out"></i> Logout</a>
+            </div>
+        </nav>
+        <nav class="navbar-default navbar-side" role="navigation">
+            <div class="sidebar-collapse">
+                <ul class="nav" id="main-menu">
+                    <li class="text-center">
+                        <img src="../assets/img/stmi.png" class="user-image img-responsive"/>
+                    </li>
+                    <li>
+                        <a class="active-menu" href="dashboard_pengadu.php"><i class="fa fa-dashboard fa-2x"></i> Dashboard</a>
+                    </li>
+                    <li>
+                        <a href="adu_form_tambah.php"><i class="fa fa-plus-square fa-2x"></i> Tambah Aduan Baru</a>
+                    </li>
+                    <li>
+                        <a href="../foto_aduan/foto_aduan.php"><i class="fa fa-image fa-2x"></i> Foto Aduan</a>
+                    </li>
+                    </ul>
+            </div>
+        </nav>
+        <div id="page-wrapper" >
+            <div id="page-inner">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div id="marquee">
+                            <h4>Selamat Datang, <?php echo $nama_user; ?>!</h4>
+                            <p>Riwayat Pengaduan Fasilitas Kampus Anda</p>
+                        </div>
+                    </div>
+                </div>
+                 <hr />
 
-<?php
-if (!empty($error_message)) {
-    echo "<div class='error'>" . htmlspecialchars($error_message) . "</div>";
-}
-?>
-
-<form method="post" action="login.php" class="form-container">
-    <label for="username" class="form-label">Username:</label>
-    <input type="text" name="username" id="username" class="form-input" required>
-
-    <label for="password" class="form-label">Password:</label>
-    <input type="password" name="password" id="password" class="form-input" required>
-
-    <input type="submit" value="Login" class="form-button">
-
-    <p class="form-footer">Belum punya akun? <a href="register.php">Daftar di sini</a></p>
-</form>
-
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                Riwayat Pengaduan Anda
+                                <?php if ($aduan_exist): // Tombol akan geser ke kanan atas jika ada aduan ?>
+                                    <div class="pull-right">
+                                        <a href="../pengadu/adu_form_tambah.php" class="btn btn-primary btn-sm">
+                                            <i class="fa fa-plus"></i> Tambahkan Aduan
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="panel-body">
+                                <div class="table-responsive">
+                                    <?php if ($aduan_exist): ?>
+                                    <table class="table table-striped table-bordered table-hover" id="dataTables-example">
+                                        <thead>
+                                            <tr>
+                                                <th>No.</th>
+                                                <th>Judul Aduan</th>
+                                                <th>Jenis Aduan</th>
+                                                <th>Waktu Aduan</th>
+                                                <th>Status</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php 
+                                            $no = 1;
+                                            while ($row = $result_riwayat->fetch_assoc()): 
+                                            ?>
+                                            <tr class="<?php echo ($no % 2 == 1) ? 'odd' : 'even'; ?>">
+                                                <td><?php echo $no++; ?></td>
+                                                <td><?php echo htmlspecialchars($row['judul']); ?></td>
+                                                <td><?php echo htmlspecialchars($row['jenis_aduan']); ?></td>
+                                                <td><?php echo date('d-m-Y H:i:s', strtotime($row['waktu_aduan'])); ?></td>
+                                                <td>
+                                                    <?php 
+                                                        $status_class = '';
+                                                        switch ($row['status']) {
+                                                            case 'Masuk':
+                                                                $status_class = 'label-danger'; // Merah untuk status Masuk/Pending
+                                                                break;
+                                                            case 'Diproses':
+                                                                $status_class = 'label-warning'; // Kuning untuk status Diproses
+                                                                break;
+                                                            case 'Selesai':
+                                                                $status_class = 'label-success'; // Hijau untuk status Selesai
+                                                                break;
+                                                            default:
+                                                                $status_class = 'label-default'; // Default jika ada status lain
+                                                                break;
+                                                        }
+                                                    ?>
+                                                    <span class="label <?php echo $status_class; ?>">
+                                                        <?php echo htmlspecialchars($row['status']); ?>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <a href="../pengadu/adu_ubah.php?id=<?php echo $row['idpengaduan']; ?>" class="btn btn-info btn-xs" title="Ubah Aduan">
+                                                        <i class="fa fa-edit"></i> Ubah
+                                                    </a>
+                                                    <a href="detail_aduan.php?id=<?php echo $row['idpengaduan']; ?>" class="btn btn-primary btn-xs" title="Lihat Detail">
+                                                        <i class="fa fa-info-circle"></i> Detail
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            <?php endwhile; ?>
+                                        </tbody>
+                                    </table>
+                                    <?php else: // Tombol di tengah jika belum ada aduan ?>
+                                        <div class="text-center">
+                                            <p>Anda belum memiliki riwayat pengaduan.</p>
+                                            <a href="../pengadu/adu_form_tambah.php" class="btn btn-primary btn-lg">
+                                                <i class="fa fa-plus"></i> Tambahkan Aduan Pertama Anda
+                                            </a>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        </div>
+                </div>
+            </div>
+            </div>
+        </div>
+    <script src="../assets/js/bootstrap.min.js"></script>
+    <script src="../assets/js/jquery.metisMenu.js"></script>
+    <script src="../assets/js/dataTables/jquery.dataTables.js"></script>
+    <script src="../assets/js/dataTables/dataTables.bootstrap.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Hanya inisialisasi DataTable jika tabelnya ada dan punya data
+            <?php if ($aduan_exist): ?>
+                $('#dataTables-example').dataTable();
+            <?php endif; ?>
+        });
+    </script>
+    <script src="../assets/js/custom.js"></script>
+    
 </body>
 </html>
