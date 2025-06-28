@@ -1,19 +1,33 @@
 <?php
-session_start();
-include "../inc/koneksi.php"; // Sesuaikan path jika diperlukan
+session_start(); // Tetap mulai session karena elemen lain mungkin memerlukannya
 
-// Cek apakah user sudah login sebagai pengadu
+// --- DEBUG MODE: HAPUS ATAU KOMENTARI BLOK INI UNTUK PENGUJIAN TANPA LOGIN ---
+/*
 if (!isset($_SESSION['loggedin']) || $_SESSION['role'] !== 'Pengadu') {
     header("Location: ../login.php");
     exit();
 }
-
 $id_user = $_SESSION['iduser'];
 $nama_user = $_SESSION['nama'];
+*/
+// --- AKHIR BLOK DEBUG MODE ---
+
+// --- DEBUG MODE: GANTI DENGAN NILAI DUMMY UNTUK PENGUJIAN ---
+// Jika Anda mengomentari blok di atas, Anda perlu dummy data ini:
+$id_user = 21; // <-- Ganti dengan ID Pengadu yang ada di database Anda (misal: Hadi punya iduser 21 di sicepu.sql)
+$nama_user = "Hadi (Pengadu)"; // <-- Ganti dengan nama Pengadu dummy untuk ditampilkan
+// --- AKHIR DEBUG DUMMY DATA ---
+
+include "../inc/koneksi.php"; // Ini tetap diperlukan untuk koneksi database dalam halaman
+
+// Pastikan koneksi berhasil
+if (!isset($koneksi) || !$koneksi) {
+    die("Error: Koneksi database tidak tersedia. Pastikan inc/koneksi.php sudah benar.");
+}
 
 // Query untuk mendapatkan riwayat aduan pengguna
 $sql_riwayat_aduan = "
-    SELECT 
+    SELECT
         p.idpengaduan,
         jp.jenis AS jenis_aduan,
         p.waktu_aduan,
@@ -28,7 +42,7 @@ $stmt_riwayat = $koneksi->prepare($sql_riwayat_aduan);
 if ($stmt_riwayat === FALSE) {
     die("Error preparing statement: " . $koneksi->error);
 }
-$stmt_riwayat->bind_param("i", $id_user);
+$stmt_riwayat->bind_param("i", $id_user); // Menggunakan ID dummy/test
 $stmt_riwayat->execute();
 $result_riwayat = $stmt_riwayat->get_result();
 
@@ -82,7 +96,7 @@ $aduan_exist = $result_riwayat->num_rows > 0;
                         <a class="active-menu" href="dashboard_pengadu.php"><i class="fa fa-dashboard fa-2x"></i> Dashboard</a>
                     </li>
                     <li>
-                        <a href="adu_form_tambah.php"><i class="fa fa-plus-square fa-2x"></i> Tambah Aduan Baru</a>
+                        <a href="../pengadu/adu_form_tambah.php"><i class="fa fa-plus-square fa-2x"></i> Tambah Aduan Baru</a>
                     </li>
                     <li>
                         <a href="../foto_aduan/foto_aduan.php"><i class="fa fa-image fa-2x"></i> Foto Aduan</a>
