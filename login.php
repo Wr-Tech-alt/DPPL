@@ -74,10 +74,10 @@ if (isset($_POST['login_submit'])) {
                             $redirect_url = "dashboard/dashboard_pengadu.php";
                             echo "DEBUG: Redirecting Pengadu to: " . $redirect_url . "<br>";
                             break;
-                        default:
-                            $redirect_url = "default_dashboard.php"; // Pastikan path ini benar atau ganti
-                            echo "DEBUG: Redirecting unknown role '" . $user['Role'] . "' to: " . $redirect_url . "<br>";
-                            break;
+                        // default:
+                        //     $redirect_url = "default_dashboard.php"; // Pastikan path ini benar atau ganti
+                        //     echo "DEBUG: Redirecting unknown role '" . $user['Role'] . "' to: " . $redirect_url . "<br>";
+                            // break;
                     }
                     
                     // Lakukan redirect hanya jika ada URL tujuan
