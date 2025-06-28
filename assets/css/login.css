@@ -1,0 +1,254 @@
+/* Custom properties for colors - based on your design */
+:root {
+    --color-dark-bg: #2d3250; /* Main body background, darker blue */
+    --color-light-purple: #678f9d; /* Active tab / accent color, lighter blue/purple */
+    --color-medium-purple: #424f69; /* Main panel background, medium blue/purple */
+    --color-darker-purple: #2d3250; /* Same as dark-bg, for consistency */
+    --color-orange: #fbb17a; /* Corrected hex code for the orange button/link */
+    --color-white: #ffffff;
+    --color-text-light: rgba(255, 255, 255, 0.7); /* Lighter text for general content */
+    --color-input-bg: rgba(255, 255, 255, 0.08); /* Slightly transparent white for inputs */
+    --color-border-focus: rgba(255, 255, 255, 0.3); /* For input borders on focus */
+}
+
+/* Basic Reset & Body Styling */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box; /* Ensures padding and border are included in element's total width/height */
+}
+
+body {
+    font-family: 'Raleway', sans-serif; /* Use the specified Raleway font */
+    display: flex;
+    justify-content: center; /* Center content horizontally */
+    align-items: center; /* Center content vertically */
+    min-height: 100vh; /* Minimum height of the viewport */
+    background-color: var(--color-dark-bg); /* Apply main background color */
+    color: var(--color-white); /* Default text color */
+    line-height: 1.6; /* Standard line height for readability */
+}
+
+/* Wrapper for the entire login component */
+.login-wrapper {
+    width: 100%;
+    max-width: 900px; /* Limits the maximum width for a smaller, centered appearance */
+    padding: 20px; /* Inner padding */
+    margin: auto; /* Centers the wrapper horizontally on the page */
+}
+
+/* Main Login Container - the split panel (form + image) */
+.login-container {
+    display: flex; /* Enables flexbox for side-by-side panels */
+    background-color: var(--color-medium-purple); /* Background for the main container */
+    border-radius: 20px; /* Rounded corners for the entire container */
+    overflow: hidden; /* Ensures child elements (image/form) respect rounded corners */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); /* Soft shadow for depth */
+}
+
+/* Form Panel (Left Side) */
+.login-form-panel {
+    flex: 1; /* Allows this panel to grow and take available space */
+    padding: 40px; /* Inner padding */
+    display: flex;
+    flex-direction: column; /* Stacks children vertically */
+    justify-content: center; /* Centers content vertically within the panel */
+    color: var(--color-text-light); /* Lighter text color for general content */
+    position: relative; /* Needed for any absolutely positioned elements inside */
+    overflow: hidden; /* Important for hiding content outside its bounds if transitions were added */
+}
+
+/* Tab Navigation (Login / Sistem SiCepu buttons) */
+.tabs {
+    display: flex; /* Buttons side-by-side */
+    margin-bottom: 30px; /* Space below tabs */
+    border-radius: 10px;
+    background-color: rgba(0, 0, 0, 0.2); /* Slightly darker background for the tab group */
+    width: fit-content; /* Makes the tab container only as wide as its content */
+    overflow: hidden; /* Hides any overflow from border-radius on child buttons */
+    z-index: 10; /* Ensures tabs are above other elements if overlaps occur */
+}
+
+.tab-button {
+    background: transparent; /* No default background */
+    border: none; /* No default border */
+    padding: 12px 25px; /* Padding for button size */
+    color: var(--color-text-light); /* Default text color */
+    font-size: 1rem;
+    font-weight: 600; /* Raleway Semibold */
+    cursor: pointer; /* Indicates it's clickable */
+    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transitions for hover/active states */
+    white-space: nowrap; /* Prevents text from wrapping */
+}
+
+.tab-button.active {
+    background-color: var(--color-light-purple); /* Active tab background color */
+    color: var(--color-white); /* Active tab text color */
+    border-radius: 10px; /* Apply rounded corners to the active tab */
+}
+
+/* Form Content containers (login form, info content) */
+.form-content {
+    display: none; /* Hides all form content by default */
+}
+
+.form-content.active {
+    display: block; /* Shows only the active form content */
+}
+
+/* Headings and Paragraphs within Form Content */
+.form-content h1 {
+    font-size: 2.2rem;
+    font-weight: 600; /* Raleway Semibold */
+    color: var(--color-white);
+    margin-bottom: 10px;
+}
+
+.form-content p {
+    font-size: 1rem;
+    margin-bottom: 30px;
+}
+
+/* Input Group Styling (for icon and input field alignment) */
+.input-group {
+    position: relative; /* Allows icon to be absolutely positioned relative to this group */
+    margin-bottom: 20px;
+}
+
+.input-group i {
+    position: absolute;
+    left: 20px; /* Position icon from the left */
+    top: 50%; /* Vertically center icon */
+    transform: translateY(-50%); /* Adjust for true vertical centering */
+    color: var(--color-text-light); /* Icon color */
+    font-size: 1.1rem;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 15px 20px 15px 50px; /* Padding, including space for the icon on the left */
+    background-color: var(--color-input-bg);
+    border: 1px solid transparent; /* Transparent border by default */
+    border-radius: 10px;
+    color: var(--color-white); /* Input text color */
+    font-size: 1rem;
+    outline: none; /* Remove default outline on focus */
+    transition: border-color 0.3s ease, background-color 0.3s ease; /* Smooth transition on focus */
+}
+
+.input-group input::placeholder {
+    color: var(--color-text-light);
+    opacity: 0.7; /* Make placeholder text slightly lighter */
+}
+
+.input-group input:focus {
+    border-color: var(--color-border-focus); /* Border color on focus */
+    background-color: rgba(255, 255, 255, 0.12); /* Slightly lighter background on focus */
+}
+
+/* Options (Remember me & Forgot password) */
+.options {
+    display: flex;
+    justify-content: space-between; /* Space elements apart */
+    align-items: center; /* Vertically align */
+    margin-bottom: 30px;
+    font-size: 0.9rem;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    color: var(--color-text-light);
+}
+
+.remember-me input[type="checkbox"] {
+    margin-right: 8px; /* Space between checkbox and text */
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-orange); /* Changes the checkbox color */
+}
+
+.forgot-password {
+    color: var(--color-orange); /* Link color */
+    text-decoration: none; /* Remove underline */
+    font-weight: 500;
+    transition: color 0.3s ease; /* Smooth color change on hover */
+}
+
+.forgot-password:hover {
+    color: var(--color-white); /* Change color on hover */
+}
+
+/* Login Button */
+.login-button {
+    width: 100%;
+    padding: 15px;
+    background-color: var(--color-orange); /* Button background color */
+    color: var(--color-white); /* Button text color */
+    border: none; /* Remove border */
+    border-radius: 10px; /* Rounded corners */
+    font-size: 1.1rem;
+    font-weight: 600; /* Raleway Semibold */
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transitions for hover/active */
+    margin-bottom: 30px; /* Space below the button */
+}
+
+.login-button:hover {
+    filter: brightness(0.9); /* Slightly darken on hover */
+    transform: translateY(-2px); /* Slight lift effect */
+}
+
+.login-button:active {
+    transform: translateY(0); /* Return to original position on click */
+}
+
+/* Image Panel (Right Side) */
+.login-image-panel {
+    flex: 1; /* Allows this panel to grow and take available space */
+    border-radius: 0 20px 20px 0; /* Apply rounded corners only to the right side */
+    overflow: hidden; /* Ensures image respects rounded corners */
+    display: flex;
+    align-items: center; /* Center image vertically */
+    justify-content: center; /* Center image horizontally */
+}
+
+.login-image-panel img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensures the image covers the area without distortion */
+    display: block; /* Removes extra space below image */
+}
+
+/* Responsive Design for smaller screens */
+@media (max-width: 900px) {
+    .login-container {
+        flex-direction: column; /* Stack panels vertically on smaller screens */
+        max-width: 500px; /* Limits the width when stacked */
+    }
+
+    .login-image-panel {
+        display: none; /* Hide the image on small screens to save vertical space */
+    }
+
+    .login-form-panel {
+        padding: 30px; /* Slightly less padding on smaller screens */
+        border-radius: 20px; /* Full rounded corners for the form panel when image is hidden */
+    }
+}
+
+@media (max-width: 500px) {
+    .login-form-panel {
+        padding: 20px; /* Even less padding on very small screens */
+    }
+
+    .form-content h1 {
+        font-size: 1.8rem; /* Smaller heading on very small screens */
+    }
+
+    .tab-button {
+        padding: 10px 20px; /* Smaller tabs */
+        font-size: 0.9rem; /* Smaller tab text */
+    }
+}

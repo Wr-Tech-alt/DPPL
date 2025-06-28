@@ -1,175 +1,164 @@
 <?php
-// === PENTING: AKTIFKAN SEMUA ERROR REPORTING UNTUK DEBUGGING ===
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// login.php (Combined Login Form and Processing)
 
-// === PASTIKAN INI ADALAH BARIS PERTAMA YANG TEREKSEKUSI.
-// === TIDAK ADA SPASI, NEWLINE, ATAU KARAKTER LAIN SEBELUM <?php
-ob_start(); // Mulai output buffering
+session_start(); // Start a PHP session at the very beginning of the page
 
-include "inc/koneksi.php"; // Pastikan inc/koneksi.php juga bersih dari output sebelum <?php dan tanpa ?> penutup
+// Include your database connection file
+// Make sure 'inc/koneksi.php' is the correct path to your database connection.
+// Based on your code, it's now 'inc/koneksi.php' instead of 'db_connection.php'
+require_once 'inc/koneksi.php'; 
 
-// Cek apakah koneksi berhasil di-include
-if (!isset($koneksi) || !$koneksi) {
-    error_log("DEBUG: \$koneksi variable is not set or is false after including koneksi.php");
-    ob_end_clean();
-    die("Error: Koneksi database tidak tersedia setelah include koneksi.php.");
-}
+$error_message = ''; // Initialize error message
 
-// === BAGIAN LOGIC PROSES LOGIN (Hanya akan dijalankan jika form di-submit via POST) ===
-if (isset($_POST['btnLogin'])) {
-    $username_input = $_POST['username'];
-    $password_input = $_POST['password'];
+// Check if the form was submitted via POST
+if (isset($_POST['login_submit'])) {
+    // *** CHANGED: Get 'nama' from POST instead of 'iduser' ***
+    $nama = $conn->real_escape_string($_POST['nama']);
+    $password = $conn->real_escape_string($_POST['password']);
 
-    // DEBUG: Log input dan waktu
-    error_log("DEBUG: Login attempt for username: " . $username_input . " at " . date('Y-m-d H:i:s'));
-
-    $sql_login = "SELECT id_pengguna, username, password, nama_pengguna, level FROM tb_pengguna WHERE username = ?";
-    
-    $stmt = mysqli_prepare($koneksi, $sql_login);
-    
-    if ($stmt === false) {
-        error_log("DEBUG: mysqli_prepare failed: " . mysqli_error($koneksi));
-        ob_end_clean();
-        die("Error: Gagal menyiapkan query login.");
-    }
-
-    mysqli_stmt_bind_param($stmt, "s", $username_input);
-    mysqli_stmt_execute($stmt);
-    $query_login = mysqli_stmt_get_result($stmt);
-    $data_login = mysqli_fetch_array($query_login, MYSQLI_ASSOC);
-    $jumlah_login = mysqli_num_rows($query_login);
-
-    if ($jumlah_login == 1) {
-        // DEBUG: Cek password hash
-        error_log("DEBUG: User found. Hashed password from DB: " . (isset($data_login['password']) ? $data_login['password'] : 'N/A'));
-        error_log("DEBUG: Provided password (plain): " . $password_input);
-
-
-        if (password_verify($password_input, $data_login['password'])) {
-            // Login berhasil
-            $_SESSION["ses_id"] = $data_login["id_pengguna"];
-            $_SESSION["ses_username"] = $data_login["username"];
-            $_SESSION["ses_nama"] = $data_login["nama_pengguna"]; 
-            $_SESSION["ses_level"] = $data_login["level"]; 
-            $_SESSION["loggedin"] = true; 
-
-            $redirect_url = '';
-            if ($_SESSION["ses_level"] == 'admin') { 
-                $redirect_url = 'dashboard/admin.php'; 
-            } elseif ($_SESSION["ses_level"] == 'petugas') { 
-                $redirect_url = 'dashboard/tugas.php'; 
-            } elseif ($_SESSION["ses_level"] == 'masyarakat') { 
-                $redirect_url = 'dashboard/pengadu.php'; 
-            } else {
-                session_unset();
-                session_destroy();
-                error_log("DEBUG: Login failed: Unknown level for user " . $username_input . " - Level: " . $_SESSION["ses_level"]);
-                header("Location: login1.php?error=level_tidak_dikenal_debug");
-                ob_end_clean();
-                die("DEBUG: Redirect ke login1.php (level tidak dikenal).");
-            }
-            
-            error_log("DEBUG: Login successful. Redirecting to: " . $redirect_url);
-
-            // DEBUG: Cek apakah headers sudah terkirim SEBELUM header()
-            if (headers_sent($file, $line)) {
-                error_log("FATAL DEBUG: Headers ALREADY SENT before final redirect in file: " . $file . " on line: " . $line);
-                ob_end_clean();
-                die("FATAL ERROR: Output sudah terkirim sebelum redirect. Cek file: " . htmlspecialchars($file) . " baris: " . htmlspecialchars($line));
-            }
-
-            header("Location: " . $redirect_url);
-            ob_end_flush(); 
-            exit(); 
-            die("DEBUG: Script seharusnya sudah berhenti setelah exit()."); // Baris ini tidak akan pernah tercapai jika exit() bekerja
-
-        } else {
-            error_log("DEBUG: Login failed: Password mismatch for user " . $username_input);
-            header("Location: login1.php?error=password_salah_debug");
-            ob_end_clean();
-            die("DEBUG: Redirect ke login1.php (password salah).");
-        }
+    // Basic input validation
+    if (empty($nama) || empty($password)) { // *** CHANGED: Error message refers to Nama Pengguna ***
+        $error_message = "Nama Pengguna dan Password harus diisi.";
     } else {
-        error_log("DEBUG: Login failed: User not found: " . $username_input);
-        header("Location: login1.php?error=user_tidak_ditemukan_debug");
-        ob_end_clean();
-        die("DEBUG: Redirect ke login1.php (user tidak ditemukan).");
-    }
-    mysqli_stmt_close($stmt);
-} 
-// === AKHIR DARI BAGIAN LOGIC PROSES LOGIN ===
+        // Prepare a SQL query to select user data by 'nama'.
+        // *** CHANGED: WHERE clause to 'nama = ?' ***
+        $stmt = $conn->prepare("SELECT iduser, Role, password, nama FROM pengguna WHERE nama = ?");
+        // *** CHANGED: Bind 'nama' instead of 'iduser' ***
+        $stmt->bind_param("s", $nama);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
-// === BAGIAN TAMPILAN FORM LOGIN (Hanya akan ditampilkan jika TIDAK ada POST atau redirect sudah gagal) ===
-else { // <-- Ini adalah blok 'else' dari 'if (isset($_POST['btnLogin']))' di atas
+        if ($result->num_rows === 1) {
+            $user = $result->fetch_assoc();
+
+            // --- SECURITY WARNING: Password Hashing is CRITICAL for production ---
+            // As discussed, this part is for demonstration with plain text passwords.
+            // In a real application, replace this with:
+            // if (password_verify($password, $user['password'])) { ... }
+            // ---------------------------------------------------------------------
+
+            if ($password === $user['password']) { // Plain text password comparison (INSECURE)
+                // Password matches, login successful
+                $_SESSION['loggedin'] = true;
+                $_SESSION['iduser'] = $user['iduser'];
+                $_SESSION['nama'] = $user['nama'];
+                $_SESSION['role'] = $user['Role'];
+
+                // Redirect based on user role
+                switch ($user['Role']) {
+                    case 'Admin':
+                        // *** CHANGED: Redirect path for Admin ***
+                        header("Location:dashboard/dashboard_admin.php");
+                        break;
+                    case 'Pengadu':
+                        header("Location: pengadu_dashboard.php");
+                        break;
+                    default:
+                        // Fallback for any other roles not specifically handled
+                        header("Location: default_dashboard.php"); // Ensure this file exists or remove
+                        break;
+                }
+                exit(); // Stop script execution after redirection
+
+            } else {
+                // Password does not match
+                $error_message = "Password salah.";
+            }
+        } else {
+            // User (nama) not found
+            $error_message = "Nama Pengguna tidak ditemukan."; // *** CHANGED: Error message refers to Nama Pengguna ***
+        }
+
+        $stmt->close(); // Close the prepared statement
+    }
+    $conn->close(); // Close the database connection
+}
 ?>
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login Sistem Pengaduan</title>
-    
-    <link href="assets/css/bootstrap.css" rel="stylesheet" />
-    <link href="assets/css/font-awesome.css" rel="stylesheet" />
-    <link href="assets/css/style.css" rel="stylesheet" />
-    <link href="assets/css/signup.css" rel="stylesheet" /> <link href="assets/css/custom.css" rel="stylesheet" /> <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@9/dist/sweetalert2.min.css">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SICepu Login</title>
+    <link rel="stylesheet" href="assets/css/login.css">
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body class="login">
-    <div class="container">
-        <div class="row"> 
-            <div class="col-md-4 col-md-offset-4 col-sm-6 col-sm-offset-3 col-xs-10 col-xs-offset-1">
-                <div class="panel panel-primary login-shadow">
-                    <div class="panel-body">
-                        <img src="assets/img/stmi.png" class="user-image img-responsive" style="max-width: 120px; margin: 0 auto 1.5rem auto; display: block;" /> 
-                        <center>
-                            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 text-center mb-2">
-                                <b>Masuk ke SiCepu</b>
-                            </h2>
-                        </center>
-                        <center class="text-sm text-gray-600 mb-8">Sistem Informasi Cepat Pengaduan Fasilitas Umum</center>
-                        <form action="" method="POST" enctype="multipart/form-data" class="space-y-6">
-                            <div class="form-group input-group">
-                                <span class="input-group-addon">
-                                    <i class="fa fa-tag"></i>
-                                </span>
-                                <input type="text" class="form-control" value="" placeholder="username" name="username" id="username" required />
-                            </div>
-                            <div class="form-group input-group">
-                                <span class="input-group-addon">
-                                    <i class="fa fa-lock"></i>
-                                </span>
-                                <input type="password" class="form-control" value="" placeholder="password" name="password" id="password" required />
-                            </div>
-
-                            <button type="submit" class="btn btn-primary form-control" name="btnLogin" title="Masuk Sistem" id="clicker">MASUK</button>
-                            <br>
-                            <CENTER>
-                                <p class="text-sm text-gray-600">Belum punya akun? Hubungi Administrator.</p>
-                            </CENTER>
-                            <CENTER class="mt-4">
-                                <p class="text-sm text-gray-600">SICEPU 2025</p>
-                            </CENTER>
-                        </form>
-                    </div>
+<body>
+    <div class="login-wrapper">
+        <div class="login-container">
+            <div class="login-form-panel">
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="login">Login</button>
+                    <button class="tab-button" data-tab="info">Sistem SiCepu</button>
                 </div>
+
+                <div id="login-form-content" class="form-content active">
+                    <h1>Selamat Datang!</h1>
+                    <p>Log in untuk melanjutkan</p>
+
+                    <?php if (!empty($error_message)): ?>
+                        <div style="color: red; text-align: center; margin-bottom: 15px; background-color: rgba(255,0,0,0.2); padding: 10px; border-radius: 5px;">
+                            <?php echo htmlspecialchars($error_message); ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <form action="" method="POST">
+                        <div class="input-group">
+                            <i class="fa-solid fa-user"></i>
+                            <input type="text" placeholder="Masukkan Nama Pengguna Anda" name="nama" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" placeholder="********" name="password" required>
+                        </div>
+
+                        <div class="options">
+                            <label class="remember-me">
+                                <input type="checkbox">
+                                Ingat saya
+                            </label>
+                            <a href="#" class="forgot-password">Lupa Password?</a>
+                        </div>
+
+                        <button type="submit" class="login-button" name="login_submit">Log In</button>
+                    </form>
+
+                </div>
+
+                <div id="info-form-content" class="form-content">
+                    <h1>Tentang SiCepu</h1>
+                    <p>Sistem Informasi Cepat Pengaduan Fasilitas Umum (SiCepu) adalah platform yang dirancang untuk memudahkan mahasiswa dalam melaporkan masalah terkait fasilitas kampus, seperti ac yang kurang sejuk, projektor bermasalah dan tidak menyala, kursi serta meja gabungan dalam keadaan tidak layak pakai dan segala hal lain yang mahasiswa temukan dalam kegiatan perkuliahan.</p>
+                    <p>Tujuan utama SiCepu adalah meningkatkan kualitas pelayanan mahasiswa dan responsibilitas kampus dalam menangani keluhan mahasiswanya. Kami berkomitmen untuk menciptakan lingkungan yang lebih baik dan nyaman bagi seluruh mahasiswa dalam menjalani kegiatan mereka dikampus.</p>
+                    <p style="text-align: center; margin-top: 30px; font-size: 0.9em; color: rgba(255,255,255,0.6);">
+                        &copy; 2025 SiCepu. All rights reserved.
+                    </p>
+                </div>
+
+            </div>
+            <div class="login-image-panel">
+                <img src="assets/img/scenery.jpg" alt="Mountain Landscape">
             </div>
         </div>
     </div>
 
-    <script src="assets/js/jquery-1.10.2.js"></script>
-    <script src="assets/js/bootstrap.min.js"></script>
-    <script src="assets/js/jquery.metisMenu.js"></script>
-    <script src="assets/js/custom.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const formContents = document.querySelectorAll('.form-content');
 
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    formContents.forEach(content => content.classList.remove('active'));
+
+                    button.classList.add('active');
+
+                    const targetTab = button.dataset.tab;
+                    document.getElementById(targetTab + '-form-content').classList.add('active');
+                });
+            });
+        });
+    </script>
 </body>
 </html>
-<?php
-} // <-- Ini adalah kurung kurawal penutup untuk blok 'else' yang membuka HTML form
-?>
