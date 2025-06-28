@@ -1,63 +1,105 @@
 <?php
+// Aktifkan error reporting penuh untuk debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 session_start(); // Start a PHP session at the very beginning of the page
+ob_start();      // Mulai output buffering untuk mencegah 'headers already sent'
 
 require_once 'inc/koneksi.php';
 
 $error_message = '';
 
 if (isset($_POST['login_submit'])) {
+    echo "DEBUG: Form submitted.<br>";
+    echo "DEBUG: POST Data: <pre>";
+    var_dump($_POST);
+    echo "</pre>";
+
     $nama = $conn->real_escape_string($_POST['nama']);
     $password = $conn->real_escape_string($_POST['password']);
 
+    echo "DEBUG: Cleaned Nama: " . htmlspecialchars($nama) . "<br>";
+    echo "DEBUG: Cleaned Password (not raw): " . htmlspecialchars($password) . "<br>";
+
     if (empty($nama) || empty($password)) {
         $error_message = "Nama Pengguna dan Password harus diisi.";
+        echo "DEBUG: Error: " . htmlspecialchars($error_message) . "<br>";
     } else {
         $stmt = $conn->prepare("SELECT iduser, Role, password, nama FROM pengguna WHERE nama = ?");
-        $stmt->bind_param("s", $nama);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result->num_rows === 1) {
-            $user = $result->fetch_assoc();
-
-            // Menggunakan perbandingan plain text password (INSECURE - HANYA UNTUK DEMO/TESTING)
-            // SANGAT DISARANKAN untuk menggunakan password_verify() setelah melakukan password_hash() saat registrasi.
-            if ($password === $user['password']) { // Plain text password comparison
-                $_SESSION['loggedin'] = true;
-                $_SESSION['iduser'] = $user['iduser'];
-                $_SESSION['nama'] = $user['nama'];
-                $_SESSION['role'] = $user['Role'];
-
-                switch ($user['Role']) {
-                    case 'Admin':
-                        // Path yang benar untuk Dashboard Admin
-                        header("Location: dashboard/dashboard_admin.php");
-                        break;
-                    case 'Petugas': // Tambahkan case untuk role Petugas
-                        // Path yang benar untuk Dashboard Petugas
-                        header("Location: dashboard/dashboard_petugas.php");
-                        break;
-                    case 'Pengadu':
-                        // Path yang benar untuk Dashboard Pengadu
-                        header("Location: dashboard/dashboard_pengadu.php");
-                        break;
-                    default:
-                        // Fallback jika ada role lain yang tidak spesifik
-                        // Pastikan file default_dashboard.php ini ada di direktori utama,
-                        // atau sesuaikan path-nya jika berada di folder dashboard
-                        header("Location: default_dashboard.php"); // Atau dashboard/default_dashboard.php
-                        break;
-                }
-                exit();
-
-            } else {
-                $error_message = "Password salah.";
-            }
+        if ($stmt === FALSE) {
+            echo "DEBUG: Prepare failed: (" . $conn->errno . ") " . $conn->error . "<br>";
+            $error_message = "Terjadi kesalahan saat menyiapkan query.";
         } else {
-            $error_message = "Nama Pengguna tidak ditemukan.";
-        }
+            $stmt->bind_param("s", $nama);
+            $stmt->execute();
+            $result = $stmt->get_result();
 
-        $stmt->close();
+            echo "DEBUG: Query executed.<br>";
+            echo "DEBUG: Number of rows found: " . $result->num_rows . "<br>";
+
+            if ($result->num_rows === 1) {
+                $user = $result->fetch_assoc();
+                echo "DEBUG: User data from DB: <pre>";
+                var_dump($user);
+                echo "</pre>";
+
+                // Menggunakan perbandingan plain text password (INSECURE - HANYA UNTUK DEMO/TESTING)
+                // SANGAT DISARANKAN untuk menggunakan password_verify() setelah melakukan password_hash() saat registrasi.
+                echo "DEBUG: Comparing password. DB: '" . htmlspecialchars($user['password']) . "' vs Input: '" . htmlspecialchars($password) . "'<br>";
+                if ($password === $user['password']) { // Plain text password comparison
+                    echo "DEBUG: Password comparison: MATCH<br>";
+                    $_SESSION['loggedin'] = true;
+                    $_SESSION['iduser'] = $user['iduser'];
+                    $_SESSION['nama'] = $user['nama'];
+                    $_SESSION['role'] = $user['Role'];
+
+                    echo "DEBUG: Session variables set: <pre>";
+                    var_dump($_SESSION);
+                    echo "</pre>";
+
+                    $redirect_url = '';
+                    echo "DEBUG: User Role: " . $user['Role'] . "<br>";
+
+                    switch ($user['Role']) {
+                        case 'Admin':
+                            $redirect_url = "dashboard/dashboard_admin.php";
+                            echo "DEBUG: Redirecting Admin to: " . $redirect_url . "<br>";
+                            break;
+                        case 'Petugas':
+                            $redirect_url = "dashboard/dashboard_petugas.php";
+                            echo "DEBUG: Redirecting Petugas to: " . $redirect_url . "<br>";
+                            break;
+                        case 'Pengadu':
+                            $redirect_url = "dashboard/dashboard_pengadu.php";
+                            echo "DEBUG: Redirecting Pengadu to: " . $redirect_url . "<br>";
+                            break;
+                        default:
+                            $redirect_url = "default_dashboard.php"; // Pastikan path ini benar atau ganti
+                            echo "DEBUG: Redirecting unknown role '" . $user['Role'] . "' to: " . $redirect_url . "<br>";
+                            break;
+                    }
+                    
+                    // Lakukan redirect hanya jika ada URL tujuan
+                    if (!empty($redirect_url)) {
+                        header("Location: " . $redirect_url);
+                        exit(); // Hentikan eksekusi script setelah redirect
+                    } else {
+                        echo "DEBUG: Redirect URL is empty, cannot redirect.<br>";
+                        $error_message = "Role pengguna tidak valid atau URL redirect tidak ditemukan.";
+                    }
+
+                } else {
+                    $error_message = "Password salah.";
+                    echo "DEBUG: Password comparison: NO MATCH. Error: " . htmlspecialchars($error_message) . "<br>";
+                }
+            } else {
+                $error_message = "Nama Pengguna tidak ditemukan.";
+                echo "DEBUG: User not found. Error: " . htmlspecialchars($error_message) . "<br>";
+            }
+
+            $stmt->close();
+        }
     }
     $conn->close();
 }
@@ -151,3 +193,6 @@ if (isset($_POST['login_submit'])) {
     </script>
 </body>
 </html>
+<?php
+ob_end_flush(); // Akhiri output buffering dan kirimkan output ke browser
+?>
