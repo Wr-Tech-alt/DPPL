@@ -4,13 +4,14 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 session_start(); // Start a PHP session at the very beginning of the page
-ob_start();      // Mulai output buffering untuk mencegah 'headers already sent'
+ob_start();// Mulai output buffering untuk mencegah 'headers already sent'
 
-require_once 'inc/koneksi.php';
+require_once 'inc/koneksi.php'; // Path is correct as 'inc' is a direct child of the root
 
 $error_message = '';
 
 if (isset($_POST['login_submit'])) {
+    // DEBUGGING - Keep these for now until login works perfectly
     echo "DEBUG: Form submitted.<br>";
     echo "DEBUG: POST Data: <pre>";
     var_dump($_POST);
@@ -20,12 +21,14 @@ if (isset($_POST['login_submit'])) {
     $password = $conn->real_escape_string($_POST['password']);
 
     echo "DEBUG: Cleaned Nama: " . htmlspecialchars($nama) . "<br>";
-    echo "DEBUG: Cleaned Password (not raw): " . htmlspecialchars($password) . "<br>";
+    // IMPORTANT: Do NOT echo raw password, even for debug in production.
+    // echo "DEBUG: Cleaned Password (not raw): " . htmlspecialchars($password) . "<br>"; 
 
     if (empty($nama) || empty($password)) {
         $error_message = "Nama Pengguna dan Password harus diisi.";
         echo "DEBUG: Error: " . htmlspecialchars($error_message) . "<br>";
     } else {
+        // Query to get user data including Role and password
         $stmt = $conn->prepare("SELECT iduser, Role, password, nama FROM pengguna WHERE nama = ?");
         if ($stmt === FALSE) {
             echo "DEBUG: Prepare failed: (" . $conn->errno . ") " . $conn->error . "<br>";
@@ -44,8 +47,12 @@ if (isset($_POST['login_submit'])) {
                 var_dump($user);
                 echo "</pre>";
 
-                echo "DEBUG: Comparing password. DB: '" . htmlspecialchars($user['password']) . "' vs Input: '" . htmlspecialchars($password) . "'<br>";
-                if ($password === $user['password']) { // Plain text password comparison
+                // --- IMPORTANT SECURITY NOTE ---
+                // If your passwords in the database are HASHED (e.g., using password_hash()),
+                // you MUST use password_verify() to check them:
+                // if (password_verify($password, $user['password'])) {
+                // If your passwords are still PLAIN TEXT (for testing only, NOT recommended for production):
+                if ($password === $user['password']) { // Plain text password comparison (for now)
                     echo "DEBUG: Password comparison: MATCH<br>";
                     $_SESSION['loggedin'] = true;
                     $_SESSION['iduser'] = $user['iduser'];
@@ -59,28 +66,29 @@ if (isset($_POST['login_submit'])) {
                     $redirect_url = '';
                     echo "DEBUG: User Role: " . $user['Role'] . "<br>";
 
+                    // Redirect based on role
                     switch ($user['Role']) {
                         case 'Admin':
-                            $redirect_url = "dashboard/dashboard_admin.php";
+                            $redirect_url = "dashboard/dashboard_admin.php"; // Path relative to login.php
                             echo "DEBUG: Redirecting Admin to: " . $redirect_url . "<br>";
                             break;
                         case 'Petugas':
-                            $redirect_url = "dashboard/dashboard_petugas.php";
+                            $redirect_url = "dashboard/dashboard_petugas.php"; // Path relative to login.php
                             echo "DEBUG: Redirecting Petugas to: " . $redirect_url . "<br>";
                             break;
                         case 'Pengadu':
-                            $redirect_url = "dashboard/dashboard_pengadu.php";
+                            $redirect_url = "dashboard/dashboard_pengadu.php"; // Path relative to login.php
                             echo "DEBUG: Redirecting Pengadu to: " . $redirect_url . "<br>";
                             break;
                         default:
-                            $redirect_url = "default_dashboard.php"; // Pastikan path ini benar atau ganti
+                            $redirect_url = "index.php"; // Fallback if role is unknown or invalid
                             echo "DEBUG: Redirecting unknown role '" . $user['Role'] . "' to: " . $redirect_url . "<br>";
                             break;
                     }
                     
                     if (!empty($redirect_url)) {
                         header("Location: " . $redirect_url);
-                        exit(); // Hentikan eksekusi script setelah redirect
+                        exit(); // Crucial: Stop script execution after redirect
                     } else {
                         echo "DEBUG: Redirect URL is empty, cannot redirect.<br>";
                         $error_message = "Role pengguna tidak valid atau URL redirect tidak ditemukan.";
@@ -98,7 +106,10 @@ if (isset($_POST['login_submit'])) {
             $stmt->close();
         }
     }
-    $conn->close();
+    // Close connection here if you only need it for login,
+    // otherwise, leave it open if 'koneksi.php' manages a persistent connection.
+    // For simple scripts, closing here is fine.
+    $conn->close(); 
 }
 ?>
 
@@ -108,7 +119,7 @@ if (isset($_POST['login_submit'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SICepu Login</title>
-    <link rel="stylesheet" href="assets/css/login.css">
+    <link rel="stylesheet" href="assets/css/login.css"> 
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -165,7 +176,7 @@ if (isset($_POST['login_submit'])) {
 
             </div>
             <div class="login-image-panel">
-                <img src="assets/img/scenery.jpg" alt="Mountain Landscape">
+                <img src="assets/img/scenery.jpg" alt="Mountain Landscape"> 
             </div>
         </div>
     </div>
