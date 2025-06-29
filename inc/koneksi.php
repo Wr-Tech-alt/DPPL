@@ -1,17 +1,20 @@
+
 <?php
-// inc/koneksi.php
-$servername = "localhost"; // Your database server name
-$username = "root";        // Your database username
-$password = "";            // Your database password (empty for XAMPP default)
-$dbname = "sicepu";          // Your database name (e.g., 'dppl' as per previous discussions)
+// Aktifkan error reporting untuk melihat pesan kesalahan
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
+$servername = "localhost";
+$username = "root";
+$password = ""; // Kosongkan jika tidak ada password di MySQL Anda
+$database = "sicepu"; // Pastikan nama ini sama persis dengan nama database di phpMyAdmin
 
-// Check connection
-if ($conn->connect_error) {
-    die("Koneksi database gagal: " . $conn->connect_error);
+// Membuat koneksi
+$koneksi = mysqli_connect($servername, $username, $password, $database);
+
+// Mengecek koneksi
+if (!$koneksi) {
+    // Jika koneksi gagal, tampilkan pesan error yang spesifik dari MySQL
+    die("Koneksi Database GAGAL! Pesan Error: " . mysqli_connect_error() . " (Nomor Error: " . mysqli_connect_errno() . ")");
 }
-// Optional: Set character set to UTF-8
-$conn->set_charset("utf8");
 ?>
