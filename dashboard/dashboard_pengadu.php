@@ -1,222 +1,222 @@
 <?php
-session_start(); // Tetap mulai session karena elemen lain mungkin memerlukannya
+// user_dashboard.php
 
-// --- DEBUG MODE: HAPUS ATAU KOMENTARI BLOK INI UNTUK PENGUJIAN TANPA LOGIN ---
-/*
-if (!isset($_SESSION['loggedin']) || $_SESSION['role'] !== 'Pengadu') {
-    header("Location: ../login.php");
+// Mulai session (PENTING: Pastikan ini selalu di awal file yang memerlukan session)
+session_start();
+
+// Sertakan file koneksi database
+require_once __DIR__ . '/../inc/koneksi.php'; // Sesuaikan path jika berbeda
+
+// Inisialisasi variabel user dengan nilai default
+$user_name = "Pengadu Default"; // Default jika data tidak ditemukan atau belum login
+$user_email = "default@example.com"; // Default jika data tidak ditemukan atau belum login
+
+// Asumsi: iduser yang sedang login diambil dari session
+// Anda harus memastikan 'iduser' ini diset saat proses login berhasil di login.php
+$logged_in_iduser = $_SESSION['iduser'] ?? null;
+
+// Cek apakah user sudah login
+if ($logged_in_iduser) {
+    // Escape input untuk mencegah SQL injection
+    $safe_iduser = $conn->real_escape_string($logged_in_iduser);
+
+    // Menggunakan Prepared Statement untuk keamanan (DIREKOMENDASIKAN)
+    $stmt = $conn->prepare("SELECT nama, email FROM pengguna WHERE iduser = ? LIMIT 1");
+    if ($stmt) {
+        $stmt->bind_param("i", $logged_in_iduser); // "i" untuk integer
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result && $result->num_rows > 0) {
+            $user = $result->fetch_assoc();
+            $user_name = htmlspecialchars($user['nama']);
+            $user_email = htmlspecialchars($user['email']);
+        } else {
+            // Pengguna tidak ditemukan di database meskipun iduser ada di session
+            // Hancurkan session dan redirect ke halaman login
+            session_unset();
+            session_destroy();
+            header('Location: login.php'); // Ganti dengan halaman login Anda
+            exit();
+        }
+        $stmt->close(); // Tutup statement
+    } else {
+        // Handle error jika prepared statement gagal
+        error_log("Failed to prepare statement: " . $conn->error);
+        // Bisa tambahkan pesan error atau redirect ke halaman error
+        session_unset();
+        session_destroy();
+        header('Location: login.php?error=db_error'); // Atau tampilkan pesan di halaman
+        exit();
+    }
+} else {
+    // Jika tidak ada iduser di session, redirect ke halaman login
+    header('Location: login.php'); // Ganti dengan halaman login Anda
     exit();
 }
-$id_user = $_SESSION['iduser'];
-$nama_user = $_SESSION['nama'];
-*/
-// --- AKHIR BLOK DEBUG MODE ---
 
-// --- DEBUG MODE: GANTI DENGAN NILAI DUMMY UNTUK PENGUJIAN ---
-// Jika Anda mengomentari blok di atas, Anda perlu dummy data ini:
-$id_user = 21; // <-- Ganti dengan ID Pengadu yang ada di database Anda (misal: Hadi punya iduser 21 di sicepu.sql)
-$nama_user = "Hadi (Pengadu)"; // <-- Ganti dengan nama Pengadu dummy untuk ditampilkan
-// --- AKHIR DEBUG DUMMY DATA ---
-
-include "../inc/koneksi.php"; // Ini tetap diperlukan untuk koneksi database dalam halaman
-
-// Pastikan koneksi berhasil
-if (!isset($koneksi) || !$koneksi) {
-    die("Error: Koneksi database tidak tersedia. Pastikan inc/koneksi.php sudah benar.");
-}
-
-// Query untuk mendapatkan riwayat aduan pengguna
-$sql_riwayat_aduan = "
-    SELECT
-        p.idpengaduan,
-        jp.jenis AS jenis_aduan,
-        p.waktu_aduan,
-        p.judul,
-        p.status
-    FROM pengaduan p
-    JOIN jenis_pengaduan jp ON p.idjenis = jp.idstatus
-    WHERE p.iduser = ?
-    ORDER BY p.waktu_aduan DESC"; // Diurutkan dari yang terbaru
-
-$stmt_riwayat = $koneksi->prepare($sql_riwayat_aduan);
-if ($stmt_riwayat === FALSE) {
-    die("Error preparing statement: " . $koneksi->error);
-}
-$stmt_riwayat->bind_param("i", $id_user); // Menggunakan ID dummy/test
-$stmt_riwayat->execute();
-$result_riwayat = $stmt_riwayat->get_result();
-
-$aduan_exist = $result_riwayat->num_rows > 0;
-
+// Tidak perlu menutup $conn di sini jika Anda akan menggunakan koneksi untuk query lain di bagian bawah halaman.
+// Jika tidak ada query lain, bisa ditutup di akhir script.
+// $conn->close();
 ?>
-
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Pengadu</title>
-    <link href="../assets/css/bootstrap.css" rel="stylesheet" />
-    <link href="../assets/css/font-awesome.css" rel="stylesheet" />
-    <link href="../assets/js/dataTables/dataTables.bootstrap.css" rel="stylesheet" />
-    <link href="../assets/css/custom.css" rel="stylesheet" />
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' />
-    <script src="../assets/js/jquery-1.10.2.js"></script>
-    <script src="../assets/js/jquery.metisMenu.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SiCepu - Dashboard Pengadu</title>
+    <link rel="stylesheet" href="../assets/css/dash_pengadu.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <div id="wrapper">
-        <nav class="navbar navbar-default navbar-cls-top " role="navigation" style="margin-bottom: 0">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="dashboard_pengadu.php">SiCepu</a>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="https://via.placeholder.com/30x30/000000/FFFFFF?text=XT" alt="SiCepu Logo" class="logo">
+                <span class="logo-text">SiCepu</span>
             </div>
-            <div class="namalevel">Selamat Datang, <?php echo $nama_user; ?> (Pengadu)</div>
-            <div class="profile-logout-section">
-                <div class="search-box">
-                    <input type="text" placeholder="Cari...">
-                    <i class="fa fa-search"></i>
+            <div class="user-profile">
+                <div class="user-avatar"><?php echo strtoupper(substr($user_name, 0, 2)); ?></div>
+                <div class="user-info">
+                    <span class="user-name"><?php echo $user_name; ?></span>
+                    <span class="user-email"><?php echo $user_email; ?></span>
                 </div>
-                <div class="profile-avatar"><i class="fa fa-user"></i></div>
-                <a href="../logout.php" class="logout-btn"><i class="fa fa-sign-out"></i> Logout</a>
             </div>
-        </nav>
-        <nav class="navbar-default navbar-side" role="navigation">
-            <div class="sidebar-collapse">
-                <ul class="nav" id="main-menu">
-                    <li class="text-center">
-                        <img src="../assets/img/stmi.png" class="user-image img-responsive"/>
-                    </li>
-                    <li>
-                        <a class="active-menu" href="dashboard_pengadu.php"><i class="fa fa-dashboard fa-2x"></i> Dashboard</a>
-                    </li>
-                    <li>
-                        <a href="../pengadu/adu_form_tambah.php"><i class="fa fa-plus-square fa-2x"></i> Tambah Aduan Baru</a>
-                    </li>
-                    <li>
-                        <a href="../foto_aduan/foto_aduan.php"><i class="fa fa-image fa-2x"></i> Foto Aduan</a>
-                    </li>
-                    </ul>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active"><a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="#"><i class="fas fa-file-alt"></i> Pengaduan Saya</a></li>
+                    <li><a href="#"><i class="fas fa-clipboard-list"></i> Riwayat Pengaduan</a></li>
+                    <li><a href="#"><i class="fas fa-cog"></i> Pengaturan Akun</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
-        </nav>
-        <div id="page-wrapper" >
-            <div id="page-inner">
-                <div class="row">
-                    <div class="col-md-12">
-                        <div id="marquee">
-                            <h4>Selamat Datang, <?php echo $nama_user; ?>!</h4>
-                            <p>Riwayat Pengaduan Fasilitas Kampus Anda</p>
+        </aside>
+        <main class="main-content">
+            <header class="navbar">
+                <div class="navbar-left">
+                    <button class="nav-button"><i class="fas fa-chevron-left"></i></button>
+                    <button class="nav-button"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="navbar-center">
+                    <div class="browser-bar">
+                        <i class="fas fa-lock"></i>
+                        <span>sicepu.co</span>
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                </div>
+                <div class="navbar-right">
+                    <button class="nav-button"><i class="fas fa-ellipsis-h"></i></button>
+                    <button class="nav-button"><i class="fas fa-star"></i></button>
+                    <button class="nav-button"><i class="fas fa-user-circle"></i></button>
+                </div>
+            </header>
+
+            <div class="content-header">
+                <h1>Selamat Datang, <?php echo $user_name; ?>!</h1>
+                <p class="greeting-text">Ada keluhan apa hari ini?</p>
+                <button class="btn btn-primary"><i class="fas fa-plus"></i> Buat Pengaduan Baru</button>
+            </div>
+
+            <div class="dashboard-content">
+                <div class="summary-cards">
+                    <div class="card">
+                        <div class="card-icon" style="background-color: var(--status-pending-bg);"><i class="fas fa-hourglass-half" style="color: var(--status-pending-text);"></i></div>
+                        <div class="card-info">
+                            <span class="card-title">Pengaduan Pending</span>
+                            <span class="card-value">3</span>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon" style="background-color: var(--status-active-bg);"><i class="fas fa-sync-alt" style="color: var(--status-active-text);"></i></div>
+                        <div class="card-info">
+                            <span class="card-title">Dalam Proses</span>
+                            <span class="card-value">2</span>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon" style="background-color: var(--status-closed-bg);"><i class="fas fa-check-circle" style="color: var(--status-closed-text);"></i></div>
+                        <div class="card-info">
+                            <span class="card-title">Selesai Ditindaklanjuti</span>
+                            <span class="card-value">15</span>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon" style="background-color: var(--status-declined-bg);"><i class="fas fa-times-circle" style="color: var(--status-declined-text);"></i></div>
+                        <div class="card-info">
+                            <span class="card-title">Ditolak</span>
+                            <span class="card-value">1</span>
                         </div>
                     </div>
                 </div>
-                 <hr />
 
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                Riwayat Pengaduan Anda
-                                <?php if ($aduan_exist): // Tombol akan geser ke kanan atas jika ada aduan ?>
-                                    <div class="pull-right">
-                                        <a href="../pengadu/adu_form_tambah.php" class="btn btn-primary btn-sm">
-                                            <i class="fa fa-plus"></i> Tambahkan Aduan
-                                        </a>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                            <div class="panel-body">
-                                <div class="table-responsive">
-                                    <?php if ($aduan_exist): ?>
-                                    <table class="table table-striped table-bordered table-hover" id="dataTables-example">
-                                        <thead>
-                                            <tr>
-                                                <th>No.</th>
-                                                <th>Judul Aduan</th>
-                                                <th>Jenis Aduan</th>
-                                                <th>Waktu Aduan</th>
-                                                <th>Status</th>
-                                                <th>Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php 
-                                            $no = 1;
-                                            while ($row = $result_riwayat->fetch_assoc()): 
-                                            ?>
-                                            <tr class="<?php echo ($no % 2 == 1) ? 'odd' : 'even'; ?>">
-                                                <td><?php echo $no++; ?></td>
-                                                <td><?php echo htmlspecialchars($row['judul']); ?></td>
-                                                <td><?php echo htmlspecialchars($row['jenis_aduan']); ?></td>
-                                                <td><?php echo date('d-m-Y H:i:s', strtotime($row['waktu_aduan'])); ?></td>
-                                                <td>
-                                                    <?php 
-                                                        $status_class = '';
-                                                        switch ($row['status']) {
-                                                            case 'Masuk':
-                                                                $status_class = 'label-danger'; // Merah untuk status Masuk/Pending
-                                                                break;
-                                                            case 'Diproses':
-                                                                $status_class = 'label-warning'; // Kuning untuk status Diproses
-                                                                break;
-                                                            case 'Selesai':
-                                                                $status_class = 'label-success'; // Hijau untuk status Selesai
-                                                                break;
-                                                            default:
-                                                                $status_class = 'label-default'; // Default jika ada status lain
-                                                                break;
-                                                        }
-                                                    ?>
-                                                    <span class="label <?php echo $status_class; ?>">
-                                                        <?php echo htmlspecialchars($row['status']); ?>
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <a href="../pengadu/adu_ubah.php?id=<?php echo $row['idpengaduan']; ?>" class="btn btn-info btn-xs" title="Ubah Aduan">
-                                                        <i class="fa fa-edit"></i> Ubah
-                                                    </a>
-                                                    <a href="detail_aduan.php?id=<?php echo $row['idpengaduan']; ?>" class="btn btn-primary btn-xs" title="Lihat Detail">
-                                                        <i class="fa fa-info-circle"></i> Detail
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                            <?php endwhile; ?>
-                                        </tbody>
-                                    </table>
-                                    <?php else: // Tombol di tengah jika belum ada aduan ?>
-                                        <div class="text-center">
-                                            <p>Anda belum memiliki riwayat pengaduan.</p>
-                                            <a href="../pengadu/adu_form_tambah.php" class="btn btn-primary btn-lg">
-                                                <i class="fa fa-plus"></i> Tambahkan Aduan Pertama Anda
-                                            </a>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                                
-                            </div>
-                        </div>
-                        </div>
+                <div class="recent-activity">
+                    <h2>Pengaduan Terbaru Anda</h2>
+                    <table class="activity-table">
+                        <thead>
+                            <tr>
+                                <th>ID Pengaduan</th>
+                                <th>Topik</th>
+                                <th>Tanggal Kirim</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#SC-00123</td>
+                                <td>Jalan Rusak</td>
+                                <td>29 Juni 2025</td>
+                                <td><span class="status-badge pending">PENDING</span></td>
+                                <td><a href="#" class="action-link">Lihat Detail</a></td>
+                            </tr>
+                            <tr>
+                                <td>#SC-00122</td>
+                                <td>Pelayanan Publik</td>
+                                <td>28 Juni 2025</td>
+                                <td><span class="status-badge active">DIPROSES</span></td>
+                                <td><a href="#" class="action-link">Lihat Detail</a></td>
+                            </tr>
+                            <tr>
+                                <td>#SC-00121</td>
+                                <td>Sampah Menumpuk</td>
+                                <td>25 Juni 2025</td>
+                                <td><span class="status-badge closed">SELESAI</span></td>
+                                <td><a href="#" class="action-link">Lihat Detail</a></td>
+                            </tr>
+                            <tr>
+                                <td>#SC-00120</td>
+                                <td>Pungli</td>
+                                <td>20 Juni 2025</td>
+                                <td><span class="status-badge declined">DITOLAK</span></td>
+                                <td><a href="#" class="action-link">Lihat Detail</a></td>
+                            </tr>
+                            <tr>
+                                <td>#SC-00119</td>
+                                <td>Lampu Jalan Mati</td>
+                                <td>18 Juni 2025</td>
+                                <td><span class="status-badge active">DIPROSES</span></td>
+                                <td><a href="#" class="action-link">Lihat Detail</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="view-all-complaints">
+                        <a href="#">Lihat Semua Pengaduan Anda <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+
+                <div class="quick-links-card">
+                    <h2>Butuh Bantuan?</h2>
+                    <ul>
+                        <li><a href="#"><i class="fas fa-question-circle"></i> FAQ (Pertanyaan Sering Diajukan)</a></li>
+                        <li><a href="#"><i class="fas fa-info-circle"></i> Panduan Penggunaan</a></li>
+                        <li><a href="#"><i class="fas fa-envelope"></i> Hubungi Dukungan</a></li>
+                    </ul>
                 </div>
             </div>
-            </div>
-        </div>
-    <script src="../assets/js/bootstrap.min.js"></script>
-    <script src="../assets/js/jquery.metisMenu.js"></script>
-    <script src="../assets/js/dataTables/jquery.dataTables.js"></script>
-    <script src="../assets/js/dataTables/dataTables.bootstrap.js"></script>
-    <script>
-        $(document).ready(function () {
-            // Hanya inisialisasi DataTable jika tabelnya ada dan punya data
-            <?php if ($aduan_exist): ?>
-                $('#dataTables-example').dataTable();
-            <?php endif; ?>
-        });
-    </script>
-    <script src="../assets/js/custom.js"></script>
-    
+        </main>
+    </div>
 </body>
 </html>

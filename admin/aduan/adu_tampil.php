@@ -1,120 +1,128 @@
 <?php
-require_once 'config.php'; //
-require_once 'user_agent_parser.php'; // pastikan ada getBrowser() & getPlatform()
+session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-$error_message = '';
+// Protect page access
+if (!isset($_SESSION['loggedin']) || !in_array($_SESSION['role'], ['Admin', 'Petugas'])) {
+    header("Location: ../login.php");
+    exit();
+}
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username_form = $_POST['username'];
-    $password_form = $_POST['password'];
+require '../../inc/koneksi.php';
 
-    $stmt = $conn->prepare("SELECT * FROM user WHERE UserName = ?");
-    $stmt->bind_param("s", $username_form);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
-    $stmt->close();
+// Fetch aduan with jenis "Fasilitas"
+$query = "SELECT 
+            a.idpengaduan, 
+            a.judul, 
+            a.status, 
+            a.waktu_aduan, 
+            p.nama AS nama_pengadu
+          FROM pengaduan a
+          JOIN pengguna p ON a.iduser = p.iduser
+          JOIN jenis_pengaduan j ON a.idjenis = j.idjenis
+          ORDER BY a.waktu_aduan DESC";
 
-    if ($user && password_verify($password_form, $user['PassWord'])) {
-        session_regenerate_id(true); // Penting untuk keamanan
-        $currentSessionId = session_id(); // ID sesi baru setelah regenerate
+$result = mysqli_query($conn, $query); // This is the only query execution needed
 
-        $userAgent = $_SERVER['HTTP_USER_AGENT'];
-        $currentBrowser = getBrowser($userAgent); //
-        $currentPlatform = getPlatform($userAgent); //
-        $currentUserIP = $_SERVER['REMOTE_ADDR'];
-
-        // Cek browser & OS terakhir dari DB
-        $lastBrowser = $user['LastBrowser'] ?? '';
-        $lastOS = $user['LastOS'] ?? '';
-        // Anda mungkin ingin menambahkan pengecekan IP juga di sini jika logikanya begitu
-        // $lastIP = $user['IPAddress'] ?? '';
-        $isFirstLogin = empty($lastBrowser) && empty($lastOS); // Anggap login pertama jika LastBrowser dan LastOS kosong
-
-        // Kondisi untuk meminta PIN: bukan login pertama DAN (browser beda ATAU OS beda)
-        // Anda bisa tambahkan pengecekan IP di sini: || $currentUserIP !== $lastIP
-        if (!$isFirstLogin && ($currentBrowser !== $lastBrowser || $currentPlatform !== $lastOS)) {
-            // Simpan semua informasi yang dibutuhkan untuk pin_auth.php
-            $_SESSION['pending_user_id'] = $user['IdUserPrimary'];
-            $_SESSION['pending_session_id'] = $currentSessionId; // Simpan ID sesi baru ini
-            $_SESSION['pending_ip'] = $currentUserIP;
-            $_SESSION['pending_browser'] = $currentBrowser;
-            $_SESSION['pending_platform'] = $currentPlatform;
-            $_SESSION['pending_username'] = $user['UserName']; // Simpan username jika perlu di pin_auth.php
-            $_SESSION['requested_page'] = 'dashboard.php'; //
-            $_SESSION['pin_attempt'] = 0; // reset percobaan PIN
-
-            // PENTING: JANGAN UPDATE DATABASE DI SINI. Update dilakukan setelah PIN berhasil.
-            // HAPUS blok ini:
-            /*
-            $stmt = $conn->prepare("UPDATE user SET Session = ?, IPAddress = ? WHERE IdUserPrimary = ?");
-            $stmt->bind_param("ssi", $currentSessionId, $currentUserIP, $user['IdUserPrimary']);
-            $stmt->execute();
-            $stmt->close();
-            */
-
-            header("Location: pin_auth.php");
-            exit();
-        }
-
-        // Lolos verifikasi (perangkat sama atau login pertama), update semua info dan masuk dashboard
-        // Untuk login pertama, LastBrowser dan LastOS akan diisi dengan info saat ini
-        $stmt = $conn->prepare("UPDATE user SET Session = ?, IPAddress = ?, LastBrowser = ?, LastOS = ? WHERE IdUserPrimary = ?"); //
-        $stmt->bind_param("ssssi", $currentSessionId, $currentUserIP, $currentBrowser, $currentPlatform, $user['IdUserPrimary']); //
-        $stmt->execute(); //
-        $stmt->close(); //
-
-        // Set session utama setelah semua aman
-        $_SESSION['user_id'] = $user['IdUserPrimary']; //
-        $_SESSION['username'] = $user['UserName']; //
-        // Sebaiknya simpan juga IP, Browser, OS yang terverifikasi ke session untuk auth_check.php
-        $_SESSION['verified_ip'] = $currentUserIP;
-        $_SESSION['verified_browser'] = $currentBrowser;
-        $_SESSION['verified_os'] = $currentPlatform;
-        // $_SESSION['current_session_id_for_user'] = $currentSessionId; // Ini bisa jadi redundant jika auth_check.php membandingkan session_id() dengan DB
-
-        header("Location: dashboard.php"); //
-        exit();
-    } else {
-        $error_message = "Username atau password yang Anda masukkan salah!"; //
-    }
+$pengaduan = [];
+if ($result) {
+    $pengaduan = mysqli_fetch_all($result, MYSQLI_ASSOC);
+} else {
+    // It's good to die here if the query failed, as the rest of the page depends on this data
+    die("Gagal ambil data: " . mysqli_error($conn)); 
 }
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <link rel="stylesheet" href="style.css">
-    <title>Login Pengguna</title>
-    <style>
-        .error {
-            color: red;
-            border: 1px solid red;
-            padding: 10px;
-            margin-bottom: 15px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Admin - Aduan Fasilitas</title>
+  <link rel="stylesheet" href="../../assets/css/users.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
-    <h2 class="form-title">🔐 Login Aplikasi</h2>
 
-<?php
-if (!empty($error_message)) {
-    echo "<div class='error'>" . htmlspecialchars($error_message) . "</div>";
-}
-?>
+<div class="dashboard-wrapper">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h3>SiCepu Admin</h3>
+    </div>
+    <ul class="sidebar-menu">
+      <li><a href="dashboard.php"><i class="fas fa-home"></i> Dashboard</a></li>
+      <li><a href="pengadu_lihat.php"><i class="fas fa-user"></i> Data Pengadu</a></li>
+      <li class="active"><a href="aduan_fasilitas.php"><i class="fas fa-tools"></i> Aduan Fasilitas</a></li>
+    </ul>
+  </aside>
 
-<form method="post" action="login.php" class="form-container">
-    <label for="username" class="form-label">Username:</label>
-    <input type="text" name="username" id="username" class="form-input" required>
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="navbar">
+      <div class="navbar-left">
+        <h2>Aduan Fasilitas</h2>
+      </div>
+      <div class="navbar-right">
+        <span class="user-role"><?php echo $_SESSION['role']; ?></span>
+      </div>
+    </header>
 
-    <label for="password" class="form-label">Password:</label>
-    <input type="password" name="password" id="password" class="form-input" required>
+    <section class="content-header">
+      <div class="header-actions">
+        <button class="btn-secondary"><i class="fas fa-download"></i> Ekspor</button>
+      </div>
+      <div class="filter-box">
+        <input type="text" placeholder="Cari aduan..." class="filter-input">
+        <select class="filter-select">
+          <option>Status</option>
+          <option>Menunggu</option>
+          <option>Diproses</option>
+          <option>Selesai</option>
+        </select>
+      </div>
+    </section>
 
-    <input type="submit" value="Login" class="form-button">
+    <section class="customer-table-section">
+      <table>
+        <thead>
+          <tr>
+            <th>ID Aduan</th>
+            <th>Pengadu</th>
+            <th>Topik</th>
+            <th>Jenis</th>
+            <th>Waktu Kirim</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($pengaduans as $aduan): ?>
+          <tr>
+            <td><?php echo htmlspecialchars($aduan['idpengaduan']); ?></td>
+            <td><?php echo htmlspecialchars($aduan['nama_pengadu']); ?></td>
+            <td><?php echo htmlspecialchars($aduan['judul']); ?></td>
+            <td>Fasilitas</td>
+            <td><?php echo date('d M Y H:i', strtotime($aduan['waktu_aduan'])); ?></td>
+            <td>
+              <span class="status-badge <?php echo strtolower($aduan['status']); ?>">
+                <?php echo htmlspecialchars($aduan['status']); ?>
+              </span>
+            </td>
+            <td><i class="fas fa-ellipsis-h action-icon"></i></td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </section>
 
-    <p class="form-footer">Belum punya akun? <a href="register.php">Daftar di sini</a></p>
-</form>
+    <div class="pagination">
+      <a href="#" class="page-arrow"><i class="fas fa-chevron-left"></i></a>
+      <a href="#" class="page-number active">1</a>
+      <a href="#" class="page-arrow"><i class="fas fa-chevron-right"></i></a>
+    </div>
+  </main>
+</div>
 
 </body>
 </html>

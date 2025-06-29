@@ -40,8 +40,15 @@ body {
     width: 40px;
     height: 40px;
     margin-right: 10px;
-    background-color: #f76b1c; /* CORRECTED: A valid orange hex code */
-    border-radius: 8px; /* For a rounded square */
+    /* REMOVED: background-color and border-radius */
+    /* If you're using an <img> tag for the logo, these properties are usually applied to the <img> itself or a wrapper if needed for specific effects */
+}
+
+.sidebar-header .logo img { /* Added style for the image inside the .logo div */
+    width: 100%; /* Make the image fill the .logo div */
+    height: 100%;
+    object-fit: contain; /* Ensures the entire image is visible, scales down if necessary */
+    border-radius: 8px; /* Apply border-radius to the image if desired */
 }
 
 .sidebar-header .logo-text {

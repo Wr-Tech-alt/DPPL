@@ -1,0 +1,482 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --primary-color: #007bff; /* Biru */
+    --secondary-color: #f0f2f5; /* Abu-abu terang */
+    --text-color-dark: #333;
+    --text-color-light: #666;
+    --border-color: #e0e0e0;
+    --sidebar-bg: #fff;
+    --main-bg: #f9fafb;
+    --active-link-bg: #e6f2ff;
+    --button-bg: #007bff;
+    --button-text: #fff;
+    --input-bg: #fff;
+    --input-border: #ccc;
+    --shadow: rgba(0, 0, 0, 0.05);
+
+    /* Status Badges */
+    --status-active-bg: #e6ffe6; /* Light green - for "Dalam Proses" */
+    --status-active-text: #008000; /* Dark green */
+    --status-pending-bg: #fff6e6; /* Light orange - for "Pending" */
+    --status-pending-text: #ffa500; /* Dark orange */
+    --status-declined-bg: #ffe6e6; /* Light red - for "Ditolak" */
+    --status-declined-text: #ff0000; /* Dark red */
+    --status-closed-bg: #e0e0e0; /* Grey - for "Selesai" */
+    --status-closed-text: #666; /* Dark grey */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--main-bg);
+    color: var(--text-color-dark);
+    line-height: 1.6;
+}
+
+.app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 5px var(--shadow);
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.sidebar-header .logo {
+    width: 30px;
+    height: 30px;
+    margin-right: 10px;
+    border-radius: 4px;
+}
+
+.sidebar-header .logo-text {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: var(--text-color-dark);
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 10px;
+    border-radius: 8px;
+    background-color: var(--secondary-color);
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: var(--button-text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+    font-size: 1.1em;
+    margin-right: 15px;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-info .user-name {
+    font-weight: 600;
+    color: var(--text-color-dark);
+}
+
+.user-info .user-email {
+    font-size: 0.85em;
+    color: var(--text-color-light);
+}
+
+.sidebar-nav ul {
+    list-style: none;
+    flex-grow: 1;
+}
+
+.sidebar-nav ul li {
+    margin-bottom: 5px;
+}
+
+.sidebar-nav ul li a {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    text-decoration: none;
+    color: var(--text-color-dark);
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.sidebar-nav ul li a i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-nav ul li a:hover {
+    background-color: var(--secondary-color);
+}
+
+.sidebar-nav ul li.active a {
+    background-color: var(--active-link-bg);
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.sidebar-footer a {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    text-decoration: none;
+    color: var(--text-color-dark);
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.sidebar-footer a i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-footer a:hover {
+    background-color: var(--secondary-color);
+}
+
+
+/* Main Content */
+.main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--main-bg);
+}
+
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: var(--sidebar-bg);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 2px 5px var(--shadow);
+}
+
+.navbar-left, .navbar-right {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-center {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.browser-bar {
+    display: flex;
+    align-items: center;
+    background-color: var(--secondary-color);
+    border-radius: 20px;
+    padding: 8px 15px;
+    font-size: 0.9em;
+    color: var(--text-color-light);
+}
+
+.browser-bar i {
+    margin: 0 5px;
+}
+
+.nav-button {
+    background: none;
+    border: none;
+    font-size: 1.1em;
+    color: var(--text-color-light);
+    padding: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.nav-button:hover {
+    background-color: var(--secondary-color);
+}
+
+/* Content Header */
+.content-header {
+    display: flex;
+    flex-direction: column; /* Changed to column for greeting and button below */
+    align-items: flex-start; /* Align text to left */
+    gap: 10px; /* Space between elements */
+    padding: 25px 30px 15px;
+}
+
+.content-header h1 {
+    font-size: 2em; /* Slightly larger for greeting */
+    font-weight: 700;
+    color: var(--primary-color); /* Primary color for greeting */
+}
+
+.content-header .greeting-text {
+    font-size: 1.2em;
+    color: var(--text-color-dark);
+    margin-bottom: 15px; /* Space before the button */
+}
+
+.btn {
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    border: 1px solid var(--button-bg);
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+/* --- Dashboard Specific Styles (User/Pengadu) --- */
+.dashboard-content {
+    padding: 20px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background-color: var(--sidebar-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px var(--shadow);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.card-icon {
+    font-size: 2.2em;
+    /* Color and background are now set inline in HTML based on status */
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.card-title {
+    font-size: 0.9em;
+    color: var(--text-color-light);
+    margin-bottom: 5px;
+}
+
+.card-value {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: var(--text-color-dark);
+}
+
+.recent-activity {
+    background-color: var(--sidebar-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px var(--shadow);
+    padding: 20px;
+}
+
+.recent-activity h2 {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    color: var(--text-color-dark);
+}
+
+.activity-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.activity-table th, .activity-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.activity-table th {
+    font-size: 0.9em;
+    color: var(--text-color-light);
+    font-weight: 600;
+    text-transform: uppercase;
+    background-color: var(--secondary-color);
+}
+
+.activity-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.activity-table tbody tr:hover {
+    background-color: #f5f5f5;
+}
+
+.status-badge { /* Re-using existing status-badge styles */
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+/* Specific styling for user's status badges */
+.status-badge.active { /* Untuk "Dalam Proses" */
+    background-color: var(--status-active-bg);
+    color: var(--status-active-text);
+}
+
+.status-badge.pending {
+    background-color: var(--status-pending-bg);
+    color: var(--status-pending-text);
+}
+
+.status-badge.declined {
+    background-color: var(--status-declined-bg);
+    color: var(--status-declined-text);
+}
+
+.status-badge.closed {
+    background-color: var(--status-closed-bg);
+    color: var(--status-closed-text);
+}
+
+.action-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.action-link:hover {
+    text-decoration: underline;
+}
+
+.view-all-complaints {
+    text-align: right;
+    margin-top: 15px;
+}
+
+.view-all-complaints a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.view-all-complaints a:hover {
+    text-decoration: underline;
+}
+
+.quick-links-card {
+    background-color: var(--sidebar-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px var(--shadow);
+    padding: 20px;
+}
+
+.quick-links-card h2 {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    color: var(--text-color-dark);
+}
+
+.quick-links-card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.quick-links-card ul li {
+    margin-bottom: 10px;
+}
+
+.quick-links-card ul li a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-color-dark);
+    padding: 8px 0;
+    transition: color 0.2s ease;
+}
+
+.quick-links-card ul li a i {
+    color: var(--primary-color);
+    font-size: 1.1em;
+    width: 20px; /* Consistent icon width */
+    text-align: center;
+}
+
+.quick-links-card ul li a:hover {
+    color: var(--primary-color);
+}
+
+
+/* Removed unnecessary elements for user dashboard context */
+.tabs,
+.filter-bar,
+.trades-table-container,
+.pagination {
+    display: none;
+}

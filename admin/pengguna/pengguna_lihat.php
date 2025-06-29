@@ -46,7 +46,7 @@ if (isset($conn) && $conn instanceof mysqli) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - SiCepu</title>
-    <link rel="stylesheet" href="../../assets/css/pengguna.css">
+    <link rel="stylesheet" href="../../assets/css/users.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
@@ -54,7 +54,7 @@ if (isset($conn) && $conn instanceof mysqli) {
     <div class="dashboard-wrapper">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <img src="../assets/img/shodai_logo.png" alt="SiCepu Logo" class="logo"> 
+                <img src="../../assets/img/logos.png" alt="SiCepu Logo" class="logo"> 
                 <span class="logo-text">SiCepu</span>
             </div>
             <nav class="sidebar-nav">
@@ -76,14 +76,14 @@ if (isset($conn) && $conn instanceof mysqli) {
             <header class="navbar">
                 <div class="search-bar">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search...">
+                    <input type="text" placeholder="Cari...">
                     <span class="shortcut">⌘K</span>
                 </div>
                 <div class="nav-icons">
                     <a href="#"><i class="fas fa-bell"></i></a>
                     <a href="#"><i class="fas fa-comment"></i></a>
                     <div class="user-profile">
-                        <img src="../assets/img/user_avatar.jpg" alt="User Avatar" class="avatar"> 
+                        <img src="../../assets/img/admin_pfp.jpg" alt="User Avatar" class="avatar"> 
                         <span><?php echo htmlspecialchars($admin_name); ?></span>
                         <a href="../logout.php"><i class="fas fa-sign-out-alt"></i></a> 
                     </div>
@@ -92,10 +92,10 @@ if (isset($conn) && $conn instanceof mysqli) {
 
             <section class="content-header">
                 <div class="customer-tabs">
-                    <button class="tab-button active">All Users</button> </div>
+                    <button class="tab-button active">Semua Pengguna</button> </div>
                 <div class="header-actions">
-                    <button class="btn-secondary"><i class="fas fa-download"></i> Export</button>
-                    <button class="btn-primary"><i class="fas fa-plus"></i> Add User</button> </div>
+                    <button class="btn-secondary"><i class="fas fa-download"></i>Ekspor</button>
+                    <button class="btn-primary"><i class="fas fa-plus"></i>Tambah Pengguna</button> </div>
             </section>
 
             <section class="customer-table-section">
@@ -103,7 +103,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                     <button class="btn-filter"><i class="fas fa-filter"></i> Filter</button>
                     <div class="search-customer">
                         <i class="fas fa-search"></i>
-                        <input type="text" placeholder="Search user email..."> </div>
+                        <input type="text" placeholder="Cari nama pengguna..."> </div>
                     <div class="sort-icons">
                         <i class="fas fa-sort-up"></i>
                         <i class="fas fa-sort-down"></i>
@@ -125,7 +125,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                                 <?php foreach ($users as $user): ?>
                                     <tr>
                                         <td>
-                                            <img src="../assets/img/avatar1.jpg" alt="Avatar" class="table-avatar"> 
+                                            <img src="../../assets/img/userav.jpg" alt="Avatar" class="table-avatar"> 
                                             <?php echo htmlspecialchars($user['nama']); ?>
                                         </td>
                                         <td><?php echo htmlspecialchars($user['email']); ?></td>
