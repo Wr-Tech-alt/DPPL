@@ -34,7 +34,7 @@ $admin_name = $_SESSION['nama']; // Get admin's name from session
             <nav class="sidebar-nav">
                 <ul>
                     <li><a href="#" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
-                    <li><a href="#" class="nav-link"><i class="fas fa-boxes"></i> Pengaduan</a></li>
+                    <li><a href="#" class="nav-link"><i class="fas fa-boxes"></i> Aduan Fasilitas</a></li>
                     <li><a href="#" class="nav-link active"><i class="fas fa-users"></i> Pengguna</a></li>
                     <li><a href="#" class="nav-link"><i class="fas fa-envelope"></i> Ditanggapi</a></li>
                 </ul>
