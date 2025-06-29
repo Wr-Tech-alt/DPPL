@@ -59,15 +59,10 @@ if (isset($conn) && $conn instanceof mysqli) {
             </div>
             <nav class="sidebar-nav">
                 <ul>
-                    <li><a href="#" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
-                    <li><a href="#" class="nav-link"><i class="fas fa-boxes"></i> Pengaduan</a></li>
+                    <li><a href="../../dashboard/dashboard_admin.php" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
+                    <li><a href="#" class="nav-link"><i class="fas fa-boxes"></i> Aduan Fasilitas</a></li>
+                    <li><a href="../pengadu/pengadu_lihat.php" class="nav-link"><i class="fas fa-users"></i> Pengadu</a></li>
                     <li><a href="#" class="nav-link active"><i class="fas fa-users"></i> Pengguna</a></li>
-                    <li><a href="#" class="nav-link"><i class="fas fa-envelope"></i> Ditanggapi</a></li>
-                </ul>
-                <div class="nav-section-title">LAINNYA</div>
-                <ul>
-                    <li><a href="#" class="nav-link"><i class="fas fa-box"></i> Selesai</a></li>
-                    <li><a href="#" class="nav-link"><i class="fas fa-puzzle-piece"></i> Pending</a></li>
                 </ul>
                 <div class="nav-section-title">SETTINGS</div>
                 <ul>

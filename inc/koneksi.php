@@ -1,20 +1,14 @@
-
 <?php
-// Aktifkan error reporting untuk melihat pesan kesalahan
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// inc/koneksi.php
+$db_host = "localhost";
+$db_user = "root";
+$db_pass = ""; // Your MySQL password
+$db_name = "sicepu"; // Your database name
 
-$servername = "localhost";
-$username = "root";
-$password = ""; // Kosongkan jika tidak ada password di MySQL Anda
-$database = "sicepu"; // Pastikan nama ini sama persis dengan nama database di phpMyAdmin
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 
-// Membuat koneksi
-$koneksi = mysqli_connect($servername, $username, $password, $database);
-
-// Mengecek koneksi
-if (!$koneksi) {
-    // Jika koneksi gagal, tampilkan pesan error yang spesifik dari MySQL
-    die("Koneksi Database GAGAL! Pesan Error: " . mysqli_connect_error() . " (Nomor Error: " . mysqli_connect_errno() . ")");
+if ($conn->connect_error) {
+    die("Koneksi database gagal: " . $conn->connect_error);
 }
+$conn->set_charset("utf8");
 ?>

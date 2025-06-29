@@ -21,24 +21,24 @@ $user_role = $_SESSION['role'];
 // --- FETCH DATA FOR DASHBOARD CARDS AND NOTIFICATIONS ---
 // Pastikan koneksi database berhasil sebelum melakukan query
 // Variabel $koneksi akan ada jika koneksi di inc/koneksi.php berhasil
-if ($koneksi) {
+if ($conn) {
     // Query untuk mendapatkan jumlah aduan masuk
-    $query_masuk = mysqli_query($koneksi, "SELECT COUNT(*) AS total FROM pengaduan WHERE status = 'Masuk'");
+    $query_masuk = mysqli_query($conn, "SELECT COUNT(*) AS total FROM pengaduan WHERE status = 'Masuk'");
     $data_masuk = mysqli_fetch_assoc($query_masuk);
     $total_masuk = $data_masuk['total'];
 
     // Query untuk mendapatkan jumlah aduan diproses
-    $query_diproses = mysqli_query($koneksi, "SELECT COUNT(*) AS total FROM pengaduan WHERE status = 'Diproses'");
+    $query_diproses = mysqli_query($conn, "SELECT COUNT(*) AS total FROM pengaduan WHERE status = 'Diproses'");
     $data_diproses = mysqli_fetch_assoc($query_diproses);
     $total_diproses = $data_diproses['total'];
 
     // Query untuk mendapatkan jumlah aduan selesai
-    $query_selesai = mysqli_query($koneksi, "SELECT COUNT(*) AS total FROM pengaduan WHERE status = 'Selesai'");
+    $query_selesai = mysqli_query($conn, "SELECT COUNT(*) AS total FROM pengaduan WHERE status = 'Selesai'");
     $data_selesai = mysqli_fetch_assoc($query_selesai);
     $total_selesai = $data_selesai['total'];
 
     // Query untuk mendapatkan total semua aduan
-    $query_total_aduan = mysqli_query($koneksi, "SELECT COUNT(*) AS total FROM pengaduan");
+    $query_total_aduan = mysqli_query($conn, "SELECT COUNT(*) AS total FROM pengaduan");
     $data_total_aduan = mysqli_fetch_assoc($query_total_aduan);
     $total_aduan = $data_total_aduan['total'];
 
@@ -224,8 +224,8 @@ if ($koneksi) {
                 <ul>
                     <li><a href="#" class="nav-link active"><i class="fas fa-th-large"></i> Dashboard</a></li>
                     <li><a href="#" class="nav-link"><i class="fas fa-boxes"></i> Aduan Fasilitas</a></li>
-                    <li><a href="../admin/pengguna/pengguna_lihat.php" class="nav-link"><i class="fas fa-users"></i> Pengadu </a></li>
-                    <li><a href="#" class="nav-link"><i class="fas fa-envelope"></i> Pengguna </a></li>
+                    <li><a href="../admin/pengadu/pengadu_lihat.php" class="nav-link"><i class="fas fa-users"></i> Pengadu </a></li>
+                    <li><a href="../admin/pengguna/pengguna_lihat.php" class="nav-link"><i class="fas fa-users"></i> Pengguna </a></li>
                 </ul>
                 <div class="nav-section-title">SETTINGS</div>
                 <ul>
@@ -239,8 +239,8 @@ if ($koneksi) {
             <header class="navbar">
                 <div class="top-info-bar">
                     <div class="status-info">
-                        <span class="status-dot <?php echo (isset($koneksi) && $koneksi ? 'status-connected' : 'status-disconnected'); ?>"></span>
-                        <span>Database: <?php echo (isset($koneksi) && $koneksi ? 'Connected' : 'Disconnected'); ?></span>
+                        <span class="status-dot <?php echo (isset($conn) && $conn ? 'status-connected' : 'status-disconnected'); ?>"></span>
+                        <span>Database: <?php echo (isset($conn) && $conn ? 'Connected' : 'Disconnected'); ?></span>
                     </div>
                     <div class="time-location-info">
                         <span id="currentDateTime"></span> | <span>Bekasi Regency, West Java, Indonesia</span>

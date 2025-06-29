@@ -18,8 +18,8 @@ if (isset($_POST['login_submit'])) {
     echo "</pre>";
 
     // MODIFIKASI: Menggunakan $koneksi
-    $nama = $koneksi->real_escape_string($_POST['nama']);
-    $password = $koneksi->real_escape_string($_POST['password']);
+    $nama = $conn->real_escape_string($_POST['nama']);
+    $password = $conn->real_escape_string($_POST['password']);
 
     echo "DEBUG: Cleaned Nama: " . htmlspecialchars($nama) . "<br>";
     // IMPORTANT: Do NOT echo raw password, even for debug in production.
@@ -30,7 +30,7 @@ if (isset($_POST['login_submit'])) {
         echo "DEBUG: Error: " . htmlspecialchars($error_message) . "<br>";
     } else {
         // MODIFIKASI: Menggunakan $koneksi
-        $stmt = $koneksi->prepare("SELECT iduser, Role, password, nama FROM pengguna WHERE nama = ?");
+        $stmt = $conn->prepare("SELECT iduser, Role, password, nama FROM pengguna WHERE nama = ?");
         if ($stmt === FALSE) {
             echo "DEBUG: Prepare failed: (" . $koneksi->errno . ") " . $koneksi->error . "<br>";
             $error_message = "Terjadi kesalahan saat menyiapkan query.";
