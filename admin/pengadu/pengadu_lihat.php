@@ -1,120 +1,170 @@
 <?php
-require_once 'config.php'; //
-require_once 'user_agent_parser.php'; // pastikan ada getBrowser() & getPlatform()
+session_start();
 
-$error_message = '';
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username_form = $_POST['username'];
-    $password_form = $_POST['password'];
-
-    $stmt = $conn->prepare("SELECT * FROM user WHERE UserName = ?");
-    $stmt->bind_param("s", $username_form);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
-    $stmt->close();
-
-    if ($user && password_verify($password_form, $user['PassWord'])) {
-        session_regenerate_id(true); // Penting untuk keamanan
-        $currentSessionId = session_id(); // ID sesi baru setelah regenerate
-
-        $userAgent = $_SERVER['HTTP_USER_AGENT'];
-        $currentBrowser = getBrowser($userAgent); //
-        $currentPlatform = getPlatform($userAgent); //
-        $currentUserIP = $_SERVER['REMOTE_ADDR'];
-
-        // Cek browser & OS terakhir dari DB
-        $lastBrowser = $user['LastBrowser'] ?? '';
-        $lastOS = $user['LastOS'] ?? '';
-        // Anda mungkin ingin menambahkan pengecekan IP juga di sini jika logikanya begitu
-        // $lastIP = $user['IPAddress'] ?? '';
-        $isFirstLogin = empty($lastBrowser) && empty($lastOS); // Anggap login pertama jika LastBrowser dan LastOS kosong
-
-        // Kondisi untuk meminta PIN: bukan login pertama DAN (browser beda ATAU OS beda)
-        // Anda bisa tambahkan pengecekan IP di sini: || $currentUserIP !== $lastIP
-        if (!$isFirstLogin && ($currentBrowser !== $lastBrowser || $currentPlatform !== $lastOS)) {
-            // Simpan semua informasi yang dibutuhkan untuk pin_auth.php
-            $_SESSION['pending_user_id'] = $user['IdUserPrimary'];
-            $_SESSION['pending_session_id'] = $currentSessionId; // Simpan ID sesi baru ini
-            $_SESSION['pending_ip'] = $currentUserIP;
-            $_SESSION['pending_browser'] = $currentBrowser;
-            $_SESSION['pending_platform'] = $currentPlatform;
-            $_SESSION['pending_username'] = $user['UserName']; // Simpan username jika perlu di pin_auth.php
-            $_SESSION['requested_page'] = 'dashboard.php'; //
-            $_SESSION['pin_attempt'] = 0; // reset percobaan PIN
-
-            // PENTING: JANGAN UPDATE DATABASE DI SINI. Update dilakukan setelah PIN berhasil.
-            // HAPUS blok ini:
-            /*
-            $stmt = $conn->prepare("UPDATE user SET Session = ?, IPAddress = ? WHERE IdUserPrimary = ?");
-            $stmt->bind_param("ssi", $currentSessionId, $currentUserIP, $user['IdUserPrimary']);
-            $stmt->execute();
-            $stmt->close();
-            */
-
-            header("Location: pin_auth.php");
-            exit();
-        }
-
-        // Lolos verifikasi (perangkat sama atau login pertama), update semua info dan masuk dashboard
-        // Untuk login pertama, LastBrowser dan LastOS akan diisi dengan info saat ini
-        $stmt = $conn->prepare("UPDATE user SET Session = ?, IPAddress = ?, LastBrowser = ?, LastOS = ? WHERE IdUserPrimary = ?"); //
-        $stmt->bind_param("ssssi", $currentSessionId, $currentUserIP, $currentBrowser, $currentPlatform, $user['IdUserPrimary']); //
-        $stmt->execute(); //
-        $stmt->close(); //
-
-        // Set session utama setelah semua aman
-        $_SESSION['user_id'] = $user['IdUserPrimary']; //
-        $_SESSION['username'] = $user['UserName']; //
-        // Sebaiknya simpan juga IP, Browser, OS yang terverifikasi ke session untuk auth_check.php
-        $_SESSION['verified_ip'] = $currentUserIP;
-        $_SESSION['verified_browser'] = $currentBrowser;
-        $_SESSION['verified_os'] = $currentPlatform;
-        // $_SESSION['current_session_id_for_user'] = $currentSessionId; // Ini bisa jadi redundant jika auth_check.php membandingkan session_id() dengan DB
-
-        header("Location: dashboard.php"); //
-        exit();
-    } else {
-        $error_message = "Username atau password yang Anda masukkan salah!"; //
-    }
+// IMPORTANT: Ensure this is the very first thing in dashboard_admin.php to protect the page.
+if (!isset($_SESSION['loggedin']) || $_SESSION['role'] !== 'Admin') {
+    header("Location: ../login.php"); 
+    exit();
 }
-?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <link rel="stylesheet" href="style.css">
-    <title>Login Pengguna</title>
-    <style>
-        .error {
-            color: red;
-            border: 1px solid red;
-            padding: 10px;
-            margin-bottom: 15px;
+require_once '../../inc/koneksi.php'; // Correct path to koneksi.php from dashboard/
+
+// Add this check immediately after including koneksi.php
+if (!isset($conn) || $conn->connect_error) {
+    die("Fatal Error: Database connection object (\$conn) is not available or connection failed in dashboard_admin.php. Please check inc/koneksi.php.");
+}
+
+$admin_name = $_SESSION['nama']; // Get admin's name from session
+
+// Fetch users from the 'pengguna' table with 'Role' = 'Pengadu'
+$users = [];
+$sql = "SELECT iduser, nama, email, Role FROM pengguna WHERE Role = 'Pengadu' ORDER BY nama ASC"; // Modified SQL query
+$result = $conn->query($sql);
+
+if ($result) {
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $users[] = $row;
         }
-    </style>
+    }
+} else {
+    echo "Error fetching users: " . $conn->error;
+}
+
+// Close the connection after fetching data
+if (isset($conn) && $conn instanceof mysqli) {
+    $conn->close(); 
+}
+
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - SiCepu</title>
+    <link rel="stylesheet" href="../../assets/css/pengguna.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h2 class="form-title">🔐 Login Aplikasi</h2>
+    <div class="dashboard-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="../assets/img/shodai_logo.png" alt="SiCepu Logo" class="logo"> 
+                <span class="logo-text">SiCepu</span>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
+                    <li><a href="#" class="nav-link"><i class="fas fa-boxes"></i> Pengaduan</a></li>
+                    <li><a href="#" class="nav-link"><i class="fas fa-users"></i> Pengguna</a></li>
+                    <li><a href="#" class="nav-link active"><i class="fas fa-envelope"></i> Pengadu</a></li>
+                </ul>
+                <div class="nav-section-title">LAINNYA</div>
+                <ul>
+                    <li><a href="#" class="nav-link"><i class="fas fa-box"></i> Selesai</a></li>
+                    <li><a href="#" class="nav-link"><i class="fas fa-puzzle-piece"></i> Pending</a></li>
+                </ul>
+                <div class="nav-section-title">SETTINGS</div>
+                <ul>
+                    <li><a href="#" class="nav-link"><i class="fas fa-cog"></i> Settings</a></li>
+                    <li><a href="#" class="nav-link"><i class="fas fa-question-circle"></i> Help</a></li>
+                </ul>
+            </nav>
+        </aside>
 
-<?php
-if (!empty($error_message)) {
-    echo "<div class='error'>" . htmlspecialchars($error_message) . "</div>";
-}
-?>
+        <main class="main-content">
+            <header class="navbar">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search...">
+                    <span class="shortcut">⌘K</span>
+                </div>
+                <div class="nav-icons">
+                    <a href="#"><i class="fas fa-bell"></i></a>
+                    <a href="#"><i class="fas fa-comment"></i></a>
+                    <div class="user-profile">
+                        <img src="../assets/img/user_avatar.jpg" alt="User Avatar" class="avatar"> 
+                        <span><?php echo htmlspecialchars($admin_name); ?></span>
+                        <a href="../logout.php"><i class="fas fa-sign-out-alt"></i></a> 
+                    </div>
+                </div>
+            </header>
 
-<form method="post" action="login.php" class="form-container">
-    <label for="username" class="form-label">Username:</label>
-    <input type="text" name="username" id="username" class="form-input" required>
+            <section class="content-header">
+                <div class="customer-tabs">
+                    <button class="tab-button active">All Users</button> </div>
+                <div class="header-actions">
+                    <button class="btn-secondary"><i class="fas fa-download"></i> Export</button>
+                    <button class="btn-primary"><i class="fas fa-plus"></i> Add User</button> </div>
+            </section>
 
-    <label for="password" class="form-label">Password:</label>
-    <input type="password" name="password" id="password" class="form-input" required>
+            <section class="customer-table-section">
+                <div class="filter-bar">
+                    <button class="btn-filter"><i class="fas fa-filter"></i> Filter</button>
+                    <div class="search-customer">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search user email..."> </div>
+                    <div class="sort-icons">
+                        <i class="fas fa-sort-up"></i>
+                        <i class="fas fa-sort-down"></i>
+                    </div>
+                </div>
 
-    <input type="submit" value="Login" class="form-button">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (!empty($users)): ?>
+                                <?php foreach ($users as $user): ?>
+                                    <tr>
+                                        <td>
+                                            <img src="../assets/img/avatar1.jpg" alt="Avatar" class="table-avatar"> 
+                                            <?php echo htmlspecialchars($user['nama']); ?>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($user['email']); ?></td>
+                                        <td><?php echo htmlspecialchars($user['Role']); ?></td>
+                                        <td><i class="fas fa-ellipsis-h action-icon"></i></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="4" style="text-align: center;">No users with 'Pengadu' role found in the database.</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
 
-    <p class="form-footer">Belum punya akun? <a href="register.php">Daftar di sini</a></p>
-</form>
-
+                <div class="pagination">
+                    <a href="#" class="page-arrow"><i class="fas fa-chevron-left"></i></a>
+                    <a href="#" class="page-number active">1</a>
+                    <a href="#" class="page-arrow"><i class="fas fa-chevron-right"></i></a>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.customer-tabs .tab-button');
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                });
+            });
+        });
+    </script>
 </body>
 </html>
