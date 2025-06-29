@@ -4,7 +4,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 session_start(); // Start a PHP session at the very beginning of the page
-ob_start();// Mulai output buffering untuk mencegah 'headers already sent'
+ob_start();      // Mulai output buffering untuk mencegah 'headers already sent'
 
 require_once 'inc/koneksi.php'; // Path is correct as 'inc' is a direct child of the root
 
@@ -17,8 +17,9 @@ if (isset($_POST['login_submit'])) {
     var_dump($_POST);
     echo "</pre>";
 
-    $nama = $conn->real_escape_string($_POST['nama']);
-    $password = $conn->real_escape_string($_POST['password']);
+    // MODIFIKASI: Menggunakan $koneksi
+    $nama = $koneksi->real_escape_string($_POST['nama']);
+    $password = $koneksi->real_escape_string($_POST['password']);
 
     echo "DEBUG: Cleaned Nama: " . htmlspecialchars($nama) . "<br>";
     // IMPORTANT: Do NOT echo raw password, even for debug in production.
@@ -28,12 +29,13 @@ if (isset($_POST['login_submit'])) {
         $error_message = "Nama Pengguna dan Password harus diisi.";
         echo "DEBUG: Error: " . htmlspecialchars($error_message) . "<br>";
     } else {
-        // Query to get user data including Role and password
-        $stmt = $conn->prepare("SELECT iduser, Role, password, nama FROM pengguna WHERE nama = ?");
+        // MODIFIKASI: Menggunakan $koneksi
+        $stmt = $koneksi->prepare("SELECT iduser, Role, password, nama FROM pengguna WHERE nama = ?");
         if ($stmt === FALSE) {
-            echo "DEBUG: Prepare failed: (" . $conn->errno . ") " . $conn->error . "<br>";
+            echo "DEBUG: Prepare failed: (" . $koneksi->errno . ") " . $koneksi->error . "<br>";
             $error_message = "Terjadi kesalahan saat menyiapkan query.";
         } else {
+            // MODIFIKASI: Menggunakan $koneksi
             $stmt->bind_param("s", $nama);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -106,10 +108,8 @@ if (isset($_POST['login_submit'])) {
             $stmt->close();
         }
     }
-    // Close connection here if you only need it for login,
-    // otherwise, leave it open if 'koneksi.php' manages a persistent connection.
-    // For simple scripts, closing here is fine.
-    $conn->close(); 
+    // MODIFIKASI: Menggunakan $koneksi
+    $koneksi->close(); 
 }
 ?>
 

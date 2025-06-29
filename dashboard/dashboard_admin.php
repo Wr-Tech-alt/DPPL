@@ -18,8 +18,9 @@ include "../inc/koneksi.php"; // Pastikan path ini benar
 $user_name = $_SESSION['nama'];
 $user_role = $_SESSION['role'];
 
-// --- FETCH DATA FOR DASHBOARD CARDS ---
+// --- FETCH DATA FOR DASHBOARD CARDS AND NOTIFICATIONS ---
 // Pastikan koneksi database berhasil sebelum melakukan query
+// Variabel $koneksi akan ada jika koneksi di inc/koneksi.php berhasil
 if ($koneksi) {
     // Query untuk mendapatkan jumlah aduan masuk
     $query_masuk = mysqli_query($koneksi, "SELECT COUNT(*) AS total FROM pengaduan WHERE status = 'Masuk'");
@@ -41,12 +42,24 @@ if ($koneksi) {
     $data_total_aduan = mysqli_fetch_assoc($query_total_aduan);
     $total_aduan = $data_total_aduan['total'];
 
-    // Data untuk grafik (donut chart)
-    $chart_data = json_encode([
+    // --- MODIFIKASI DISINI: Saring data untuk grafik ---
+    $raw_chart_data = [
         ['label' => 'Aduan Masuk', 'value' => $total_masuk],
         ['label' => 'Aduan Diproses', 'value' => $total_diproses],
         ['label' => 'Aduan Selesai', 'value' => $total_selesai]
-    ]);
+    ];
+
+    $filtered_chart_data = [];
+    foreach ($raw_chart_data as $data_point) {
+        if ($data_point['value'] > 0) { // Hanya sertakan data jika nilainya lebih dari 0
+            $filtered_chart_data[] = $data_point;
+        }
+    }
+    $chart_data = json_encode($filtered_chart_data);
+    // --- AKHIR MODIFIKASI ---
+
+    // Jumlah aduan baru untuk notifikasi
+    $new_complaints_count = $total_masuk;
 
 } else {
     // Jika koneksi gagal, set semua total ke 0
@@ -54,8 +67,10 @@ if ($koneksi) {
     $total_diproses = 0;
     $total_selesai = 0;
     $total_aduan = 0;
-    $chart_data = json_encode([]); // Data kosong untuk grafik
-    echo "<div style='color: red; text-align: center; padding: 10px; background-color: #ffe0e0;'>DEBUG: Koneksi database GAGAL! Pastikan MySQL Running dan database 'sicepu' sudah ada.</div>";
+    $chart_data = json_encode([]);
+    $new_complaints_count = 0;
+    // Pesan debug jika koneksi gagal sudah diinc/koneksi.php
+    // echo "<div style='color: red; text-align: center; padding: 10px; background-color: #ffe0e0;'>DEBUG: Koneksi database GAGAL! Pastikan MySQL Running dan database 'sicepu' sudah ada.</div>";
 }
 ?>
 <!DOCTYPE html>
@@ -67,7 +82,11 @@ if ($koneksi) {
     <link rel="stylesheet" href="../assets/css/dashadmin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="../assets/js/morris/morris-0.4.3.min.css">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
     <style>
         /* Custom styles for dashboard cards */
         .dashboard-card-row {
@@ -136,20 +155,59 @@ if ($koneksi) {
             justify-content: center;
         }
         
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .dashboard-card {
-                flex: 1 1 45%; /* Two cards per row on smaller screens */
-                max-width: 48%;
-            }
-            #morris-donut-chart {
-                height: 250px; /* Adjust height for smaller screens */
-            }
+        /* Notification badge styling */
+        .nav-icons .notification-badge {
+            position: absolute;
+            top: -5px; /* Adjust as needed */
+            right: -5px; /* Adjust as needed */
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.7em;
+            font-weight: bold;
+            line-height: 1;
+            min-width: 18px; /* Ensure it's a circle even with single digit */
+            text-align: center;
         }
-        @media (max-width: 480px) {
-            .dashboard-card {
-                flex: 1 1 90%; /* One card per row on very small screens */
-                max-width: 95%;
+        .nav-icons .icon-wrapper {
+            position: relative;
+            display: inline-block; /* To contain the absolute positioned badge */
+            margin-right: 15px; /* Space between icons */
+        }
+
+        /* New styles for top-info-bar */
+        .navbar .top-info-bar {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-grow: 1; /* Allow it to take available space */
+            padding-left: 20px; /* Adjust as needed */
+            color: #333; /* Ubah ke warna gelap agar terbaca jelas */
+        }
+        .top-info-bar .status-info,
+        .top-info-bar .time-location-info {
+            display: flex;
+            align-items: center;
+            font-size: 0.95em;
+            color: #333; /* Pastikan teks di dalamnya juga gelap */
+        }
+        .top-info-bar .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .top-info-bar .status-connected {
+            background-color: #28a745; /* Green */
+        }
+        .top-info-bar .status-disconnected {
+            background-color: #dc3545; /* Red */
+        }
+        /* Make sure it's responsive */
+        @media (max-width: 992px) { /* Adjust breakpoint as needed */
+            .navbar .top-info-bar {
+                display: none; /* Hide on smaller screens to save space */
             }
         }
 
@@ -179,12 +237,26 @@ if ($koneksi) {
 
         <main class="main-content">
             <header class="navbar">
-                <div class="search-bar">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search...">
+                <div class="top-info-bar">
+                    <div class="status-info">
+                        <span class="status-dot <?php echo (isset($koneksi) && $koneksi ? 'status-connected' : 'status-disconnected'); ?>"></span>
+                        <span>Database: <?php echo (isset($koneksi) && $koneksi ? 'Connected' : 'Disconnected'); ?></span>
+                    </div>
+                    <div class="time-location-info">
+                        <span id="currentDateTime"></span> | <span>Bekasi Regency, West Java, Indonesia</span>
+                    </div>
                 </div>
+
                 <div class="nav-icons">
-                    <a href="#"><i class="fas fa-bell"></i></a>
+                    
+                    <div class="icon-wrapper">
+                        <a href="#" id="notificationBell">
+                            <i class="fas fa-bell"></i>
+                            <?php if ($new_complaints_count > 0): ?>
+                                <span class="notification-badge"><?php echo $new_complaints_count; ?></span>
+                            <?php endif; ?>
+                        </a>
+                    </div>
                     <a href="#"><i class="fas fa-comment"></i></a>
                     <div class="user-profile">
                         <img src="../assets/img/user_avatar.jpg" alt="User Avatar" class="avatar">
@@ -200,21 +272,25 @@ if ($koneksi) {
 
             <section style="padding: 20px; background-color: #f0f2f5;">
                 <div class="dashboard-card-row">
+                    
                     <div class="dashboard-card card-masuk" onclick="alert('Aduan Masuk: <?php echo $total_masuk; ?>')">
                         <div class="icon"><i class="fas fa-inbox"></i></div>
                         <div class="value"><?php echo $total_masuk; ?></div>
                         <div class="label">Aduan Masuk</div>
                     </div>
+                    
                     <div class="dashboard-card card-diproses" onclick="alert('Aduan Diproses: <?php echo $total_diproses; ?>')">
                         <div class="icon"><i class="fas fa-sync-alt"></i></div>
                         <div class="value"><?php echo $total_diproses; ?></div>
                         <div class="label">Aduan Diproses</div>
                     </div>
+                    
                     <div class="dashboard-card card-selesai" onclick="alert('Aduan Selesai: <?php echo $total_selesai; ?>')">
                         <div class="icon"><i class="fas fa-check-circle"></i></div>
                         <div class="value"><?php echo $total_selesai; ?></div>
                         <div class="label">Aduan Selesai</div>
                     </div>
+                    
                     <div class="dashboard-card card-total" onclick="alert('Total Aduan: <?php echo $total_aduan; ?>')">
                         <div class="icon"><i class="fas fa-clipboard-list"></i></div>
                         <div class="value"><?php echo $total_aduan; ?></div>
@@ -231,10 +307,25 @@ if ($koneksi) {
         </main>
     </div>
 
+    <script src="../assets/js/jquery-1.10.2.js"></script>
     <script src="../assets/js/morris/raphael-2.1.0.min.js"></script>
     <script src="../assets/js/morris/morris.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+
     <script>
+        // Function to update current time and date
+        function updateDateTime() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            document.getElementById('currentDateTime').innerText = now.toLocaleDateString('id-ID', options);
+        }
+
         $(document).ready(function() {
+            // Initial update
+            updateDateTime();
+            // Update every second
+            setInterval(updateDateTime, 1000);
+
             // Inisialisasi Morris Donut Chart
             new Morris.Donut({
                 element: 'morris-donut-chart',
@@ -242,6 +333,34 @@ if ($koneksi) {
                 colors: ['#f44336', '#ff9800', '#4CAF50'], // Warna sesuai status: Masuk (Merah), Diproses (Oranye), Selesai (Hijau)
                 resize: true, // Mengaktifkan responsivitas
                 formatter: function (y, data) { return y + " Aduan" } // Format tooltip
+            });
+
+            // SweetAlert2 for notification bell click
+            $('#notificationBell').on('click', function(e) {
+                e.preventDefault(); // Mencegah href="#" dari melompat ke atas halaman
+                let newComplaints = <?php echo $new_complaints_count; ?>;
+                let title = newComplaints > 0 ? 'Notifikasi Aduan Baru!' : 'Tidak Ada Aduan Baru';
+                let text = newComplaints > 0 ? `Anda memiliki ${newComplaints} aduan baru yang masuk.` : 'Belum ada aduan baru yang perlu ditindaklanjuti.';
+                let icon = newComplaints > 0 ? 'info' : 'success'; // 'info' atau 'warning' untuk ada, 'success' untuk tidak ada
+
+                Swal.fire({
+                    title: title,
+                    text: text,
+                    icon: icon,
+                    confirmButtonText: 'Oke'
+                });
+            });
+
+            // Update onclick for dashboard cards to use SweetAlert2 (optional, if you want consistent popups)
+            $('.dashboard-card').off('click').on('click', function() {
+                let cardLabel = $(this).find('.label').text();
+                let cardValue = $(this).find('.value').text();
+                Swal.fire({
+                    title: cardLabel,
+                    text: `Jumlah: ${cardValue}`,
+                    icon: 'info',
+                    confirmButtonText: 'Oke'
+                });
             });
         });
     </script>
