@@ -67,8 +67,6 @@ $pengaduan_terbaru = $result_aduan->fetch_all(MYSQLI_ASSOC);
             cursor: pointer;
             font-size: 1em;
             font-weight: 600;
-            text-decoration: none;
-            display: inline-block;
         }
         .btn-primary:hover {
             background-color: #0056b3;
@@ -79,103 +77,6 @@ $pengaduan_terbaru = $result_aduan->fetch_all(MYSQLI_ASSOC);
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             margin-top: 20px;
-        }
-
-        /* --- CSS UNTUK RESPONSIVE --- */
-        .hamburger-menu {
-            display: none;
-            background: none;
-            border: none;
-            font-size: 1.5em;
-            cursor: pointer;
-            color: #333;
-            z-index: 1001;
-        }
-
-        @media (max-width: 992px) {
-            .hamburger-menu {
-                display: block;
-            }
-            .sidebar {
-                position: fixed;
-                left: 0;
-                top: 0;
-                height: 100%;
-                width: 250px;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease-in-out;
-                z-index: 1000;
-                background-color: #fff;
-            }
-            .sidebar.show {
-                transform: translateX(0);
-            }
-            .main-content {
-                margin-left: 0;
-            }
-            .dashboard-wrapper.sidebar-show .main-content::before {
-                content: '';
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.4);
-                z-index: 999;
-            }
-            .navbar .top-info-bar {
-                display: none;
-            }
-             .navbar .nav-icons {
-                margin-left: auto;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .dashboard-card-row {
-                flex-direction: column;
-            }
-            .content-header {
-                text-align: center;
-            }
-            /* --- Style untuk Tabel Responsif --- */
-            .customer-table-section table thead {
-                display: none;
-            }
-            .customer-table-section table, 
-            .customer-table-section table tbody, 
-            .customer-table-section table tr, 
-            .customer-table-section table td {
-                display: block;
-                width: 100%;
-            }
-            .customer-table-section table tr {
-                margin-bottom: 15px;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                overflow: hidden;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            }
-            .customer-table-section table td {
-                text-align: right;
-                padding-left: 50%;
-                position: relative;
-                border-bottom: 1px solid #eee;
-                padding-top: 10px;
-                padding-bottom: 10px;
-            }
-            .customer-table-section table td:last-child {
-                border-bottom: 0;
-            }
-            .customer-table-section table td::before {
-                content: attr(data-label);
-                position: absolute;
-                left: 15px;
-                width: calc(50% - 30px);
-                padding-right: 10px;
-                font-weight: bold;
-                text-align: left;
-            }
         }
     </style>
 </head>
@@ -203,7 +104,6 @@ $pengaduan_terbaru = $result_aduan->fetch_all(MYSQLI_ASSOC);
         <main class="main-content">
             <!-- Header disamakan dengan Admin -->
             <header class="navbar">
-                <button class="hamburger-menu" id="hamburgerMenu"><i class="fas fa-bars"></i></button>
                 <div class="top-info-bar">
                     <!-- Kosongkan atau bisa diisi info lain -->
                 </div>
@@ -261,15 +161,15 @@ $pengaduan_terbaru = $result_aduan->fetch_all(MYSQLI_ASSOC);
                                 <?php if (!empty($pengaduan_terbaru)): ?>
                                     <?php foreach ($pengaduan_terbaru as $aduan): ?>
                                     <tr>
-                                        <td data-label="ID Aduan">#<?php echo htmlspecialchars($aduan['idpengaduan']); ?></td>
-                                        <td data-label="Judul Aduan"><?php echo htmlspecialchars($aduan['judul']); ?></td>
-                                        <td data-label="Tanggal Kirim"><?php echo date('d M Y, H:i', strtotime($aduan['waktu_aduan'])); ?></td>
-                                        <td data-label="Status">
+                                        <td>#<?php echo htmlspecialchars($aduan['idpengaduan']); ?></td>
+                                        <td><?php echo htmlspecialchars($aduan['judul']); ?></td>
+                                        <td><?php echo date('d M Y, H:i', strtotime($aduan['waktu_aduan'])); ?></td>
+                                        <td>
                                             <span class="status-badge <?php echo strtolower(htmlspecialchars($aduan['status'])); ?>">
                                                 <?php echo htmlspecialchars($aduan['status']); ?>
                                             </span>
                                         </td>
-                                        <td data-label="Aksi">
+                                        <td>
                                             <a href="aduan/adu_detail.php?id=<?php echo $aduan['idpengaduan']; ?>" title="Lihat Detail"><i class="fas fa-eye action-icon"></i></a>
                                         </td>
                                     </tr>
@@ -286,27 +186,5 @@ $pengaduan_terbaru = $result_aduan->fetch_all(MYSQLI_ASSOC);
             </section>
         </main>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const hamburgerMenu = document.getElementById('hamburgerMenu');
-            const sidebar = document.querySelector('.sidebar');
-            const wrapper = document.querySelector('.dashboard-wrapper');
-
-            if (hamburgerMenu && sidebar && wrapper) {
-                hamburgerMenu.addEventListener('click', function() {
-                    sidebar.classList.toggle('show');
-                    wrapper.classList.toggle('sidebar-show');
-                });
-
-                // Klik di luar sidebar untuk menutupnya
-                wrapper.addEventListener('click', function(e) {
-                    if (wrapper.classList.contains('sidebar-show') && !sidebar.contains(e.target) && !hamburgerMenu.contains(e.target)) {
-                        sidebar.classList.remove('show');
-                        wrapper.classList.remove('sidebar-show');
-                    }
-                });
-            }
-        });
-    </script>
 </body>
 </html>
