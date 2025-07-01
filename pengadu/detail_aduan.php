@@ -115,7 +115,6 @@ if (!$aduan) {
         
         .detail-body {
             display: grid;
-            /* Perubahan di sini: lebar kolom gambar dibatasi */
             grid-template-columns: 150px 1fr;
             gap: 2rem;
         }
@@ -135,7 +134,6 @@ if (!$aduan) {
             margin: 0 0 1.5rem 0;
             line-height: 1.6;
         }
-        /* Style baru untuk status yang lebih besar */
         .status-badge.large {
             font-size: 1.1em;
             padding: 10px 20px;
@@ -176,17 +174,14 @@ if (!$aduan) {
             .main-content { margin-left: 0; width: 100%; }
             .hamburger-menu { display: block; }
             .navbar { justify-content: flex-start; gap: 15px; }
+            
+            /* PERUBAHAN DI SINI: Untuk tablet dan mobile, layout menjadi 1 kolom */
             .detail-body {
-                /* Mengubah layout grid untuk layar sedang */
-                grid-template-columns: 250px 1fr;
-            }
-        }
-        @media (max-width: 768px) {
-            .detail-body {
-                /* Kembali ke satu kolom untuk layar kecil */
                 grid-template-columns: 1fr;
             }
         }
+        /* Media query untuk 768px dihapus karena sudah dicakup oleh 992px */
+
     </style>
 </head>
 <body>
