@@ -115,7 +115,7 @@ if (!$aduan) {
         
         .detail-body {
             display: grid;
-            grid-template-columns: 150px 1fr;
+            grid-template-columns: 200px 1fr;
             gap: 2rem;
         }
         .detail-image-container img {
