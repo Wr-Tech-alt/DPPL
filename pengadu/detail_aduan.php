@@ -133,6 +133,13 @@ if (!$aduan) {
             margin: 0 0 1.5rem 0;
             line-height: 1.6;
         }
+        /* Style baru untuk status yang lebih besar */
+        .status-badge.large {
+            font-size: 1.1em;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+        }
         .tanggapan-section {
             margin-top: 2rem;
             padding: 1.5rem;
@@ -212,7 +219,7 @@ if (!$aduan) {
                 <div class="detail-header">
                     <h2 class="detail-title"><?php echo htmlspecialchars($aduan['judul']); ?></h2>
                     <div class="detail-meta">
-                        <span><i class="fas fa-info-circle"></i> Status: <span class="status-badge <?php echo strtolower(htmlspecialchars($aduan['status'])); ?>"><?php echo htmlspecialchars($aduan['status']); ?></span></span>
+                        <!-- Status dipindahkan dari sini -->
                         <span><i class="fas fa-tag"></i> Jenis: <?php echo htmlspecialchars($aduan['jenis']); ?></span>
                         <span><i class="fas fa-calendar-alt"></i> Dilaporkan pada: <?php echo date('d F Y, H:i', strtotime($aduan['waktu_aduan'])); ?></span>
                     </div>
@@ -228,6 +235,10 @@ if (!$aduan) {
 
                         <h4>Keterangan Aduan</h4>
                         <p><?php echo nl2br(htmlspecialchars($aduan['keterangan'])); ?></p>
+                        
+                        <!-- Status ditempatkan di sini dengan ukuran lebih besar -->
+                        <h4>Status Aduan Saat Ini</h4>
+                        <p><span class="status-badge large <?php echo strtolower(htmlspecialchars($aduan['status'])); ?>"><?php echo htmlspecialchars($aduan['status']); ?></span></p>
                     </div>
                 </div>
 
