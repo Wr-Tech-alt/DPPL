@@ -263,7 +263,7 @@ $conn->close();
             <div class="content-header">
                 <h2>Selamat Datang Kembali, <?php echo $user_name; ?>!</h2>
                 <p class="greeting-text">Ada keluhan yang ingin Anda sampaikan hari ini?</p>
-                <a href="#" class="btn btn-primary"><i class="fas fa-plus"></i> Buat Pengaduan Baru</a>
+                <a href="../pengadu/adu_form_tambah.php" class="btn btn-primary"><i class="fas fa-plus"></i> Buat Pengaduan Baru</a>
             </div>
 
             <div class="dashboard-content">
