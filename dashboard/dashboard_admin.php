@@ -257,7 +257,6 @@ if ($conn) {
                             <?php endif; ?>
                         </a>
                     </div>
-                    <a href="#"><i class="fas fa-comment"></i></a>
                     <div class="user-profile">
                         <img src="../assets/img/admin_pfp.jpg" alt="User Avatar" class="avatar">
                         <span><?php echo htmlspecialchars($user_name); ?></span>
@@ -273,25 +272,25 @@ if ($conn) {
             <section style="padding: 20px; background-color: #f0f2f5;">
                 <div class="dashboard-card-row">
                     
-                    <div class="dashboard-card card-masuk" onclick="alert('Aduan Masuk: <?php echo $total_masuk; ?>')">
+                    <div class="dashboard-card card-masuk">
                         <div class="icon"><i class="fas fa-inbox"></i></div>
                         <div class="value"><?php echo $total_masuk; ?></div>
                         <div class="label">Aduan Masuk</div>
                     </div>
                     
-                    <div class="dashboard-card card-diproses" onclick="alert('Aduan Diproses: <?php echo $total_diproses; ?>')">
+                    <div class="dashboard-card card-diproses">
                         <div class="icon"><i class="fas fa-sync-alt"></i></div>
                         <div class="value"><?php echo $total_diproses; ?></div>
                         <div class="label">Aduan Diproses</div>
                     </div>
                     
-                    <div class="dashboard-card card-selesai" onclick="alert('Aduan Selesai: <?php echo $total_selesai; ?>')">
+                    <div class="dashboard-card card-selesai">
                         <div class="icon"><i class="fas fa-check-circle"></i></div>
                         <div class="value"><?php echo $total_selesai; ?></div>
                         <div class="label">Aduan Selesai</div>
                     </div>
                     
-                    <div class="dashboard-card card-total" onclick="alert('Total Aduan: <?php echo $total_aduan; ?>')">
+                    <div class="dashboard-card card-total">
                         <div class="icon"><i class="fas fa-clipboard-list"></i></div>
                         <div class="value"><?php echo $total_aduan; ?></div>
                         <div class="label">Total Aduan</div>
