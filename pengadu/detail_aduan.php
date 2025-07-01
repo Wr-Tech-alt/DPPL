@@ -116,7 +116,7 @@ if (!$aduan) {
         .detail-body {
             display: grid;
             /* Perubahan di sini: lebar kolom gambar dibatasi */
-            grid-template-columns: 350px 1fr;
+            grid-template-columns: 150px 1fr;
             gap: 2rem;
         }
         .detail-image-container img {
