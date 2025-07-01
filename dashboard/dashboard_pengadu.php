@@ -243,7 +243,7 @@ $conn->close();
             </div>
             <nav class="sidebar-nav">
                 <ul>
-                    <li class="active"><a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li class="active"><a href="#../dashboard/dashboard_pengadu.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
                     <li><a href="../pengadu/riwayat_aduan.php"><i class="fas fa-clipboard-list"></i> Riwayat Pengaduan</a></li>
                     <li><a href="#"><i class="fas fa-cog"></i> Pengaturan Akun</a></li>
                 </ul>

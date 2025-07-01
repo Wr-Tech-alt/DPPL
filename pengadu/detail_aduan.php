@@ -200,9 +200,8 @@ if (!$aduan) {
             </div>
             <nav class="sidebar-nav">
                 <ul>
-                    <li><a href="dashboard_pengadu.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                    <li><a href="form_tambahaduan.php"><i class="fas fa-plus-circle"></i> Buat Aduan Baru</a></li>
-                    <li class="active"><a href="riwayat_aduan.php"><i class="fas fa-clipboard-list"></i> Riwayat Pengaduan</a></li>
+                    <li><a href="../dashboard/dashboard_pengadu.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li class="active"><a href="../pengadu/riwayat_aduan.php"><i class="fas fa-clipboard-list"></i> Riwayat Pengaduan</a></li>
                     <li><a href="#"><i class="fas fa-cog"></i> Pengaturan Akun</a></li>
                 </ul>
             </nav>
