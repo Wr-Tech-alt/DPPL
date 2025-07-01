@@ -97,7 +97,7 @@ if ($result) {
           </tr>
         </thead>
         <tbody>
-          <?php foreach ($pengaduans as $aduan): ?>
+          <?php foreach ($pengaduan as $aduan): ?>
           <tr>
             <td><?php echo htmlspecialchars($aduan['idpengaduan']); ?></td>
             <td><?php echo htmlspecialchars($aduan['nama_pengadu']); ?></td>
