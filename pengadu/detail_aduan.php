@@ -115,13 +115,15 @@ if (!$aduan) {
         
         .detail-body {
             display: grid;
-            grid-template-columns: 1fr 2fr;
+            /* Perubahan di sini: lebar kolom gambar dibatasi */
+            grid-template-columns: 350px 1fr;
             gap: 2rem;
         }
         .detail-image-container img {
             width: 100%;
             border-radius: 12px;
             height: auto;
+            border: 1px solid var(--border-color);
         }
         .detail-info h4 {
             margin-top: 0;
@@ -174,9 +176,14 @@ if (!$aduan) {
             .main-content { margin-left: 0; width: 100%; }
             .hamburger-menu { display: block; }
             .navbar { justify-content: flex-start; gap: 15px; }
+            .detail-body {
+                /* Mengubah layout grid untuk layar sedang */
+                grid-template-columns: 250px 1fr;
+            }
         }
         @media (max-width: 768px) {
             .detail-body {
+                /* Kembali ke satu kolom untuk layar kecil */
                 grid-template-columns: 1fr;
             }
         }
