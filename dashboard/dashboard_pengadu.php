@@ -238,7 +238,6 @@ $conn->close();
                 <div class="user-avatar"><?php echo strtoupper(substr($user_name, 0, 1)); ?></div>
                 <div class="user-info">
                     <span class="user-name"><?php echo $user_name; ?></span>
-                    <span class="user-email"><?php echo $user_email; ?></span>
                 </div>
             </div>
             <nav class="sidebar-nav">
