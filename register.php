@@ -15,16 +15,21 @@ if (isset($_POST['register_submit'])) {
     $nama_pengguna = $conn->real_escape_string($_POST['nama_pengguna']);
     $password = $conn->real_escape_string($_POST['password']);
     $confirm_password = $conn->real_escape_string($_POST['confirm_password']);
-    // Atribut yang dihilangkan: nama_lengkap, nim_nip, notelp
+    $nim = $conn->real_escape_string($_POST['nim']); // Ambil nilai NIM dari form
 
     // Validasi input
-    if (empty($nama_pengguna) || empty($password) || empty($confirm_password)) {
-        $error_message = "Nama Pengguna, Password, dan Konfirmasi Password harus diisi.";
+    if (empty($nama_pengguna) || empty($password) || empty($confirm_password) || empty($nim)) {
+        $error_message = "Nama Pengguna, Password, Konfirmasi Password, dan NIM harus diisi.";
     } elseif ($password !== $confirm_password) {
         $error_message = "Konfirmasi password tidak cocok.";
     } elseif (strlen($password) < 6) {
         $error_message = "Password minimal 6 karakter.";
-    } else {
+    } elseif (!preg_match("/^[0-9]+$/", $nim)) { // Validasi NIM hanya angka
+        $error_message = "NIM hanya boleh mengandung angka.";
+    } elseif (strlen($nim) < 5 || strlen($nim) > 20) { // Contoh batasan panjang NIM
+        $error_message = "Panjang NIM tidak valid. (Contoh: 5-20 digit)";
+    }
+    else {
         // Peran default untuk semua pendaftar dari halaman ini
         $assigned_role = 'Pengadu'; 
 
@@ -37,23 +42,34 @@ if (isset($_POST['register_submit'])) {
         if ($result_check_user->num_rows > 0) {
             $error_message = "Nama pengguna sudah ada. Silakan pilih nama pengguna lain.";
         } else {
-            // Password tetap plain text sesuai permintaan
-            $hashed_password = $password; 
+            // Periksa apakah NIM sudah terdaftar (menggunakan kolom 'email' untuk NIM)
+            $stmt_check_nim = $conn->prepare("SELECT iduser FROM pengguna WHERE email = ?");
+            $stmt_check_nim->bind_param("s", $nim);
+            $stmt_check_nim->execute();
+            $result_check_nim = $stmt_check_nim->get_result();
 
-            // Masukkan data pengguna baru ke database
-            // Kolom yang dimasukkan: nama, password, Role
-            $stmt_insert = $conn->prepare("INSERT INTO pengguna (nama, password, Role) VALUES (?, ?, ?)");
-            $stmt_insert->bind_param("sss", $nama_pengguna, $hashed_password, $assigned_role);
-
-            if ($stmt_insert->execute()) {
-                $success_message = "Pendaftaran berhasil! Silakan login.";
-                // Opsional: Redirect ke halaman login setelah sukses
-                // header("Location: index.php?registration=success");
-                // exit();
+            if ($result_check_nim->num_rows > 0) {
+                $error_message = "NIM ini sudah terdaftar. Silakan login atau hubungi admin.";
             } else {
-                $error_message = "Terjadi kesalahan saat mendaftar: " . $stmt_insert->error;
+                // Password tetap plain text sesuai permintaan
+                $hashed_password = $password; 
+
+                // Masukkan data pengguna baru ke database
+                // Kolom yang dimasukkan: nama, password, Role, dan email (untuk NIM)
+                $stmt_insert = $conn->prepare("INSERT INTO pengguna (nama, password, Role, email) VALUES (?, ?, ?, ?)");
+                $stmt_insert->bind_param("ssss", $nama_pengguna, $hashed_password, $assigned_role, $nim);
+
+                if ($stmt_insert->execute()) {
+                    $success_message = "Pendaftaran berhasil! Silakan login.";
+                    // Opsional: Redirect ke halaman login setelah sukses
+                    // header("Location: index.php?registration=success");
+                    // exit();
+                } else {
+                    $error_message = "Terjadi kesalahan saat mendaftar: " . $stmt_insert->error;
+                }
+                $stmt_insert->close();
             }
-            $stmt_insert->close();
+            $stmt_check_nim->close();
         }
         $stmt_check_user->close();
     }
@@ -156,6 +172,10 @@ if (isset($_POST['register_submit'])) {
                     <div class="input-group">
                         <i class="fa-solid fa-lock"></i>
                         <input type="password" placeholder="Konfirmasi Password" name="confirm_password" required>
+                    </div>
+                    <div class="input-group">
+                        <i class="fa-solid fa-id-card"></i> <!-- Menggunakan ikon ID card untuk NIM -->
+                        <input type="text" placeholder="NIM" name="nim" required value="<?php echo isset($_POST['nim']) ? htmlspecialchars($_POST['nim']) : ''; ?>">
                     </div>
                     
                     <button type="submit" class="login-button" name="register_submit">Daftar</button>
