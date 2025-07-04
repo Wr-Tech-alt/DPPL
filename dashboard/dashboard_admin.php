@@ -496,7 +496,7 @@ if ($conn) {
                                 <span class="status-badge">${complaint.status}</span>
                             </div>
                             <div class="content">${truncatedContent}</div>
-                            <a href="../admin/aduan/aduan_detail.php?id=${complaint.idpengaduan}" class="detail-link">Lihat Detail</a>
+                            <a href="../admin/aduan/adu_detail.php?id=${complaint.idpengaduan}" class="detail-link">Lihat Detail</a>
                         </div>
                     `;
                     pendingListContainer.append(itemHtml);
