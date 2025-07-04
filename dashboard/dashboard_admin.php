@@ -327,7 +327,6 @@ if ($conn) {
                     <li><a href="#" class="nav-link active"><i class="fas fa-th-large"></i> Dashboard</a></li>
                     <li><a href="../admin/aduan/adu_tampil.php" class="nav-link"><i class="fas fa-boxes"></i> Aduan Fasilitas</a></li>
                     <li><a href="../admin/pengadu/pengadu_lihat.php" class="nav-link"><i class="fas fa-users"></i> Pengadu </a></li>
-                    <li><a href="../admin/pengguna/pengguna_lihat.php" class="nav-link"><i class="fas fa-users"></i> Pengguna </a></li>
                 </ul>
                 <div class="nav-section-title">SETTINGS</div>
                 <ul>
