@@ -63,7 +63,7 @@ if ($conn) {
 
     // --- NEW: Fetch Pending Complaints for the list ---
     // Mengambil 5 aduan pending terbaru
-    $query_pending_list = mysqli_query($conn, "SELECT idpengaduan, tgl_pengaduan, isi_laporan, status FROM pengaduan WHERE status = 'Pending' ORDER BY tgl_pengaduan DESC LIMIT 5"); 
+    $query_pending_list = mysqli_query($conn, "SELECT idpengaduan, waktu_aduan, isi_laporan, status FROM pengaduan WHERE status = 'Pending' ORDER BY waktu_aduan DESC LIMIT 5"); 
     $pending_complaints_array = [];
     while ($row = mysqli_fetch_assoc($query_pending_list)) {
         $pending_complaints_array[] = $row;
@@ -492,7 +492,7 @@ if ($conn) {
                     const itemHtml = `
                         <div class="pending-complaint-item">
                             <div class="header-info">
-                                <div class="date">${new Date(complaint.tgl_pengaduan).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                                <div class="date">${new Date(complaint.waktu_aduan).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
                                 <span class="status-badge">${complaint.status}</span>
                             </div>
                             <div class="content">${truncatedContent}</div>
