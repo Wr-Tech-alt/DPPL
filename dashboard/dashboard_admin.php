@@ -63,7 +63,7 @@ if ($conn) {
 
     // --- NEW: Fetch Pending Complaints for the list ---
     // Mengambil 5 aduan pending terbaru
-    $query_pending_list = mysqli_query($conn, "SELECT idpengaduan, waktu_aduan, judul, status FROM pengaduan WHERE status = 'Pending' ORDER BY waktu_aduan DESC LIMIT 5"); 
+    $query_pending_list = mysqli_query($conn, "SELECT id_pengaduan, tgl_pengaduan, isi_laporan, status FROM pengaduan WHERE status = 'Pending' ORDER BY tgl_pengaduan DESC LIMIT 5"); 
     $pending_complaints_array = [];
     while ($row = mysqli_fetch_assoc($query_pending_list)) {
         $pending_complaints_array[] = $row;
@@ -253,15 +253,32 @@ if ($conn) {
             max-width: calc(50% - 20px);
             box-sizing: border-box;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex; /* Use flexbox for internal layout */
+            flex-direction: column; /* Stack elements vertically */
+            justify-content: space-between; /* Push detail link to bottom */
         }
         .pending-complaint-item:hover {
             transform: translateY(-3px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
+        .pending-complaint-item .header-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
         .pending-complaint-item .date {
             font-size: 0.85em;
             color: #888;
-            margin-bottom: 5px;
+        }
+        .pending-complaint-item .status-badge {
+            background-color: #f44336; /* Red for Pending */
+            color: white;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 0.75em;
+            font-weight: bold;
+            text-transform: uppercase;
         }
         .pending-complaint-item .content {
             font-size: 1em;
@@ -272,6 +289,7 @@ if ($conn) {
             display: -webkit-box;
             -webkit-line-clamp: 3; /* Limit to 3 lines */
             -webkit-box-orient: vertical;
+            flex-grow: 1; /* Allow content to take available space */
         }
         .pending-complaint-item .detail-link {
             display: inline-block;
@@ -282,6 +300,7 @@ if ($conn) {
             text-decoration: none;
             font-size: 0.9em;
             transition: background-color 0.2s ease;
+            align-self: flex-start; /* Align link to the start if column */
         }
         .pending-complaint-item .detail-link:hover {
             background-color: #1976D2;
@@ -465,16 +484,19 @@ if ($conn) {
             if (pendingComplaints.length > 0) {
                 pendingListContainer.empty(); // Clear "Tidak ada aduan pending" message if data exists
                 pendingComplaints.forEach(complaint => {
-                    // Truncate judul if it's too long
-                    const truncatedContent = complaint.judul.length > 100 
-                        ? complaint.judul.substring(0, 100) + '...' 
-                        : complaint.judul;
+                    // Truncate isi_laporan if it's too long
+                    const truncatedContent = complaint.isi_laporan.length > 100 
+                        ? complaint.isi_laporan.substring(0, 100) + '...' 
+                        : complaint.isi_laporan;
 
                     const itemHtml = `
                         <div class="pending-complaint-item">
-                            <div class="date">${new Date(complaint.waktu_aduan).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                            <div class="header-info">
+                                <div class="date">${new Date(complaint.tgl_pengaduan).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                                <span class="status-badge">${complaint.status}</span>
+                            </div>
                             <div class="content">${truncatedContent}</div>
-                            <a href="../admin/aduan/aduan_detail.php?id=${complaint.idpengaduan}" class="detail-link">Lihat Detail</a>
+                            <a href="../admin/aduan/aduan_detail.php?id=${complaint.id_pengaduan}" class="detail-link">Lihat Detail</a>
                         </div>
                     `;
                     pendingListContainer.append(itemHtml);
