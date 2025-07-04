@@ -273,7 +273,7 @@ $conn->close();
                     </div>
                     <div class="form-group">
                         <label for="lokasi">Lokasi Kejadian</label>
-                        <input type="text" id="lokasi" name="lokasi" placeholder="Contoh: Jl. Merdeka No. 10, RT 01/RW 02" required>
+                        <input type="text" id="lokasi" name="lokasi" placeholder="Contoh: Lantai 5 / ERP 3" required>
                     </div>
                     <div class="form-group">
                         <label for="keterangan">Keterangan Lengkap</label>
