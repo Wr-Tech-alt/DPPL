@@ -254,7 +254,7 @@ $conn->close();
                 <form action="adu_form_tambah.php" method="POST" enctype="multipart/form-data">
                     <div class="form-group">
                         <label for="judul">Judul Aduan</label>
-                        <input type="text" id="judul" name="judul" placeholder="Contoh: Lampu jalan mati di depan rumah" required>
+                        <input type="text" id="judul" name="judul" placeholder="Contoh: Bangku Patah / Rusak" required>
                     </div>
                     <div class="form-group">
                         <label for="idjenis">Jenis Aduan</label>
