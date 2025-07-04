@@ -305,13 +305,24 @@ $conn->close();
                         }
 
                         // Inisialisasi kamera
-                        navigator.mediaDevices.getUserMedia({ video: true })
-                            .then(function (stream) {
-                                document.getElementById('preview').srcObject = stream;
-                            })
-                            .catch(function (error) {
-                                console.error("Kamera tidak bisa diakses:", error);
-                            });
+                        navigator.mediaDevices.getUserMedia({
+                            video: { facingMode: { exact: "environment" } }
+                        })
+                        .then(function (stream) {
+                            document.getElementById('preview').srcObject = stream;
+                        })
+                        .catch(function (error) {
+                        // Fallback ke kamera depan
+                        console.warn("Kamera belakang tidak tersedia, gunakan kamera depan:", error);
+                         return navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                        })
+                        .then(function (stream) {
+                        if (stream) {
+                            document.getElementById('preview').srcObject = stream;
+                        }
+                        });
+
+
 
                         // Ambil foto dari kamera
                         function takePhoto() {
