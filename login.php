@@ -12,27 +12,27 @@ $error_message = '';
 
 if (isset($_POST['login_submit'])) {
     // DEBUGGING - Keep these for now until login works perfectly
-    echo "DEBUG: Form submitted.<br>";
-    echo "DEBUG: POST Data: <pre>";
-    var_dump($_POST);
-    echo "</pre>";
+    // echo "DEBUG: Form submitted.<br>";
+    // echo "DEBUG: POST Data: <pre>";
+    // var_dump($_POST);
+    // echo "</pre>";
 
     // MODIFIKASI: Menggunakan $koneksi
     $nama = $conn->real_escape_string($_POST['nama']);
     $password = $conn->real_escape_string($_POST['password']);
 
-    echo "DEBUG: Cleaned Nama: " . htmlspecialchars($nama) . "<br>";
+    // echo "DEBUG: Cleaned Nama: " . htmlspecialchars($nama) . "<br>";
     // IMPORTANT: Do NOT echo raw password, even for debug in production.
     // echo "DEBUG: Cleaned Password (not raw): " . htmlspecialchars($password) . "<br>"; 
 
     if (empty($nama) || empty($password)) {
         $error_message = "Nama Pengguna dan Password harus diisi.";
-        echo "DEBUG: Error: " . htmlspecialchars($error_message) . "<br>";
+        // echo "DEBUG: Error: " . htmlspecialchars($error_message) . "<br>";
     } else {
         // MODIFIKASI: Menggunakan $koneksi
         $stmt = $conn->prepare("SELECT iduser, Role, password, nama FROM pengguna WHERE nama = ?");
         if ($stmt === FALSE) {
-            echo "DEBUG: Prepare failed: (" . $koneksi->errno . ") " . $koneksi->error . "<br>";
+            // echo "DEBUG: Prepare failed: (" . $conn->errno . ") " . $conn->error . "<br>"; // Changed $koneksi to $conn
             $error_message = "Terjadi kesalahan saat menyiapkan query.";
         } else {
             // MODIFIKASI: Menggunakan $koneksi
@@ -40,14 +40,14 @@ if (isset($_POST['login_submit'])) {
             $stmt->execute();
             $result = $stmt->get_result();
 
-            echo "DEBUG: Query executed.<br>";
-            echo "DEBUG: Number of rows found: " . $result->num_rows . "<br>";
+            // echo "DEBUG: Query executed.<br>";
+            // echo "DEBUG: Number of rows found: " . $result->num_rows . "<br>";
 
             if ($result->num_rows === 1) {
                 $user = $result->fetch_assoc();
-                echo "DEBUG: User data from DB: <pre>";
-                var_dump($user);
-                echo "</pre>";
+                // echo "DEBUG: User data from DB: <pre>";
+                // var_dump($user);
+                // echo "</pre>";
 
                 // --- IMPORTANT SECURITY NOTE ---
                 // If your passwords in the database are HASHED (e.g., using password_hash()),
@@ -55,36 +55,36 @@ if (isset($_POST['login_submit'])) {
                 // if (password_verify($password, $user['password'])) {
                 // If your passwords are still PLAIN TEXT (for testing only, NOT recommended for production):
                 if ($password === $user['password']) { // Plain text password comparison (for now)
-                    echo "DEBUG: Password comparison: MATCH<br>";
+                    // echo "DEBUG: Password comparison: MATCH<br>";
                     $_SESSION['loggedin'] = true;
                     $_SESSION['iduser'] = $user['iduser'];
                     $_SESSION['nama'] = $user['nama'];
                     $_SESSION['role'] = $user['Role'];
 
-                    echo "DEBUG: Session variables set: <pre>";
-                    var_dump($_SESSION);
-                    echo "</pre>";
+                    // echo "DEBUG: Session variables set: <pre>";
+                    // var_dump($_SESSION);
+                    // echo "</pre>";
 
                     $redirect_url = '';
-                    echo "DEBUG: User Role: " . $user['Role'] . "<br>";
+                    // echo "DEBUG: User Role: " . $user['Role'] . "<br>";
 
                     // Redirect based on role
                     switch ($user['Role']) {
                         case 'Admin':
                             $redirect_url = "dashboard/dashboard_admin.php"; // Path relative to login.php
-                            echo "DEBUG: Redirecting Admin to: " . $redirect_url . "<br>";
+                            // echo "DEBUG: Redirecting Admin to: " . $redirect_url . "<br>";
                             break;
                         case 'Petugas':
                             $redirect_url = "dashboard/dashboard_petugas.php"; // Path relative to login.php
-                            echo "DEBUG: Redirecting Petugas to: " . $redirect_url . "<br>";
+                            // echo "DEBUG: Redirecting Petugas to: " . $redirect_url . "<br>";
                             break;
                         case 'Pengadu':
                             $redirect_url = "dashboard/dashboard_pengadu.php"; // Path relative to login.php
-                            echo "DEBUG: Redirecting Pengadu to: " . $redirect_url . "<br>";
+                            // echo "DEBUG: Redirecting Pengadu to: " . $redirect_url . "<br>";
                             break;
                         default:
                             $redirect_url = "index.php"; // Fallback if role is unknown or invalid
-                            echo "DEBUG: Redirecting unknown role '" . $user['Role'] . "' to: " . $redirect_url . "<br>";
+                            // echo "DEBUG: Redirecting unknown role '" . $user['Role'] . "' to: " . $redirect_url . "<br>";
                             break;
                     }
                     
@@ -92,24 +92,26 @@ if (isset($_POST['login_submit'])) {
                         header("Location: " . $redirect_url);
                         exit(); // Crucial: Stop script execution after redirect
                     } else {
-                        echo "DEBUG: Redirect URL is empty, cannot redirect.<br>";
+                        // echo "DEBUG: Redirect URL is empty, cannot redirect.<br>";
                         $error_message = "Role pengguna tidak valid atau URL redirect tidak ditemukan.";
                     }
 
                 } else {
-                    $error_message = "Password salah.";
-                    echo "DEBUG: Password comparison: NO MATCH. Error: " . htmlspecialchars($error_message) . "<br>";
+                    // Generic error message for security
+                    $error_message = "Nama Pengguna atau Password salah.";
+                    // echo "DEBUG: Password comparison: NO MATCH. Error: " . htmlspecialchars($error_message) . "<br>";
                 }
             } else {
-                $error_message = "Nama Pengguna tidak ditemukan.";
-                echo "DEBUG: User not found. Error: " . htmlspecialchars($error_message) . "<br>";
+                // Generic error message for security
+                $error_message = "Nama Pengguna atau Password salah.";
+                // echo "DEBUG: User not found. Error: " . htmlspecialchars($error_message) . "<br>";
             }
 
             $stmt->close();
         }
     }
     // MODIFIKASI: Menggunakan $koneksi
-    $koneksi->close(); 
+    $conn->close(); // Changed $koneksi to $conn
 }
 ?>
 
