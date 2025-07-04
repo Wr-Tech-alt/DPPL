@@ -95,8 +95,33 @@ if (isset($_POST['register_submit'])) {
         .back-to-login:hover {
             color: #0056b3;
         }
+        /* Penyesuaian gaya untuk input agar terlihat rapi seperti di halaman login */
+        .input-group {
+            display: flex; /* Gunakan flexbox untuk perataan */
+            align-items: center; /* Pusatkan item secara vertikal */
+            margin-bottom: 20px; /* Spasi antar grup input */
+            background-color: rgba(255, 255, 255, 0.1); /* Latar belakang transparan putih */
+            border-radius: 5px; /* Sudut membulat */
+            padding: 5px 15px; /* Padding di dalam grup input */
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); /* Bayangan dalam halus */
+        }
         .input-group i {
-            color: #ccc; /* Warna ikon */
+            margin-right: 15px; /* Spasi antara ikon dan input */
+            color: #fff; /* Warna ikon putih */
+            font-size: 1.2em;
+        }
+        .input-group input {
+            flex-grow: 1; /* Input mengambil sisa ruang */
+            background: none; /* Latar belakang transparan */
+            border: none; /* Tanpa border */
+            outline: none; /* Tanpa outline saat fokus */
+            color: #fff; /* Warna teks putih */
+            padding: 10px 0; /* Padding vertikal untuk teks input */
+            font-size: 1em;
+            height: auto; /* Biarkan padding menentukan tinggi */
+        }
+        .input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.7); /* Warna placeholder lebih terang */
         }
     </style>
 </head>
@@ -133,20 +158,6 @@ if (isset($_POST['register_submit'])) {
                         <input type="password" placeholder="Konfirmasi Password" name="confirm_password" required>
                     </div>
                     
-                    <!-- Atribut yang dihilangkan dari form: Nama Lengkap, NIM/NIP, Nomor Telepon -->
-                    <!-- <div class="input-group">
-                        <i class="fa-solid fa-address-card"></i>
-                        <input type="text" placeholder="Nama Lengkap" name="nama_lengkap" required value="<?php echo isset($_POST['nama_lengkap']) ? htmlspecialchars($_POST['nama_lengkap']) : ''; ?>">
-                    </div>
-                    <div class="input-group">
-                        <i class="fa-solid fa-id-card"></i>
-                        <input type="text" placeholder="NIM / NIP" name="nim_nip" required value="<?php echo isset($_POST['nim_nip']) ? htmlspecialchars($_POST['nim_nip']) : ''; ?>">
-                    </div>
-                    <div class="input-group">
-                        <i class="fa-solid fa-phone"></i>
-                        <input type="text" placeholder="Nomor Telepon" name="notelp" required value="<?php echo isset($_POST['notelp']) ? htmlspecialchars($_POST['notelp']) : ''; ?>">
-                    </div> -->
-
                     <button type="submit" class="login-button" name="register_submit">Daftar</button>
                 </form>
 
