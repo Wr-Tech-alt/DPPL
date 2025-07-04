@@ -63,7 +63,7 @@ if ($conn) {
 
     // --- NEW: Fetch Pending Complaints for the list ---
     // Mengambil 5 aduan pending terbaru
-    $query_pending_list = mysqli_query($conn, "SELECT idpengaduan, waktu_aduan, isi_laporan, status FROM pengaduan WHERE status = 'Pending' ORDER BY waktu_aduan DESC LIMIT 5"); 
+    $query_pending_list = mysqli_query($conn, "SELECT idpengaduan, waktu_aduan, judul, status FROM pengaduan WHERE status = 'Pending' ORDER BY waktu_aduan DESC LIMIT 5"); 
     $pending_complaints_array = [];
     while ($row = mysqli_fetch_assoc($query_pending_list)) {
         $pending_complaints_array[] = $row;
@@ -465,10 +465,10 @@ if ($conn) {
             if (pendingComplaints.length > 0) {
                 pendingListContainer.empty(); // Clear "Tidak ada aduan pending" message if data exists
                 pendingComplaints.forEach(complaint => {
-                    // Truncate isi_laporan if it's too long
-                    const truncatedContent = complaint.isi_laporan.length > 100 
-                        ? complaint.isi_laporan.substring(0, 100) + '...' 
-                        : complaint.isi_laporan;
+                    // Truncate judul if it's too long
+                    const truncatedContent = complaint.judul.length > 100 
+                        ? complaint.judul.substring(0, 100) + '...' 
+                        : complaint.judul;
 
                     const itemHtml = `
                         <div class="pending-complaint-item">
