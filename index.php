@@ -11,105 +11,66 @@ require_once 'inc/koneksi.php'; // Path is correct as 'inc' is a direct child of
 $error_message = '';
 
 if (isset($_POST['login_submit'])) {
-    // DEBUGGING - Keep these for now until login works perfectly
-    echo "DEBUG: Form submitted.<br>";
-    echo "DEBUG: POST Data: <pre>";
-    var_dump($_POST);
-    echo "</pre>";
-
-    // MODIFIKASI: Menggunakan $koneksi
     $nama = $conn->real_escape_string($_POST['nama']);
     $password = $conn->real_escape_string($_POST['password']);
 
-    echo "DEBUG: Cleaned Nama: " . htmlspecialchars($nama) . "<br>";
-    // IMPORTANT: Do NOT echo raw password, even for debug in production.
-    // echo "DEBUG: Cleaned Password (not raw): " . htmlspecialchars($password) . "<br>"; 
-
     if (empty($nama) || empty($password)) {
         $error_message = "Nama Pengguna dan Password harus diisi.";
-        echo "DEBUG: Error: " . htmlspecialchars($error_message) . "<br>";
     } else {
-        // MODIFIKASI: Menggunakan $koneksi
         $stmt = $conn->prepare("SELECT iduser, Role, password, nama FROM pengguna WHERE nama = ?");
         if ($stmt === FALSE) {
-            echo "DEBUG: Prepare failed: (" . $koneksi->errno . ") " . $koneksi->error . "<br>";
             $error_message = "Terjadi kesalahan saat menyiapkan query.";
         } else {
-            // MODIFIKASI: Menggunakan $koneksi
             $stmt->bind_param("s", $nama);
             $stmt->execute();
             $result = $stmt->get_result();
 
-            echo "DEBUG: Query executed.<br>";
-            echo "DEBUG: Number of rows found: " . $result->num_rows . "<br>";
-
             if ($result->num_rows === 1) {
                 $user = $result->fetch_assoc();
-                echo "DEBUG: User data from DB: <pre>";
-                var_dump($user);
-                echo "</pre>";
-
-                // --- IMPORTANT SECURITY NOTE ---
-                // If your passwords in the database are HASHED (e.g., using password_hash()),
-                // you MUST use password_verify() to check them:
+                
+                // Jika password di database di-hash, gunakan password_verify()
                 // if (password_verify($password, $user['password'])) {
-                // If your passwords are still PLAIN TEXT (for testing only, NOT recommended for production):
-                if ($password === $user['password']) { // Plain text password comparison (for now)
-                    echo "DEBUG: Password comparison: MATCH<br>";
+                // Untuk saat ini, asumsikan password masih plain text (HARAP GANTI DENGAN HASHING DI PRODUKSI!)
+                if ($password === $user['password']) { 
                     $_SESSION['loggedin'] = true;
                     $_SESSION['iduser'] = $user['iduser'];
                     $_SESSION['nama'] = $user['nama'];
                     $_SESSION['role'] = $user['Role'];
 
-                    echo "DEBUG: Session variables set: <pre>";
-                    var_dump($_SESSION);
-                    echo "</pre>";
-
                     $redirect_url = '';
-                    echo "DEBUG: User Role: " . $user['Role'] . "<br>";
-
-                    // Redirect based on role
                     switch ($user['Role']) {
                         case 'Admin':
-                            $redirect_url = "dashboard/dashboard_admin.php"; // Path relative to login.php
-                            echo "DEBUG: Redirecting Admin to: " . $redirect_url . "<br>";
+                            $redirect_url = "dashboard/dashboard_admin.php";
                             break;
                         case 'Petugas':
-                            $redirect_url = "dashboard/dashboard_petugas.php"; // Path relative to login.php
-                            echo "DEBUG: Redirecting Petugas to: " . $redirect_url . "<br>";
+                            $redirect_url = "dashboard/dashboard_petugas.php";
                             break;
                         case 'Pengadu':
-                            $redirect_url = "dashboard/dashboard_pengadu.php"; // Path relative to login.php
-                            echo "DEBUG: Redirecting Pengadu to: " . $redirect_url . "<br>";
+                            $redirect_url = "dashboard/dashboard_pengadu.php";
                             break;
                         default:
-                            $redirect_url = "index.php"; // Fallback if role is unknown or invalid
-                            echo "DEBUG: Redirecting unknown role '" . $user['Role'] . "' to: " . $redirect_url . "<br>";
+                            $redirect_url = "index.php";
                             break;
                     }
                     
                     if (!empty($redirect_url)) {
                         header("Location: " . $redirect_url);
-                        exit(); // Crucial: Stop script execution after redirect
+                        exit();
                     } else {
-                        echo "DEBUG: Redirect URL is empty, cannot redirect.<br>";
                         $error_message = "Role pengguna tidak valid atau URL redirect tidak ditemukan.";
                     }
 
                 } else {
-                    $error_message = "Password salah.";
-                    echo "DEBUG: Password comparison: NO MATCH. Error: " . htmlspecialchars($error_message) . "<br>";
+                    $error_message = "Nama Pengguna atau Password salah.";
                 }
             } else {
-                $error_message = "Nama Pengguna tidak ditemukan.";
-                echo "DEBUG: User not found. Error: " . htmlspecialchars($error_message) . "<br>";
+                $error_message = "Nama Pengguna atau Password salah.";
             }
 
             $stmt->close();
         }
     }
-    // MODIFIKASI: Menggunakan $koneksi
-    $koneksi->close(); 
+    $conn->close();
 }
 ?>
 
@@ -122,6 +83,59 @@ if (isset($_POST['login_submit'])) {
     <link rel="stylesheet" href="assets/css/login.css"> 
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Tambahan style untuk tombol register */
+        .register-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        .register-link:hover {
+            color: #0056b3;
+        }
+        /* Menyesuaikan lebar tab agar pas */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+        }
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 12px 25px;
+            color: rgba(255,255,255,0.7);
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            outline: none;
+        }
+        .tab-button.active {
+            color: #fff;
+            font-weight: 600;
+        }
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #fff;
+        }
+        .form-content {
+            display: none;
+            padding: 20px 0;
+        }
+        .form-content.active {
+            display: block;
+        }
+    </style>
 </head>
 <body>
     <div class="login-wrapper">
@@ -129,7 +143,7 @@ if (isset($_POST['login_submit'])) {
             <div class="login-form-panel">
                 <div class="tabs">
                     <button class="tab-button active" data-tab="login">Login</button>
-                    <button class="tab-button" data-tab="info">Sistem SiCepu</button>
+                    <button class="tab-button" data-tab="info">Tentang SiCepu</button>
                 </div>
 
                 <div id="login-form-content" class="form-content active">
@@ -162,7 +176,7 @@ if (isset($_POST['login_submit'])) {
 
                         <button type="submit" class="login-button" name="login_submit">Log In</button>
                     </form>
-
+                    <a href="register.php" class="register-link">Belum punya akun? Daftar di sini</a>
                 </div>
 
                 <div id="info-form-content" class="form-content">

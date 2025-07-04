@@ -20,10 +20,10 @@ $user_role = $_SESSION['role'];
 
 // --- FETCH DATA FOR DASHBOARD CARDS AND NOTIFICATIONS ---
 // Pastikan koneksi database berhasil sebelum melakukan query
-// Variabel $koneksi akan ada jika koneksi di inc/koneksi.php berhasil
+// Variabel $koneksi akan ada jika koneksi di inc/koneksi.php berhasil kon
 if ($conn) {
     // Query untuk mendapatkan jumlah aduan masuk
-    $query_masuk = mysqli_query($conn, "SELECT COUNT(*) AS total FROM pengaduan WHERE status = 'Masuk'");
+    $query_masuk = mysqli_query($conn, "SELECT COUNT(*) AS total FROM pengaduan WHERE status = 'Pending'");
     $data_masuk = mysqli_fetch_assoc($query_masuk);
     $total_masuk = $data_masuk['total'];
 
@@ -61,6 +61,15 @@ if ($conn) {
     // Jumlah aduan baru untuk notifikasi
     $new_complaints_count = $total_masuk;
 
+    // --- NEW: Fetch Pending Complaints for the list ---
+    // Mengambil 5 aduan pending terbaru
+    $query_pending_list = mysqli_query($conn, "SELECT idpengaduan, waktu_aduan, judul, status FROM pengaduan WHERE status = 'Pending' ORDER BY waktu_aduan DESC LIMIT 5"); 
+    $pending_complaints_array = [];
+    while ($row = mysqli_fetch_assoc($query_pending_list)) {
+        $pending_complaints_array[] = $row;
+    }
+    $pending_complaints_json = json_encode($pending_complaints_array);
+
 } else {
     // Jika koneksi gagal, set semua total ke 0
     $total_masuk = 0;
@@ -69,6 +78,7 @@ if ($conn) {
     $total_aduan = 0;
     $chart_data = json_encode([]);
     $new_complaints_count = 0;
+    $pending_complaints_json = json_encode([]); // Initialize empty array for pending complaints
     // Pesan debug jika koneksi gagal sudah diinc/koneksi.php
     // echo "<div style='color: red; text-align: center; padding: 10px; background-color: #ffe0e0;'>DEBUG: Koneksi database GAGAL! Pastikan MySQL Running dan database 'sicepu' sudah ada.</div>";
 }
@@ -134,21 +144,25 @@ if ($conn) {
         .dashboard-card.card-selesai .icon { color: #4CAF50; } /* Green */
         .dashboard-card.card-total .icon { color: #2196F3; } /* Blue */
 
-        /* Chart container styling */
+        /* Chart container styling - Dikecilkan */
         .chart-container {
             background-color: #fff;
             padding: 25px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            min-height: 350px;
+            min-height: 250px; /* Reduced min-height */
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            margin-bottom: 30px; /* Added margin-bottom */
+            max-width: 600px; /* Make it smaller horizontally */
+            margin-left: auto; /* Center the chart */
+            margin-right: auto; /* Center the chart */
         }
         #morris-donut-chart {
             width: 100%;
-            height: 300px;
+            height: 200px; /* Reduced height */
             /* Flex properties for centering within chart-container */
             display: flex;
             align-items: center;
@@ -211,6 +225,94 @@ if ($conn) {
             }
         }
 
+        /* Styles for Pending Complaints List */
+        .pending-complaints-section {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-top: 30px;
+        }
+        .pending-complaints-section h3 {
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+        .pending-complaints-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center; /* Center items if they don't fill the row */
+        }
+        .pending-complaint-item {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            flex: 1 1 calc(50% - 20px); /* Two columns on larger screens */
+            max-width: calc(50% - 20px);
+            box-sizing: border-box;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex; /* Use flexbox for internal layout */
+            flex-direction: column; /* Stack elements vertically */
+            justify-content: space-between; /* Push detail link to bottom */
+        }
+        .pending-complaint-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .pending-complaint-item .header-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .pending-complaint-item .date {
+            font-size: 0.85em;
+            color: #888;
+        }
+        .pending-complaint-item .status-badge {
+            background-color: #f44336; /* Red for Pending */
+            color: white;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 0.75em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .pending-complaint-item .content {
+            font-size: 1em;
+            color: #555;
+            margin-bottom: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3; /* Limit to 3 lines */
+            -webkit-box-orient: vertical;
+            flex-grow: 1; /* Allow content to take available space */
+        }
+        .pending-complaint-item .detail-link {
+            display: inline-block;
+            background-color: #2196F3;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 0.9em;
+            transition: background-color 0.2s ease;
+            align-self: flex-start; /* Align link to the start if column */
+        }
+        .pending-complaint-item .detail-link:hover {
+            background-color: #1976D2;
+        }
+
+        @media (max-width: 768px) {
+            .pending-complaint-item {
+                flex: 1 1 100%; /* Single column on smaller screens */
+                max-width: 100%;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -225,7 +327,6 @@ if ($conn) {
                     <li><a href="#" class="nav-link active"><i class="fas fa-th-large"></i> Dashboard</a></li>
                     <li><a href="../admin/aduan/adu_tampil.php" class="nav-link"><i class="fas fa-boxes"></i> Aduan Fasilitas</a></li>
                     <li><a href="../admin/pengadu/pengadu_lihat.php" class="nav-link"><i class="fas fa-users"></i> Pengadu </a></li>
-                    <li><a href="../admin/pengguna/pengguna_lihat.php" class="nav-link"><i class="fas fa-users"></i> Pengguna </a></li>
                 </ul>
                 <div class="nav-section-title">SETTINGS</div>
                 <ul>
@@ -301,6 +402,19 @@ if ($conn) {
                     <h3 style="margin-bottom: 20px; color: #333;">Distribusi Status Aduan</h3>
                     <div id="morris-donut-chart"></div>
                 </div>
+
+                <!-- New Section for Pending Complaints List -->
+                <div class="pending-complaints-section">
+                    <h3>Aduan Pending Terbaru</h3>
+                    <div id="pending-complaints-list" class="pending-complaints-list">
+                        <!-- Pending complaints will be loaded here by JavaScript -->
+                        <?php if (empty($pending_complaints_array)): ?>
+                            <p style="text-align: center; color: #666;">Tidak ada aduan pending saat ini.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <!-- End New Section -->
+
             </section>
 
         </main>
@@ -361,6 +475,32 @@ if ($conn) {
                     confirmButtonText: 'Oke'
                 });
             });
+
+            // --- NEW: Load Pending Complaints List ---
+            const pendingComplaints = <?php echo $pending_complaints_json; ?>;
+            const pendingListContainer = $('#pending-complaints-list');
+
+            if (pendingComplaints.length > 0) {
+                pendingListContainer.empty(); // Clear "Tidak ada aduan pending" message if data exists
+                pendingComplaints.forEach(complaint => {
+                    // Truncate judul if it's too long
+                    const truncatedContent = complaint.judul.length > 100 
+                        ? complaint.judul.substring(0, 100) + '...' 
+                        : complaint.judul;
+
+                    const itemHtml = `
+                        <div class="pending-complaint-item">
+                            <div class="header-info">
+                                <div class="date">${new Date(complaint.waktu_aduan).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                                <span class="status-badge">${complaint.status}</span>
+                            </div>
+                            <div class="content">${truncatedContent}</div>
+                            <a href="../admin/aduan/adu_detail.php?id=${complaint.idpengaduan}" class="detail-link">Lihat Detail</a>
+                        </div>
+                    `;
+                    pendingListContainer.append(itemHtml);
+                });
+            }
         });
     </script>
 </body>

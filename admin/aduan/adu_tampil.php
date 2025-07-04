@@ -111,7 +111,6 @@ if ($result) {
                     <li><a href="../../dashboard/dashboard_admin.php" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
                     <li><a href="#" class="nav-link active"><i class="fas fa-boxes"></i> Aduan Fasilitas</a></li>
                     <li><a href="../pengadu/pengadu_lihat.php" class="nav-link"><i class="fas fa-users"></i> Pengadu </a></li>
-                    <li><a href="../pengguna/pengguna_lihat.php" class="nav-link"><i class="fas fa-users"></i> Pengguna </a></li>
                 </ul>
                 <div class="nav-section-title">SETTINGS</div>
                 <ul>
@@ -188,7 +187,7 @@ if ($result) {
                             </td>
                             <td>
                                 <a href="adu_detail.php?id=<?php echo $aduan['idpengaduan']; ?>" title="Lihat Detail"><i class="fas fa-eye action-icon"></i></a>
-                                <a href="adu_edit.php?id=<?php echo $aduan['idpengaduan']; ?>" title="Edit"><i class="fas fa-edit action-icon"></i></a>
+                                <a href="adu_detail.php?id=<?php echo $aduan['idpengaduan']; ?>" title="Edit"><i class="fas fa-edit action-icon"></i></a>
                                 <a href="adu_hapus.php?id=<?php echo $aduan['idpengaduan']; ?>" title="Hapus" onclick="return confirm('Apakah Anda yakin ingin menghapus aduan ini?');"><i class="fas fa-trash action-icon"></i></a>
                             </td>
                           </tr>

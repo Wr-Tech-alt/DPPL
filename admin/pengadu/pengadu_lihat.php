@@ -306,7 +306,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                     <li><a href="../../dashboard/dashboard_admin.php" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
                     <li><a href="#" class="nav-link"><i class="fas fa-boxes"></i> Aduan Fasilitas</a></li>
                     <li><a href="pengadu_lihat.php" class="nav-link active"><i class="fas fa-users"></i> Pengadu</a></li>
-                    <li><a href="../pengguna/pengguna_lihat.php" class="nav-link"><i class="fas fa-users"></i> Pengguna</a></li>
                 </ul>
                 <div class="nav-section-title">SETTINGS</div>
                 <ul>
@@ -386,9 +385,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                                             <div class="action-buttons">
                                                 <a href="pengadu_ubah.php?id=<?php echo htmlspecialchars($user['iduser']); ?>" class="action-button edit" title="Ubah Pengadu">
                                                     <i class="fas fa-edit"></i> Ubah
-                                                </a>
-                                                <a href="pengadu_detail.php?id=<?php echo htmlspecialchars($user['iduser']); ?>" class="action-button detail" title="Detail Pengadu">
-                                                    <i class="fas fa-info-circle"></i> Detail
                                                 </a>
                                                 <a href="pengadu_hapus.php?id=<?php echo htmlspecialchars($user['iduser']); ?>" class="action-button delete" title="Hapus Pengadu">
                                                     <i class="fas fa-trash-alt"></i> Hapus
