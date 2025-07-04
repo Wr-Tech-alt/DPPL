@@ -1,4 +1,4 @@
 <?php
-echo "Hello, PHP is working!";
+echo "Hello, kontol PHP is working!";
 phpinfo(); // Ini akan menampilkan informasi PHP
 ?>
