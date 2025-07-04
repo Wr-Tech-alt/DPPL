@@ -38,7 +38,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
                                                 p.status,
                                                 p.gambar,
                                                 p.author,
-                                                u.nama_user AS nama_pengadu,
+                                                u.nama AS nama_pengadu,
                                                 j.nama_jenis AS jenis_aduan
                                             FROM 
                                                 pengaduan p
