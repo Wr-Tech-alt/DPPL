@@ -188,7 +188,7 @@ if ($result) {
                             </td>
                             <td>
                                 <a href="adu_detail.php?id=<?php echo $aduan['idpengaduan']; ?>" title="Lihat Detail"><i class="fas fa-eye action-icon"></i></a>
-                                <a href="adu_edit.php?id=<?php echo $aduan['idpengaduan']; ?>" title="Edit"><i class="fas fa-edit action-icon"></i></a>
+                                <a href="adu_detailt.php?id=<?php echo $aduan['idpengaduan']; ?>" title="Edit"><i class="fas fa-edit action-icon"></i></a>
                                 <a href="adu_hapus.php?id=<?php echo $aduan['idpengaduan']; ?>" title="Hapus" onclick="return confirm('Apakah Anda yakin ingin menghapus aduan ini?');"><i class="fas fa-trash action-icon"></i></a>
                             </td>
                           </tr>
