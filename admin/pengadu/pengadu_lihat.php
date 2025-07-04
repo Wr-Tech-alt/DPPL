@@ -386,9 +386,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                                                 <a href="pengadu_ubah.php?id=<?php echo htmlspecialchars($user['iduser']); ?>" class="action-button edit" title="Ubah Pengadu">
                                                     <i class="fas fa-edit"></i> Ubah
                                                 </a>
-                                                <a href="pengadu_detail.php?id=<?php echo htmlspecialchars($user['iduser']); ?>" class="action-button detail" title="Detail Pengadu">
-                                                    <i class="fas fa-info-circle"></i> Detail
-                                                </a>
+                                                
                                                 <a href="pengadu_hapus.php?id=<?php echo htmlspecialchars($user['iduser']); ?>" class="action-button delete" title="Hapus Pengadu">
                                                     <i class="fas fa-trash-alt"></i> Hapus
                                                 </a>
