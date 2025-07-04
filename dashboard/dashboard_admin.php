@@ -20,7 +20,7 @@ $user_role = $_SESSION['role'];
 
 // --- FETCH DATA FOR DASHBOARD CARDS AND NOTIFICATIONS ---
 // Pastikan koneksi database berhasil sebelum melakukan query
-// Variabel $koneksi akan ada jika koneksi di inc/koneksi.php berhasil
+// Variabel $koneksi akan ada jika koneksi di inc/koneksi.php berhasil kon
 if ($conn) {
     // Query untuk mendapatkan jumlah aduan masuk
     $query_masuk = mysqli_query($conn, "SELECT COUNT(*) AS total FROM pengaduan WHERE status = 'Masuk'");
