@@ -23,7 +23,7 @@ $user_role = $_SESSION['role'];
 // Variabel $koneksi akan ada jika koneksi di inc/koneksi.php berhasil kon
 if ($conn) {
     // Query untuk mendapatkan jumlah aduan masuk
-    $query_masuk = mysqli_query($conn, "SELECT COUNT(*) AS total FROM pengaduan WHERE status = 'Masuk'");
+    $query_masuk = mysqli_query($conn, "SELECT COUNT(*) AS total FROM pengaduan WHERE status = 'Pending'");
     $data_masuk = mysqli_fetch_assoc($query_masuk);
     $total_masuk = $data_masuk['total'];
 
