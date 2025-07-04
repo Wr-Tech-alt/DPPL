@@ -15,99 +15,47 @@ if (isset($_POST['register_submit'])) {
     $nama_pengguna = $conn->real_escape_string($_POST['nama_pengguna']);
     $password = $conn->real_escape_string($_POST['password']);
     $confirm_password = $conn->real_escape_string($_POST['confirm_password']);
-    $nama_lengkap = $conn->real_escape_string($_POST['nama_lengkap']);
-    $nim_nip = $conn->real_escape_string($_POST['nim_nip']); // Ini akan menjadi NIM/NIP
-    $notelp = $conn->real_escape_string($_POST['notelp']);
+    // Atribut yang dihilangkan: nama_lengkap, nim_nip, notelp
 
     // Validasi input
-    if (empty($nama_pengguna) || empty($password) || empty($confirm_password) || empty($nama_lengkap) || empty($nim_nip) || empty($notelp)) {
-        $error_message = "Semua kolom harus diisi.";
+    if (empty($nama_pengguna) || empty($password) || empty($confirm_password)) {
+        $error_message = "Nama Pengguna, Password, dan Konfirmasi Password harus diisi.";
     } elseif ($password !== $confirm_password) {
         $error_message = "Konfirmasi password tidak cocok.";
     } elseif (strlen($password) < 6) {
         $error_message = "Password minimal 6 karakter.";
-    } elseif (!preg_match("/^[0-9]+$/", $nim_nip)) { // Validasi NIM/NIP hanya angka
-        $error_message = "NIM/NIP hanya boleh mengandung angka.";
-    } elseif (strlen($nim_nip) < 5 || strlen($nim_nip) > 20) { // Contoh batasan panjang NIM/NIP
-        $error_message = "Panjang NIM/NIP tidak valid.";
     } else {
-        // --- Validasi NIM/NIP di Database (Konseptual) ---
-        // Anda perlu memiliki tabel terpisah (misalnya 'valid_identitas_kampus')
-        // yang berisi daftar NIM/NIP yang valid dan peran mereka.
-        // Contoh:
-        // CREATE TABLE valid_identitas_kampus (
-        //     identitas_id VARCHAR(20) PRIMARY KEY,
-        //     nama VARCHAR(100),
-        //     role_kampus VARCHAR(50) -- 'Mahasiswa', 'Dosen', 'Staf'
-        // );
+        // Peran default untuk semua pendaftar dari halaman ini
+        $assigned_role = 'Pengadu'; 
 
-        // Query untuk memeriksa apakah NIM/NIP ada di daftar valid
-        // Untuk tujuan demo, kita asumsikan NIM/NIP valid jika tidak kosong dan hanya angka.
-        // DI LINGKUNGAN PRODUKSI, ANDA HARUS MENGHUBUNGKAN INI KE DATABASE NIM/NIP ASLI KAMPUS.
-        $is_nim_nip_valid = false;
-        $assigned_role = 'Pengadu'; // Default role jika validasi NIM/NIP berhasil
+        // Periksa apakah nama pengguna sudah ada
+        $stmt_check_user = $conn->prepare("SELECT iduser FROM pengguna WHERE nama = ?");
+        $stmt_check_user->bind_param("s", $nama_pengguna);
+        $stmt_check_user->execute();
+        $result_check_user = $stmt_check_user->get_result();
 
-        // Contoh sederhana: Jika NIM/NIP dimulai dengan '123' itu mahasiswa, jika '456' itu dosen
-        if (substr($nim_nip, 0, 3) === '123') {
-            $is_nim_nip_valid = true;
-            $assigned_role = 'Pengadu'; // Peran untuk mahasiswa
-        } elseif (substr($nim_nip, 0, 3) === '456') {
-            $is_nim_nip_valid = true;
-            $assigned_role = 'Pengadu'; // Peran untuk dosen/staf
+        if ($result_check_user->num_rows > 0) {
+            $error_message = "Nama pengguna sudah ada. Silakan pilih nama pengguna lain.";
         } else {
-            $error_message = "NIM/NIP tidak terdaftar atau tidak valid. Silakan hubungi admin kampus.";
-        }
-        
-        // Jika Anda memiliki tabel valid_identitas_kampus, kodenya akan seperti ini:
-        /*
-        $stmt_check_nim_nip = $conn->prepare("SELECT role_kampus FROM valid_identitas_kampus WHERE identitas_id = ?");
-        $stmt_check_nim_nip->bind_param("s", $nim_nip);
-        $stmt_check_nim_nip->execute();
-        $result_nim_nip = $stmt_check_nim_nip->get_result();
+            // Password tetap plain text sesuai permintaan
+            $hashed_password = $password; 
 
-        if ($result_nim_nip->num_rows > 0) {
-            $nim_nip_data = $result_nim_nip->fetch_assoc();
-            $is_nim_nip_valid = true;
-            // Anda bisa menyesuaikan peran di sini jika perlu, misal:
-            // $assigned_role = ($nim_nip_data['role_kampus'] === 'Mahasiswa') ? 'Pengadu' : 'Petugas';
-            $assigned_role = 'Pengadu'; // Untuk semua yang mendaftar dari halaman ini
-        } else {
-            $error_message = "NIM/NIP tidak terdaftar atau tidak valid. Silakan hubungi admin kampus.";
-        }
-        $stmt_check_nim_nip->close();
-        */
+            // Masukkan data pengguna baru ke database
+            // Kolom yang dimasukkan: nama, password, Role
+            $stmt_insert = $conn->prepare("INSERT INTO pengguna (nama, password, Role) VALUES (?, ?, ?)");
+            $stmt_insert->bind_param("sss", $nama_pengguna, $hashed_password, $assigned_role);
 
-        if ($is_nim_nip_valid) {
-            // Periksa apakah nama pengguna sudah ada
-            $stmt_check_user = $conn->prepare("SELECT iduser FROM pengguna WHERE nama = ?");
-            $stmt_check_user->bind_param("s", $nama_pengguna);
-            $stmt_check_user->execute();
-            $result_check_user = $stmt_check_user->get_result();
-
-            if ($result_check_user->num_rows > 0) {
-                $error_message = "Nama pengguna sudah ada. Silakan pilih nama pengguna lain.";
+            if ($stmt_insert->execute()) {
+                $success_message = "Pendaftaran berhasil! Silakan login.";
+                // Opsional: Redirect ke halaman login setelah sukses
+                // header("Location: index.php?registration=success");
+                // exit();
             } else {
-                // Hash password sebelum menyimpan (SANGAT DIREKOMENDASIKAN UNTUK PRODUKSI)
-                // $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                $hashed_password = $password; // Untuk demo, masih plain text
-
-                // Masukkan data pengguna baru ke database
-                $stmt_insert = $conn->prepare("INSERT INTO pengguna (nama, password, Role, nama_lengkap, nim_nip, notelp) VALUES (?, ?, ?, ?, ?, ?)");
-                // Perhatikan: 'Pengadu' adalah role default untuk pendaftar dari halaman ini
-                $stmt_insert->bind_param("ssssss", $nama_pengguna, $hashed_password, $assigned_role, $nama_lengkap, $nim_nip, $notelp);
-
-                if ($stmt_insert->execute()) {
-                    $success_message = "Pendaftaran berhasil! Silakan login.";
-                    // Opsional: Redirect ke halaman login setelah sukses
-                    // header("Location: index.php?registration=success");
-                    // exit();
-                } else {
-                    $error_message = "Terjadi kesalahan saat mendaftar: " . $stmt_insert->error;
-                }
-                $stmt_insert->close();
+                $error_message = "Terjadi kesalahan saat mendaftar: " . $stmt_insert->error;
             }
-            $stmt_check_user->close();
+            $stmt_insert->close();
         }
+        $stmt_check_user->close();
     }
     $conn->close();
 }
@@ -184,7 +132,9 @@ if (isset($_POST['register_submit'])) {
                         <i class="fa-solid fa-lock"></i>
                         <input type="password" placeholder="Konfirmasi Password" name="confirm_password" required>
                     </div>
-                    <div class="input-group">
+                    
+                    <!-- Atribut yang dihilangkan dari form: Nama Lengkap, NIM/NIP, Nomor Telepon -->
+                    <!-- <div class="input-group">
                         <i class="fa-solid fa-address-card"></i>
                         <input type="text" placeholder="Nama Lengkap" name="nama_lengkap" required value="<?php echo isset($_POST['nama_lengkap']) ? htmlspecialchars($_POST['nama_lengkap']) : ''; ?>">
                     </div>
@@ -195,7 +145,7 @@ if (isset($_POST['register_submit'])) {
                     <div class="input-group">
                         <i class="fa-solid fa-phone"></i>
                         <input type="text" placeholder="Nomor Telepon" name="notelp" required value="<?php echo isset($_POST['notelp']) ? htmlspecialchars($_POST['notelp']) : ''; ?>">
-                    </div>
+                    </div> -->
 
                     <button type="submit" class="login-button" name="register_submit">Daftar</button>
                 </form>
