@@ -45,7 +45,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
                                             LEFT JOIN 
                                                 pengguna u ON p.iduser = u.iduser
                                             LEFT JOIN 
-                                                tb_jenis_aduan j ON p.idjenis = j.id_jenis
+                                                jenis_pengaduan j ON p.idjenis = j.idjenis
                                             WHERE 
                                                 p.idpengaduan = '$id_pengaduan'");
         
