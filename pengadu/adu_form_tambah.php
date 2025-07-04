@@ -269,8 +269,11 @@ $conn->close();
                         <input type="file" id="gambar" name="gambar" accept="image/jpeg, image/png" required>
                     </div>
                     <div class="form-group">
-                        <label for="gambar">Ambil Foto Bukti (Kamera, maks. 2MB)</label>
-                        <input type="file" id="gambar" name="gambar" accept="image/*" capture="environment" required>
+                        <label for="gambar">Ambil Foto Bukti (dari Kamera)</label><br>
+                        <video id="preview" autoplay style="width: 100%; max-width: 300px;"></video><br>
+                        <button type="button" onclick="takePhoto()">Ambil Foto</button>
+                        <canvas id="snapshot" style="display: none;"></canvas>
+                        <input type="hidden" name="gambarData" id="gambarData">
                     </div>
 
                     <script>
