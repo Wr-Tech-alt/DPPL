@@ -46,32 +46,47 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // --- Proses Upload Gambar ---
     if (isset($_FILES['gambar']) && $_FILES['gambar']['error'] == 0) {
+        // Proses file upload
         $allowed_types = ['image/jpeg', 'image/png', 'image/jpg'];
-        $max_size = 2 * 1024 * 1024; // 2 MB
+        $max_size = 2 * 1024 * 1024; // 2MB
 
         if (in_array($_FILES['gambar']['type'], $allowed_types) && $_FILES['gambar']['size'] <= $max_size) {
-            // Buat nama file yang unik untuk menghindari penimpaan
             $file_extension = pathinfo($_FILES['gambar']['name'], PATHINFO_EXTENSION);
             $unique_filename = time() . '_' . uniqid() . '.' . $file_extension;
-            $upload_dir = __DIR__ . '/../uploads/'; // Pastikan folder 'uploads' ada di root project
-            
-            if (!is_dir($upload_dir)) {
-                mkdir($upload_dir, 0755, true);
-            }
-
+            $upload_dir = __DIR__ . '/../uploads/';
+            if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
             $upload_path = $upload_dir . $unique_filename;
 
             if (move_uploaded_file($_FILES['gambar']['tmp_name'], $upload_path)) {
-                $gambar_path = $unique_filename; // Simpan nama filenya saja di database
+                $gambar_path = $unique_filename;
             } else {
                 $errors[] = "Gagal memindahkan file yang diunggah.";
             }
         } else {
-            $errors[] = "File tidak valid. Pastikan formatnya (JPG, PNG) dan ukuran maksimal 2MB.";
+            $errors[] = "File tidak valid. Pastikan formatnya JPG/PNG dan maksimal 2MB.";
         }
+
+    } elseif (!empty($_POST['gambarData'])) {
+        // Proses data dari kamera (base64)
+        $data = $_POST['gambarData'];
+        $data = str_replace('data:image/png;base64,', '', $data);
+        $data = base64_decode($data);
+
+        $unique_filename = time() . '_' . uniqid() . '.png';
+        $upload_dir = __DIR__ . '/../uploads/';
+        if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
+        $upload_path = $upload_dir . $unique_filename;
+
+        if (file_put_contents($upload_path, $data)) {
+            $gambar_path = $unique_filename;
+        } else {
+            $errors[] = "Gagal menyimpan foto dari kamera.";
+        }
+
     } else {
-        $errors[] = "Gambar bukti wajib diunggah.";
+        $errors[] = "Silakan unggah gambar atau ambil foto.";
     }
+
 
     // --- Simpan ke Database jika tidak ada error ---
     if (empty($errors)) {
@@ -265,28 +280,40 @@ $conn->close();
                         <textarea id="keterangan" name="keterangan" rows="6" placeholder="Jelaskan detail aduan Anda di sini..." required></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="gambar">Unggah Gambar Bukti (JPG, PNG, maks. 2MB)</label>
-                        <input type="file" id="gambar" name="gambar" accept="image/jpeg, image/png" required>
+                        <label>Metode Unggah Gambar Bukti:</label><br>
+                        <input type="radio" name="metode" value="galeri" checked onclick="switchMetode('galeri')"> Dari Galeri
+                        <input type="radio" name="metode" value="kamera" onclick="switchMetode('kamera')"> Ambil dari Kamera
                     </div>
-                    <div class="form-group">
-                        <label for="gambar">Ambil Foto Bukti (dari Kamera)</label><br>
+
+                    <div class="form-group" id="galeriInput">
+                        <label for="gambar">Pilih dari Galeri (JPG, PNG, maks. 2MB)</label>
+                        <input type="file" id="gambar" name="gambar" accept="image/jpeg, image/png">
+                    </div>
+
+                    <div class="form-group" id="kameraInput" style="display: none;">
+                        <label for="kamera">Ambil Foto dengan Kamera</label><br>
                         <video id="preview" autoplay style="width: 100%; max-width: 300px;"></video><br>
                         <button type="button" onclick="takePhoto()">Ambil Foto</button>
                         <canvas id="snapshot" style="display: none;"></canvas>
                         <input type="hidden" name="gambarData" id="gambarData">
                     </div>
-
                     <script>
-                        // Akses kamera
+                        // Toggle input berdasarkan metode
+                        function switchMetode(mode) {
+                            document.getElementById('galeriInput').style.display = mode === 'galeri' ? 'block' : 'none';
+                            document.getElementById('kameraInput').style.display = mode === 'kamera' ? 'block' : 'none';
+                        }
+
+                        // Inisialisasi kamera
                         navigator.mediaDevices.getUserMedia({ video: true })
                             .then(function (stream) {
-                            document.getElementById('preview').srcObject = stream;
+                                document.getElementById('preview').srcObject = stream;
                             })
                             .catch(function (error) {
-                            console.error("Kamera tidak bisa diakses:", error);
+                                console.error("Kamera tidak bisa diakses:", error);
                             });
 
-                        // Ambil foto dari video
+                        // Ambil foto dari kamera
                         function takePhoto() {
                             var video = document.getElementById('preview');
                             var canvas = document.getElementById('snapshot');
@@ -294,16 +321,13 @@ $conn->close();
 
                             canvas.width = video.videoWidth;
                             canvas.height = video.videoHeight;
-
                             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
                             var imageData = canvas.toDataURL('image/png');
                             document.getElementById('gambarData').value = imageData;
-
                             alert("Foto berhasil diambil!");
                         }
                     </script>
-
 
                     <div class="form-group">
                         <button type="submit" class="btn-submit"><i class="fas fa-paper-plane"></i> Kirim Aduan</button>
