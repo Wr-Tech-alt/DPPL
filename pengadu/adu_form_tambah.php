@@ -269,6 +269,40 @@ $conn->close();
                         <input type="file" id="gambar" name="gambar" accept="image/jpeg, image/png" required>
                     </div>
                     <div class="form-group">
+                        <label for="gambar">Ambil Foto Bukti (Kamera, maks. 2MB)</label>
+                        <input type="file" id="gambar" name="gambar" accept="image/*" capture="environment" required>
+                    </div>
+
+                    <script>
+                        // Akses kamera
+                        navigator.mediaDevices.getUserMedia({ video: true })
+                            .then(function (stream) {
+                            document.getElementById('preview').srcObject = stream;
+                            })
+                            .catch(function (error) {
+                            console.error("Kamera tidak bisa diakses:", error);
+                            });
+
+                        // Ambil foto dari video
+                        function takePhoto() {
+                            var video = document.getElementById('preview');
+                            var canvas = document.getElementById('snapshot');
+                            var context = canvas.getContext('2d');
+
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+
+                            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                            var imageData = canvas.toDataURL('image/png');
+                            document.getElementById('gambarData').value = imageData;
+
+                            alert("Foto berhasil diambil!");
+                        }
+                    </script>
+
+
+                    <div class="form-group">
                         <button type="submit" class="btn-submit"><i class="fas fa-paper-plane"></i> Kirim Aduan</button>
                     </div>
                 </form>
