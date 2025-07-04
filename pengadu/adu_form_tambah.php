@@ -66,26 +66,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $errors[] = "File tidak valid. Pastikan formatnya JPG/PNG dan maksimal 2MB.";
         }
 
-    } elseif (!empty($_POST['gambarData'])) {
-        // Proses data dari kamera (base64)
-        $data = $_POST['gambarData'];
-        $data = str_replace('data:image/png;base64,', '', $data);
-        $data = base64_decode($data);
-
-        $unique_filename = time() . '_' . uniqid() . '.png';
-        $upload_dir = __DIR__ . '/../uploads/';
-        if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
-        $upload_path = $upload_dir . $unique_filename;
-
-        if (file_put_contents($upload_path, $data)) {
-            $gambar_path = $unique_filename;
-        } else {
-            $errors[] = "Gagal menyimpan foto dari kamera.";
-        }
-
     } else {
         $errors[] = "Silakan unggah gambar atau ambil foto.";
     }
+
 
 
     // --- Simpan ke Database jika tidak ada error ---
@@ -285,18 +269,25 @@ $conn->close();
                         <input type="radio" name="metode" value="kamera" onclick="switchMetode('kamera')"> Ambil dari Kamera
                     </div>
 
+                    <!-- Input Galeri -->
                     <div class="form-group" id="galeriInput">
-                        <label for="gambar">Pilih dari Galeri (JPG, PNG, maks. 2MB)</label>
-                        <input type="file" id="gambar" name="gambar" accept="image/jpeg, image/png">
+                        <label for="gambarGaleri">Pilih dari Galeri (JPG, PNG, maks. 2MB)</label>
+                        <input type="file" id="gambarGaleri" name="gambar" accept="image/jpeg, image/png">
                     </div>
 
+                    <!-- Input Kamera -->
                     <div class="form-group" id="kameraInput" style="display: none;">
-                        <label for="kamera">Ambil Foto dengan Kamera</label><br>
-                        <video id="preview" autoplay style="width: 100%; max-width: 300px;"></video><br>
-                        <button type="button" onclick="takePhoto()">Ambil Foto</button>
-                        <canvas id="snapshot" style="display: none;"></canvas>
-                        <input type="hidden" name="gambarData" id="gambarData">
+                        <label for="gambarKamera">Ambil Foto dengan Kamera</label>
+                        <input type="file" id="gambarKamera" name="gambar" accept="image/*" capture="environment">
                     </div>
+
+                    <script>
+                        function switchMetode(mode) {
+                            document.getElementById('galeriInput').style.display = mode === 'galeri' ? 'block' : 'none';
+                            document.getElementById('kameraInput').style.display = mode === 'kamera' ? 'block' : 'none';
+                        }
+                    </script>
+
                     <script>
                         // Toggle input berdasarkan metode
                         function switchMetode(mode) {
