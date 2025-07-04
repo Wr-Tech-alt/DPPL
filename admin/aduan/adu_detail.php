@@ -39,8 +39,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             } else {
                 $_SESSION['update_message'] = ['type' => 'error', 'text' => 'Gagal memperbarui status aduan: ' . mysqli_error($conn)];
             }
+        } elseif ($current_status === 'Diproses') { // Tambahkan logika untuk mengubah ke 'Selesai'
+            $update_query = mysqli_query($conn, "UPDATE pengaduan SET status = 'Selesai' WHERE idpengaduan = '$id_pengaduan_to_update'");
+            if ($update_query) {
+                $_SESSION['update_message'] = ['type' => 'success', 'text' => 'Status aduan berhasil diperbarui menjadi "Selesai".'];
+            } else {
+                $_SESSION['update_message'] = ['type' => 'error', 'text' => 'Gagal memperbarui status aduan: ' . mysqli_error($conn)];
+            }
         } else {
-            $_SESSION['update_message'] = ['type' => 'error', 'text' => 'Status aduan tidak dapat diperbarui karena bukan "Pending".'];
+            $_SESSION['update_message'] = ['type' => 'error', 'text' => 'Status aduan tidak dapat diperbarui karena bukan "Pending" atau "Diproses".'];
         }
     } else {
         $_SESSION['update_message'] = ['type' => 'error', 'text' => 'Anda tidak memiliki izin untuk melakukan tindakan ini atau ID aduan tidak valid.'];
@@ -300,14 +307,26 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
             <section class="content-header">
                 <h2>Detail Aduan</h2>
                 <?php 
-                // Tampilkan tombol update hanya jika peran adalah Admin dan status adalah Pending
-                if ($user_role === 'Admin' && $complaint_detail && $complaint_detail['status'] === 'Pending'): 
+                // Tampilkan tombol update hanya jika peran adalah Admin dan status adalah Pending atau Diproses
+                if ($user_role === 'Admin' && $complaint_detail && 
+                    ($complaint_detail['status'] === 'Pending' || $complaint_detail['status'] === 'Diproses')): 
+                    
+                    $button_text = '';
+                    $confirm_text = '';
+                    if ($complaint_detail['status'] === 'Pending') {
+                        $button_text = 'Update ke "Diproses"';
+                        $confirm_text = "Apakah Anda yakin ingin mengubah status aduan ini menjadi 'Diproses'?";
+                    } elseif ($complaint_detail['status'] === 'Diproses') {
+                        $button_text = 'Update ke "Selesai"';
+                        $confirm_text = "Apakah Anda yakin ingin mengubah status aduan ini menjadi 'Selesai'?";
+                    }
                 ?>
                     <form id="updateStatusForm" method="POST" action="">
                         <input type="hidden" name="idpengaduan" value="<?php echo htmlspecialchars($complaint_detail['idpengaduan']); ?>">
                         <input type="hidden" name="action" value="update_status">
-                        <button type="submit" class="update-status-button">
-                            <i class="fas fa-sync-alt"></i> Update ke "Diproses"
+                        <input type="hidden" name="current_status" value="<?php echo htmlspecialchars($complaint_detail['status']); ?>">
+                        <button type="submit" class="update-status-button" data-confirm-text="<?php echo htmlspecialchars($confirm_text); ?>">
+                            <i class="fas fa-sync-alt"></i> <?php echo $button_text; ?>
                         </button>
                     </form>
                 <?php endif; ?>
@@ -437,14 +456,16 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
                 e.preventDefault(); // Mencegah pengiriman formulir default
 
                 const form = this;
+                const confirmText = $(this).find('.update-status-button').data('confirm-text');
+
                 Swal.fire({
                     title: 'Konfirmasi Perubahan Status',
-                    text: "Apakah Anda yakin ingin mengubah status aduan ini menjadi 'Diproses'?",
+                    text: confirmText,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#3085d6',
                     cancelButtonColor: '#d33',
-                    confirmButtonText: 'Ya, Proses Sekarang!',
+                    confirmButtonText: 'Ya, Lanjutkan!',
                     cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
