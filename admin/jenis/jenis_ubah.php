@@ -107,12 +107,6 @@ if (isset($_POST['ubah_jenis_submit'])) {
     }
     $stmt_update->close();
 
-} else {
-    // If not a POST request and no ID is provided in GET
-    $_SESSION['form_message'] = "ID Jenis Pengaduan tidak ditemukan untuk diubah.";
-    $_SESSION['form_message_type'] = 'error';
-    header("Location: jenis_lihat.php");
-    exit();
 }
 
 // Close connection at the end of script
