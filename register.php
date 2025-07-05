@@ -175,7 +175,7 @@ if (isset($_POST['register_submit'])) {
                     </div>
                     <div class="input-group">
                         <i class="fa-solid fa-id-card"></i> <!-- Menggunakan ikon ID card untuk NIM -->
-                        <input type="text" placeholder="NIM" name="nim" required value="<?php echo isset($_POST['nim']) ? htmlspecialchars($_POST['nim']) : ''; ?>">
+                        <input type="email" placeholder="EMAIL" name="nim" required value="<?php echo isset($_POST['nim']) ? htmlspecialchars($_POST['nim']) : ''; ?>">
                     </div>
                     
                     <button type="submit" class="login-button" name="register_submit">Daftar</button>
