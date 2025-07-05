@@ -61,7 +61,7 @@ if (isset($_GET['id'])) {
 
 } 
 // Tangani permintaan POST untuk memperbarui data
-else if (isset($_POST['ubah_pengadu_submit'])) {
+if (isset($_POST['ubah_pengadu_submit'])) {
     $iduser_to_edit = intval($_POST['iduser']);
     $nama = $conn->real_escape_string($_POST['nama']);
     $email = $conn->real_escape_string($_POST['email']);
