@@ -1,120 +1,93 @@
 <?php
-require_once 'config.php'; //
-require_once 'user_agent_parser.php'; // pastikan ada getBrowser() & getPlatform()
+session_start();
 
-$error_message = '';
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username_form = $_POST['username'];
-    $password_form = $_POST['password'];
+// IMPORTANT: Ensure this is the very first thing to protect the page.
+// Assuming this file is located at admin/jenis/jenis_hapus.php
+// Path to login.php from here is ../../login.php
+if (!isset($_SESSION['loggedin']) || $_SESSION['role'] !== 'Admin') {
+    header("Location: ../../login.php");
+    exit();
+}
 
-    $stmt = $conn->prepare("SELECT * FROM user WHERE UserName = ?");
-    $stmt->bind_param("s", $username_form);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
-    $stmt->close();
+// Path to koneksi.php from admin/jenis/
+require_once '../../inc/koneksi.php';
 
-    if ($user && password_verify($password_form, $user['PassWord'])) {
-        session_regenerate_id(true); // Penting untuk keamanan
-        $currentSessionId = session_id(); // ID sesi baru setelah regenerate
+// Check database connection object ($conn)
+if (!isset($conn) || $conn->connect_error) {
+    die("Fatal Error: Database connection object (\$conn) is not available or connection failed. Please check ../../inc/koneksi.php. Error: " . $conn->connect_error);
+}
 
-        $userAgent = $_SERVER['HTTP_USER_AGENT'];
-        $currentBrowser = getBrowser($userAgent); //
-        $currentPlatform = getPlatform($userAgent); //
-        $currentUserIP = $_SERVER['REMOTE_ADDR'];
+// Initialize session messages for feedback to the user on the redirected page.
+if (!isset($_SESSION['form_message'])) {
+    $_SESSION['form_message'] = '';
+}
+if (!isset($_SESSION['form_message_type'])) {
+    $_SESSION['form_message_type'] = '';
+}
 
-        // Cek browser & OS terakhir dari DB
-        $lastBrowser = $user['LastBrowser'] ?? '';
-        $lastOS = $user['LastOS'] ?? '';
-        // Anda mungkin ingin menambahkan pengecekan IP juga di sini jika logikanya begitu
-        // $lastIP = $user['IPAddress'] ?? '';
-        $isFirstLogin = empty($lastBrowser) && empty($lastOS); // Anggap login pertama jika LastBrowser dan LastOS kosong
+// Check if an 'id' parameter (which is idjenis) is provided in the URL (GET request).
+if (isset($_GET['id'])) {
+    // Sanitize and validate the input ID as an integer.
+    $id_jenis_to_delete = intval($_GET['id']);
 
-        // Kondisi untuk meminta PIN: bukan login pertama DAN (browser beda ATAU OS beda)
-        // Anda bisa tambahkan pengecekan IP di sini: || $currentUserIP !== $lastIP
-        if (!$isFirstLogin && ($currentBrowser !== $lastBrowser || $currentPlatform !== $lastOS)) {
-            // Simpan semua informasi yang dibutuhkan untuk pin_auth.php
-            $_SESSION['pending_user_id'] = $user['IdUserPrimary'];
-            $_SESSION['pending_session_id'] = $currentSessionId; // Simpan ID sesi baru ini
-            $_SESSION['pending_ip'] = $currentUserIP;
-            $_SESSION['pending_browser'] = $currentBrowser;
-            $_SESSION['pending_platform'] = $currentPlatform;
-            $_SESSION['pending_username'] = $user['UserName']; // Simpan username jika perlu di pin_auth.php
-            $_SESSION['requested_page'] = 'dashboard.php'; //
-            $_SESSION['pin_attempt'] = 0; // reset percobaan PIN
+    // Prepare statement variable to ensure it is always closed.
+    $stmt_delete_jenis = null;
 
-            // PENTING: JANGAN UPDATE DATABASE DI SINI. Update dilakukan setelah PIN berhasil.
-            // HAPUS blok ini:
-            /*
-            $stmt = $conn->prepare("UPDATE user SET Session = ?, IPAddress = ? WHERE IdUserPrimary = ?");
-            $stmt->bind_param("ssi", $currentSessionId, $currentUserIP, $user['IdUserPrimary']);
-            $stmt->execute();
-            $stmt->close();
-            */
+    try {
+        // Prepare the SQL DELETE statement for the 'jenis_pengaduan' table.
+        $stmt_delete_jenis = $conn->prepare("DELETE FROM jenis_pengaduan WHERE idjenis = ?");
 
-            header("Location: pin_auth.php");
-            exit();
+        if ($stmt_delete_jenis === FALSE) {
+            throw new Exception("Error preparing statement to delete jenis pengaduan: " . $conn->error);
         }
 
-        // Lolos verifikasi (perangkat sama atau login pertama), update semua info dan masuk dashboard
-        // Untuk login pertama, LastBrowser dan LastOS akan diisi dengan info saat ini
-        $stmt = $conn->prepare("UPDATE user SET Session = ?, IPAddress = ?, LastBrowser = ?, LastOS = ? WHERE IdUserPrimary = ?"); //
-        $stmt->bind_param("ssssi", $currentSessionId, $currentUserIP, $currentBrowser, $currentPlatform, $user['IdUserPrimary']); //
-        $stmt->execute(); //
-        $stmt->close(); //
+        // Bind the integer parameter to the prepared statement.
+        $stmt_delete_jenis->bind_param("i", $id_jenis_to_delete);
 
-        // Set session utama setelah semua aman
-        $_SESSION['user_id'] = $user['IdUserPrimary']; //
-        $_SESSION['username'] = $user['UserName']; //
-        // Sebaiknya simpan juga IP, Browser, OS yang terverifikasi ke session untuk auth_check.php
-        $_SESSION['verified_ip'] = $currentUserIP;
-        $_SESSION['verified_browser'] = $currentBrowser;
-        $_SESSION['verified_os'] = $currentPlatform;
-        // $_SESSION['current_session_id_for_user'] = $currentSessionId; // Ini bisa jadi redundant jika auth_check.php membandingkan session_id() dengan DB
+        // Execute the delete statement.
+        if ($stmt_delete_jenis->execute()) {
+            // Check if any rows were affected by the deletion.
+            if ($stmt_delete_jenis->affected_rows > 0) {
+                $_SESSION['form_message'] = "Jenis pengaduan dengan ID " . htmlspecialchars($id_jenis_to_delete) . " berhasil dihapus!";
+                $_SESSION['form_message_type'] = 'success';
+            } else {
+                // If no rows were affected, it means the ID was not found.
+                $_SESSION['form_message'] = "Jenis pengaduan dengan ID " . htmlspecialchars($id_jenis_to_delete) . " tidak ditemukan atau sudah dihapus.";
+                $_SESSION['form_message_type'] = 'error';
+            }
+        } else {
+            // Handle execution errors.
+            throw new Exception("Gagal menghapus jenis pengaduan: " . $stmt_delete_jenis->error);
+        }
 
-        header("Location: dashboard.php"); //
-        exit();
-    } else {
-        $error_message = "Username atau password yang Anda masukkan salah!"; //
+    } catch (Exception $e) {
+        // Catch any exceptions thrown during the process and set an error message.
+        $_SESSION['form_message'] = "Terjadi kesalahan saat menghapus jenis pengaduan: " . $e->getMessage();
+        $_SESSION['form_message_type'] = 'error';
+    } finally {
+        // Ensure the prepared statement is closed, regardless of success or failure.
+        // Removed is_closed() check for broader PHP version compatibility.
+        if ($stmt_delete_jenis) {
+            $stmt_delete_jenis->close();
+        }
     }
+
+} else {
+    // If no 'id' parameter is provided, set an error message.
+    $_SESSION['form_message'] = "ID Jenis Pengaduan tidak diberikan untuk penghapusan.";
+    $_SESSION['form_message_type'] = 'error';
+}
+
+// Redirect back to the jenis_lihat.php page after processing.
+// The session messages will be displayed there using SweetAlert2.
+header("Location: jenis_lihat.php");
+exit();
+
+// Close the main database connection.
+if (isset($conn) && $conn instanceof mysqli) {
+    $conn->close();
 }
 ?>
-
-<!DOCTYPE html>
-<html>
-<head>
-    <link rel="stylesheet" href="style.css">
-    <title>Login Pengguna</title>
-    <style>
-        .error {
-            color: red;
-            border: 1px solid red;
-            padding: 10px;
-            margin-bottom: 15px;
-        }
-    </style>
-</head>
-<body>
-    <h2 class="form-title">🔐 Login Aplikasi</h2>
-
-<?php
-if (!empty($error_message)) {
-    echo "<div class='error'>" . htmlspecialchars($error_message) . "</div>";
-}
-?>
-
-<form method="post" action="login.php" class="form-container">
-    <label for="username" class="form-label">Username:</label>
-    <input type="text" name="username" id="username" class="form-input" required>
-
-    <label for="password" class="form-label">Password:</label>
-    <input type="password" name="password" id="password" class="form-input" required>
-
-    <input type="submit" value="Login" class="form-button">
-
-    <p class="form-footer">Belum punya akun? <a href="register.php">Daftar di sini</a></p>
-</form>
-
-</body>
-</html>

@@ -10,6 +10,9 @@ require_once 'inc/koneksi.php'; // Sertakan file koneksi database
 $success_message = '';
 $error_message = '';
 
+// ====================================================================
+// BAGIAN LOGIKA PHP UNTUK PROSES REGISTRASI
+// ====================================================================
 if (isset($_POST['register_submit'])) {
     // Escape string untuk mencegah SQL Injection
     $nama_pengguna = $conn->real_escape_string($_POST['nama_pengguna']);
@@ -24,12 +27,9 @@ if (isset($_POST['register_submit'])) {
         $error_message = "Konfirmasi password tidak cocok.";
     } elseif (strlen($password) < 6) {
         $error_message = "Password minimal 6 karakter.";
-    } elseif (!preg_match("/^[0-9]+$/", $nim)) { // Validasi NIM hanya angka
-        $error_message = "NIM hanya boleh mengandung angka.";
-    } elseif (strlen($nim) < 5 || strlen($nim) > 20) { // Contoh batasan panjang NIM
-        $error_message = "Panjang NIM tidak valid. (Contoh: 5-20 digit)";
-    }
-    else {
+    } elseif (!filter_var($nim, FILTER_VALIDATE_EMAIL)) { // Validasi NIM sebagai email
+        $error_message = "Format Email tidak valid. (Contoh: email@domain.com)";
+    } else {
         // Peran default untuk semua pendaftar dari halaman ini
         $assigned_role = 'Pengadu'; 
 
@@ -49,7 +49,8 @@ if (isset($_POST['register_submit'])) {
             $result_check_nim = $stmt_check_nim->get_result();
 
             if ($result_check_nim->num_rows > 0) {
-                $error_message = "NIM ini sudah terdaftar. Silakan login atau hubungi admin.";
+                $error_message = "Email ini sudah terdaftar. Silakan login atau hubungi admin.";
+                $redirect_to_login = true;
             } else {
                 // Password tetap plain text sesuai permintaan
                 $hashed_password = $password; 
@@ -61,6 +62,7 @@ if (isset($_POST['register_submit'])) {
 
                 if ($stmt_insert->execute()) {
                     $success_message = "Pendaftaran berhasil! Silakan login.";
+                    $redirect_to_login = true;
                     // Opsional: Redirect ke halaman login setelah sukses
                     // header("Location: index.php?registration=success");
                     // exit();
@@ -75,6 +77,9 @@ if (isset($_POST['register_submit'])) {
     }
     $conn->close();
 }
+// ====================================================================
+// AKHIR BAGIAN LOGIKA PHP
+// ====================================================================
 ?>
 
 <!DOCTYPE html>
@@ -82,24 +87,13 @@ if (isset($_POST['register_submit'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - SiCepu</title>
-    <link rel="stylesheet" href="assets/css/login.css"> <!-- Re-use login.css for consistent styling -->
+    <title>SICepu Regis</title>
+    <link rel="stylesheet" href="assets/css/login.css"> 
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Custom styles for register page if needed, or override login.css */
-        .login-container {
-            max-width: 500px; /* Adjust width for register form */
-        }
-        .login-form-panel {
-            padding: 40px;
-        }
-        .login-button {
-            width: 100%;
-            padding: 12px;
-            font-size: 1.1em;
-        }
-        .back-to-login {
+        /* Tambahan style untuk tombol register */
+        .register-link {
             display: block;
             text-align: center;
             margin-top: 20px;
@@ -108,36 +102,46 @@ if (isset($_POST['register_submit'])) {
             font-weight: 600;
             transition: color 0.3s ease;
         }
-        .back-to-login:hover {
+        .register-link:hover {
             color: #0056b3;
         }
-        /* Penyesuaian gaya untuk input agar terlihat rapi seperti di halaman login */
-        .input-group {
-            display: flex; /* Gunakan flexbox untuk perataan */
-            align-items: center; /* Pusatkan item secara vertikal */
-            margin-bottom: 20px; /* Spasi antar grup input */
-            background-color: rgba(255, 255, 255, 0.1); /* Latar belakang transparan putih */
-            border-radius: 5px; /* Sudut membulat */
-            padding: 5px 15px; /* Padding di dalam grup input */
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); /* Bayangan dalam halus */
+        /* Menyesuaikan lebar tab agar pas */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
         }
-        .input-group i {
-            margin-right: 15px; /* Spasi antara ikon dan input */
-            color: #fff; /* Warna ikon putih */
-            font-size: 1.2em;
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 12px 25px;
+            color: rgba(255,255,255,0.7);
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            outline: none;
         }
-        .input-group input {
-            flex-grow: 1; /* Input mengambil sisa ruang */
-            background: none; /* Latar belakang transparan */
-            border: none; /* Tanpa border */
-            outline: none; /* Tanpa outline saat fokus */
-            color: #fff; /* Warna teks putih */
-            padding: 10px 0; /* Padding vertikal untuk teks input */
-            font-size: 1em;
-            height: auto; /* Biarkan padding menentukan tinggi */
+        .tab-button.active {
+            color: #fff;
+            font-weight: 600;
         }
-        .input-group input::placeholder {
-            color: rgba(255, 255, 255, 0.7); /* Warna placeholder lebih terang */
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #fff;
+        }
+        .form-content {
+            display: none;
+            padding: 20px 0;
+        }
+        .form-content.active {
+            display: block;
         }
     </style>
 </head>
@@ -145,49 +149,90 @@ if (isset($_POST['register_submit'])) {
     <div class="login-wrapper">
         <div class="login-container">
             <div class="login-form-panel">
-                <h1>Daftar Akun Baru</h1>
-                <p>Silakan isi detail Anda untuk mendaftar</p>
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="login">Register</button>
+                    <button class="tab-button" data-tab="info">Tentang SiCepu</button>
+                </div>
 
-                <?php if (!empty($success_message)): ?>
-                    <div style="color: green; text-align: center; margin-bottom: 15px; background-color: rgba(0,255,0,0.2); padding: 10px; border-radius: 5px;">
-                        <?php echo htmlspecialchars($success_message); ?>
-                    </div>
-                <?php endif; ?>
+                <div id="login-form-content" class="form-content active">
+                    <h1>Salam Kenal!</h1>
+                    <p>Silahkan Buat Akun barumu</p>
 
-                <?php if (!empty($error_message)): ?>
-                    <div style="color: red; text-align: center; margin-bottom: 15px; background-color: rgba(255,0,0,0.2); padding: 10px; border-radius: 5px;">
-                        <?php echo htmlspecialchars($error_message); ?>
-                    </div>
-                <?php endif; ?>
+                    <?php if (!empty($success_message)): ?>
+                        <div style="color: white; text-align: center; margin-bottom: 15px; background-color: rgba(0,255,0,0.2); padding: 10px; border-radius: 5px;">
+                            <?php echo htmlspecialchars($success_message); ?>
+                        </div>
+                    <?php endif; ?>
 
-                <form action="" method="POST">
-                    <div class="input-group">
-                        <i class="fa-solid fa-user"></i>
-                        <input type="text" placeholder="Nama Pengguna (Username)" name="nama_pengguna" required value="<?php echo isset($_POST['nama_pengguna']) ? htmlspecialchars($_POST['nama_pengguna']) : ''; ?>">
-                    </div>
-                    <div class="input-group">
-                        <i class="fa-solid fa-lock"></i>
-                        <input type="password" placeholder="Password" name="password" required>
-                    </div>
-                    <div class="input-group">
-                        <i class="fa-solid fa-lock"></i>
-                        <input type="password" placeholder="Konfirmasi Password" name="confirm_password" required>
-                    </div>
-                    <div class="input-group">
-                        <i class="fa-solid fa-id-card"></i> <!-- Menggunakan ikon ID card untuk NIM -->
-                        <input type="text" placeholder="NIM" name="nim" required value="<?php echo isset($_POST['nim']) ? htmlspecialchars($_POST['nim']) : ''; ?>">
-                    </div>
-                    
-                    <button type="submit" class="login-button" name="register_submit">Daftar</button>
-                </form>
+                    <?php if (!empty($error_message)): ?>
+                        <div style="color: white; text-align: center; margin-bottom: 15px; background-color: rgba(255,0,0,0.2); padding: 10px; border-radius: 5px;">
+                            <?php echo htmlspecialchars($error_message); ?>
+                        </div>
+                    <?php endif; ?>
 
-                <a href="index.php" class="back-to-login">Sudah punya akun? Login di sini</a>
+                    <form action="" method="POST">
+                        <div class="input-group">
+                            <i class="fa-solid fa-user"></i>
+                            <input type="text" placeholder="Nama Pengguna (Username)" name="nama_pengguna" required value="<?php echo isset($_POST['nama_pengguna']) ? htmlspecialchars($_POST['nama_pengguna']) : ''; ?>">
+                        </div>
+                        <div class="input-group">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" placeholder="Password" name="password" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" placeholder="Konfirmasi Password" name="confirm_password" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fa-solid fa-envelope"></i> <!-- Menggunakan ikon ID card untuk NIM -->
+                            <input type="email" placeholder="Email Kampus" name="nim" required value="<?php echo isset($_POST['nim']) ? htmlspecialchars($_POST['nim']) : ''; ?>">
+                        </div>
+                        
+                        <button type="submit" class="login-button" name="register_submit">Daftar</button>
+                    </form>
+                    <a href="login.php" class="register-link">Udah punya akun? Login di sini</a>
+                </div>
+
+                <div id="info-form-content" class="form-content">
+                    <h1>Tentang SiCepu</h1>
+                    <p>Sistem Informasi Cepat Pengaduan Fasilitas Umum (SiCepu) adalah platform yang dirancang untuk memudahkan mahasiswa dalam melaporkan masalah terkait fasilitas kampus, seperti ac yang kurang sejuk, projektor bermasalah dan tidak menyala, kursi serta meja gabungan dalam keadaan tidak layak pakai dan segala hal lain yang mahasiswa temukan dalam kegiatan perkuliahan.</p>
+                    <p>Tujuan utama SiCepu adalah meningkatkan kualitas pelayanan mahasiswa dan responsibilitas kampus dalam menangani keluhan mahasiswanya. Kami berkomitmen untuk menciptakan lingkungan yang lebih baik dan nyaman bagi seluruh mahasiswa dalam menjalani kegiatan mereka dikampus.</p>
+                    <p style="text-align: center; margin-top: 30px; font-size: 0.9em; color: rgba(255,255,255,0.6);">
+                        &copy; 2025 SiCepu. All rights reserved.
+                    </p>
+                </div>
+
             </div>
             <div class="login-image-panel">
                 <img src="assets/img/scenery.jpg" alt="Mountain Landscape"> 
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const formContents = document.querySelectorAll('.form-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    formContents.forEach(content => content.classList.remove('active'));
+
+                    button.classList.add('active');
+
+                    const targetTab = button.dataset.tab;
+                    document.getElementById(targetTab + '-form-content').classList.add('active');
+                });
+            });
+
+            <?php if ($redirect_to_login): ?>
+                setTimeout(function() {
+                    window.location.href = 'index.php'; // Redirect ke halaman login
+                }, 1000); // Redirect setelah 1 detik
+            <?php endif; ?>
+        });
+    </script>
 </body>
 </html>
 <?php
