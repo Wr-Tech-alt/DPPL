@@ -27,12 +27,9 @@ if (isset($_POST['register_submit'])) {
         $error_message = "Konfirmasi password tidak cocok.";
     } elseif (strlen($password) < 6) {
         $error_message = "Password minimal 6 karakter.";
-    } elseif (!preg_match("/^[0-9]+$/", $nim)) { // Validasi NIM hanya angka
-        $error_message = "NIM hanya boleh mengandung angka.";
-    } elseif (strlen($nim) < 5 || strlen($nim) > 20) { // Contoh batasan panjang NIM
-        $error_message = "Panjang NIM tidak valid. (Contoh: 5-20 digit)";
-    }
-    else {
+    } elseif (!filter_var($nim, FILTER_VALIDATE_EMAIL)) { // Validasi NIM sebagai email
+        $error_message = "Format Email tidak valid. (Contoh: email@domain.com)";
+    } else {
         // Peran default untuk semua pendaftar dari halaman ini
         $assigned_role = 'Pengadu'; 
 
@@ -52,7 +49,7 @@ if (isset($_POST['register_submit'])) {
             $result_check_nim = $stmt_check_nim->get_result();
 
             if ($result_check_nim->num_rows > 0) {
-                $error_message = "NIM ini sudah terdaftar. Silakan login atau hubungi admin.";
+                $error_message = "Email ini sudah terdaftar. Silakan login atau hubungi admin.";
             } else {
                 // Password tetap plain text sesuai permintaan
                 $hashed_password = $password; 
