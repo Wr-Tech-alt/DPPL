@@ -434,6 +434,10 @@ if (isset($conn) && $conn instanceof mysqli) {
             // Update every second
             setInterval(updateDateTime, 1000);
 
+            const message_from_session = <?php echo json_encode($message_from_session); ?>;
+            const message_type_from_session = <?php echo json_encode($message_type_from_session); ?>;
+
+
             // Inisialisasi DataTables
             // Changed table ID to match the HTML
             const table = $('#jenisPengaduanTable').DataTable({
@@ -444,7 +448,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                 "lengthChange": true,
                 "dom": 'rtip' 
             });
-
 
             const message = message_from_session;
             const messageType = message_type_from_session;
