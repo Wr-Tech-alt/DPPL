@@ -1,6 +1,6 @@
 <?php
 session_start();
-require '../../koneksi.php'; // Sesuaikan path file koneksinya
+require '../../inc/koneksi.php'; // Sesuaikan path file koneksinya
 
 $pengadu_data = [
     'iduser' => '',
