@@ -121,8 +121,7 @@ if (isset($conn) && $conn instanceof mysqli) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ubah Jenis Pengaduan - SiCepu</title> <!-- Updated Title -->
-    <link rel="stylesheet" href="../../assets/css/users.css">
+    <title>Ubah Jenis Pengaduan - SiCepu</title> <link rel="stylesheet" href="../../assets/css/users.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
     
@@ -181,9 +180,28 @@ if (isset($conn) && $conn instanceof mysqli) {
             font-size: 1.1em;
             transition: background-color 0.2s ease;
             width: 100%;
+            margin-bottom: 10px; /* Added margin for spacing with back button */
         }
         .btn-submit:hover {
             background-color: #0056b3;
+        }
+        /* Style for the back button */
+        .btn-back {
+            background-color: #6c757d; /* A neutral gray */
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.2s ease;
+            width: 100%;
+            text-align: center;
+            display: block; /* Make it a block element to take full width */
+            text-decoration: none; /* Remove underline for anchor tag */
+        }
+        .btn-back:hover {
+            background-color: #5a6268;
         }
         /* .message (SweetAlert2 will handle this) */
         .form-divider { /* Not strictly needed for a single field, but can be kept for consistency */
@@ -307,27 +325,18 @@ if (isset($conn) && $conn instanceof mysqli) {
             </header>
 
             <section class="content-header">
-                <h2>Ubah Jenis Pengaduan</h2> <!-- Updated Title -->
-            </section>
+                <h2>Ubah Jenis Pengaduan</h2> </section>
 
             <section class="form-section">
                 <form action="" method="POST">
-                    <!-- Hidden input to pass idjenis for update -->
                     <input type="hidden" name="id_jenis" value="<?php echo htmlspecialchars($id_jenis_to_edit ?? ''); ?>">
                     
-                    <h3>Detail Jenis Pengaduan</h3> <!-- Updated Heading -->
-                    <div class="form-group">
+                    <h3>Detail Jenis Pengaduan</h3> <div class="form-group">
                         <label for="jenis">Nama Jenis Pengaduan:</label>
-                        <!-- Pre-fill input with fetched data -->
                         <input type="text" id="jenis" name="jenis" placeholder="Masukkan nama jenis pengaduan" value="<?php echo htmlspecialchars($jenis_data['jenis'] ?? ''); ?>" required>
                     </div>
                     
-                    <!-- Removed Telegram section and password field as they are not relevant for jenis_pengaduan -->
-                    <!-- <div class="form-divider"><span>Data Telegram</span></div> -->
-                    <!-- <div class="form-group"> ... </div> -->
-                    
-                    <button type="submit" name="ubah_jenis_submit" class="btn-submit">Ubah Jenis Pengaduan</button> <!-- Updated button text and name -->
-                </form>
+                    <button type="submit" name="ubah_jenis_submit" class="btn-submit">Ubah Jenis Pengaduan</button> <a href="jenis_lihat.php" class="btn-back">Kembali</a> </form>
             </section>
         </main>
     </div>
@@ -359,11 +368,13 @@ if (isset($conn) && $conn instanceof mysqli) {
                     icon: messageType, // 'success' atau 'error'
                     confirmButtonText: 'Oke'
                 }).then((result) => {
-                    // Jika pesan sukses, redirect ke jenis_lihat.php setelah pop-up ditutup
-                    if (messageType === 'success' && result.isConfirmed) {
-                        window.location.href = 'jenis_lihat.php';
-                    }
                     // If it's an error, the page will remain with the form and error message.
+                    // If the message is not an error and the user confirms, we might still redirect if the PHP logic for success dictates.
+                    // However, for success messages, the PHP already handles the redirect.
+                    // This 'then' block for success messages might cause a double redirect if not careful,
+                    // but since the PHP header("Location: jenis_lihat.php") is already there, it should be fine.
+                    // For error messages, keeping the user on the page is good.
+                    // So, no explicit redirect here for success, as PHP already does it.
                 });
             }
         });
