@@ -1,6 +1,6 @@
 <?php
 session_start();
-require '../../koneksi.php'; // sesuaikan path file koneksi kamu
+require '../../inc/koneksi.php'; // sesuaikan path file koneksi kamu
 
 $message_from_session = '';
 $message_type_from_session = '';
