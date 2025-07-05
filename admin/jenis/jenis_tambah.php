@@ -7,6 +7,18 @@ ini_set('display_errors', 1);
 // IMPORTANT: Ensure this is the very first thing to protect the page.
 // Assuming this file is located at admin/jenis/jenis_tambah.php
 // Path to login.php from here is ../../login.php
+
+$message_from_session = '';
+$message_type_from_session = '';
+
+if (isset($_SESSION['message'])) {
+    $message_from_session = $_SESSION['message'];
+    $message_type_from_session = $_SESSION['message_type'];
+
+    unset($_SESSION['message']);
+    unset($_SESSION['message_type']);
+}
+
 if (!isset($_SESSION['loggedin']) || $_SESSION['role'] !== 'Admin') {
     header("Location: ../../login.php");
     exit();
