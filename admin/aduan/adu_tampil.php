@@ -399,7 +399,6 @@ if (isset($conn) && $conn instanceof mysqli) {
             padding: 8px 12px 8px 35px; /* Adjust padding for icon */
             border: 1px solid #ccc;
             border-radius: 6px;
-            box-sizing: border-box;
         }
         .search-customer input:focus { /* MODIFIED: Added outline: none; here */
             outline: none; /* Remove the default outline */
