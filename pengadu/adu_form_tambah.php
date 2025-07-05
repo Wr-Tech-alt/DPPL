@@ -88,8 +88,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bind_param("iissssssss", $iduser, $idjenis, $waktu_aduan, $judul, $notelp, $keterangan, $lokasi, $status, $gambar_path, $author);
 
         if ($stmt->execute()) {
+            // Ambil ID aduan yang baru saja dimasukkan
+            $new_complaint_id = mysqli_insert_id($conn);
             $_SESSION['success_message'] = "Aduan Anda telah berhasil dikirim!";
-            header('Location: ../dashboard/dashboard_pengadu.php');
+            // Redirect ke halaman detail aduan yang baru dibuat
+            header('Location: detail_aduan.php?id=' . $new_complaint_id);
             exit();
         } else {
             $errors[] = "Terjadi kesalahan saat menyimpan aduan: " . $stmt->error;
