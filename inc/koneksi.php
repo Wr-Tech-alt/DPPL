@@ -1,8 +1,8 @@
 <?php
 // inc/koneksi.php
 $db_host = "localhost";
-$db_user = "root";
-$db_pass = ""; // Your MySQL password
+$db_user = "u951570841_hadi";
+$db_pass = "Hadi333#"; // Your MySQL password
 $db_name = "u951570841_hadi"; // Your database name
 
 $conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
