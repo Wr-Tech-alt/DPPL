@@ -4,97 +4,77 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// --- DEBUGGING: Tampilkan isi sesi saat halaman dimuat (sementara) ---
-// echo '<pre>';
-// echo 'DEBUG: Isi $_SESSION saat awal load:';
-// var_dump($_SESSION);
-// echo '</pre>';
-// --- AKHIR DEBUGGING ---
-
-// PENTING: Pastikan ini adalah hal pertama untuk melindungi halaman.
-// Asumsi file ini berada di admin/jenis/jenis_tambah.php
-// Path ke login.php dari sini adalah ../../login.php
-
-// Inisialisasi variabel pesan dan tipe pesan.
-// Ini akan menampung pesan dari sesi jika ada.
-$message_from_session = '';
-$message_type_from_session = '';
-
-// Cek apakah ada pesan yang disimpan di sesi
-if (isset($_SESSION['message'])) {
-    $message_from_session = $_SESSION['message'];
-    $message_type_from_session = $_SESSION['message_type'];
-
-    // Hapus pesan dari sesi agar tidak muncul lagi setelah refresh
-    unset($_SESSION['message']);
-    unset($_SESSION['message_type']);
-
-    // --- DEBUGGING: Tampilkan isi sesi setelah unset (sementara) ---
-    // echo '<pre>';
-    // echo 'DEBUG: Isi $_SESSION setelah unset:';
-    // var_dump($_SESSION);
-    // echo '</pre>';
-    // --- AKHIR DEBUGGING ---
-}
-
-// Periksa status login dan peran pengguna
+// IMPORTANT: Ensure this is the very first thing to protect the page.
+// Assuming this file is located at admin/jenis/jenis_tambah.php
+// Path to login.php from here is ../../login.php
 if (!isset($_SESSION['loggedin']) || $_SESSION['role'] !== 'Admin') {
     header("Location: ../../login.php");
     exit();
 }
 
-// Path ke koneksi.php dari admin/jenis/
+// Path to koneksi.php from admin/jenis/
 require_once '../../inc/koneksi.php';
 
-// Periksa objek koneksi database ($conn)
+// Check database connection object ($conn)
 if (!isset($conn) || $conn->connect_error) {
-    die("Fatal Error: Objek koneksi database (\$conn) tidak tersedia atau koneksi gagal. Harap periksa ../../inc/koneksi.php.");
+    die("Fatal Error: Database connection object (\$conn) is not available or connection failed. Please check ../../inc/koneksi.php.");
 }
 
-$admin_name = $_SESSION['nama']; // Dapatkan nama admin dari sesi
+$admin_name = $_SESSION['nama']; // Get admin's name from session
 
-// Tangani pengiriman formulir saat tombol 'tambah_jenis_submit' ditekan
+// Inisialisasi pesan dan tipe pesan dari sesi (untuk pop-up setelah redirect)
+$message_from_session = '';
+$message_type_from_session = '';
+
+if (isset($_SESSION['form_message'])) {
+    $message_from_session = $_SESSION['form_message'];
+    $message_type_from_session = $_SESSION['form_message_type'];
+    // Hapus pesan dari sesi agar tidak muncul lagi setelah refresh
+    unset($_SESSION['form_message']);
+    unset($_SESSION['form_message_type']);
+}
+
+
 if (isset($_POST['tambah_jenis_submit'])) {
-    // Sanitasi dan dapatkan data formulir untuk tabel jenis_pengaduan
+    // Sanitize and get form data for jenis_pengaduan table
     $jenis_baru = $conn->real_escape_string($_POST['jenis']);
 
-    // Validasi dasar
+    // Basic validation
     if (empty($jenis_baru)) {
-        $_SESSION['message'] = "Nama Jenis Pengaduan harus diisi.";
-        $_SESSION['message_type'] = 'error';
+        $_SESSION['form_message'] = "Nama Jenis Pengaduan harus diisi.";
+        $_SESSION['form_message_type'] = 'error';
         header("Location: jenis_tambah.php"); // Redirect kembali ke halaman ini untuk menampilkan error
         exit();
     } else {
-        // Siapkan statement untuk memasukkan ke tabel jenis_pengaduan
+        // Prepare statement for inserting into jenis_pengaduan table
         $stmt_jenis = $conn->prepare("INSERT INTO jenis_pengaduan (jenis) VALUES (?)");
-
-        // Periksa jika prepare statement gagal
         if ($stmt_jenis === FALSE) {
-            $_SESSION['message'] = "Prepare statement gagal: " . $conn->error;
-            $_SESSION['message_type'] = 'error';
+            // Handle error if prepare fails
+            $_SESSION['form_message'] = "Prepare statement failed: " . $conn->error;
+            $_SESSION['form_message_type'] = 'error';
             header("Location: jenis_tambah.php");
             exit();
         }
+        $stmt_jenis->bind_param("s", $jenis_baru); // 's' for string type
 
-        $stmt_jenis->bind_param("s", $jenis_baru); // 's' untuk tipe string
-        
         if ($stmt_jenis->execute()) {
-            $_SESSION['message'] = "Jenis pengaduan '" . htmlspecialchars($jenis_baru) . "' berhasil ditambahkan!";
-            $_SESSION['message_type'] = 'success';
-            // TIDAK ADA REDIRECT DI SINI! SweetAlert akan menangani pengalihan setelah dikonfirmasi.
-            // Biarkan skrip PHP berlanjut untuk merender halaman dengan pesan sesi yang baru diatur.
+            $_SESSION['form_message'] = "Jenis pengaduan '" . htmlspecialchars($jenis_baru) . "' berhasil ditambahkan!";
+            $_SESSION['form_message_type'] = 'success';
+            // Redirect ke halaman lihat setelah sukses
+            header("Location: jenis_lihat.php");
+            exit();
         } else {
-            $_SESSION['message'] = "Gagal menambahkan Jenis Pengaduan: " . $stmt_jenis->error;
-            $_SESSION['message_type'] = 'error';
+            $_SESSION['form_message'] = "Gagal menambahkan Jenis Pengaduan: " . $stmt_jenis->error;
+            $_SESSION['form_message_type'] = 'error';
             header("Location: jenis_tambah.php"); // Redirect kembali ke halaman ini jika ada error
             exit();
         }
         $stmt_jenis->close();
     }
 }
-// Tutup koneksi di sini jika Anda hanya membutuhkannya untuk login,
-// jika tidak, biarkan terbuka jika 'koneksi.php' mengelola koneksi persisten.
-// Untuk skrip sederhana, menutup di sini tidak masalah.
+// Close connection here if you only need it for login,
+// otherwise, leave it open if 'koneksi.php' manages a persistent connection.
+// For simple scripts, closing here is fine.
 if (isset($conn) && $conn instanceof mysqli) {
     $conn->close();
 }
@@ -105,8 +85,7 @@ if (isset($conn) && $conn instanceof mysqli) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tambah Jenis Aduan Baru - SiCepu</title>
-    <link rel="stylesheet" href="../../assets/css/users.css">
+    <title>Tambah Jenis Aduan Baru - SiCepu</title> <link rel="stylesheet" href="../../assets/css/users.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
@@ -291,8 +270,7 @@ if (isset($conn) && $conn instanceof mysqli) {
             </header>
 
             <section class="content-header">
-                <h2>Tambah Jenis Pengaduan Baru</h2>
-            </section>
+                <h2>Tambah Jenis Pengaduan Baru</h2> </section>
 
             <section class="form-section">
                 <form action="" method="POST">
@@ -302,8 +280,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                         <input type="text" id="jenis" name="jenis" placeholder="Masukkan nama jenis pengaduan (e.g., Fasilitas Umum)" required>
                     </div>
 
-                    <button type="submit" name="tambah_jenis_submit" class="btn-submit">Tambah Jenis Pengaduan</button>
-                </form>
+                    <button type="submit" name="tambah_jenis_submit" class="btn-submit">Tambah Jenis Pengaduan</button> </form>
             </section>
         </main>
     </div>
@@ -317,19 +294,14 @@ if (isset($conn) && $conn instanceof mysqli) {
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Pembaruan awal
+            // Initial update
             updateDateTime();
-            // Perbarui setiap detik
+            // Update every second
             setInterval(updateDateTime, 1000);
 
             // Tangani pesan dari sesi menggunakan SweetAlert2
             const message = "<?php echo $message_from_session; ?>";
             const messageType = "<?php echo $message_type_from_session; ?>";
-
-            // --- DEBUGGING: Tampilkan nilai variabel JavaScript (sementara) ---
-            // console.log("Pesan dari sesi (JS):", message);
-            // console.log("Tipe pesan dari sesi (JS):", messageType);
-            // --- AKHIR DEBUGGING ---
 
             if (message) {
                 Swal.fire({
@@ -339,7 +311,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                     confirmButtonText: 'Oke'
                 }).then((result) => {
                     // Jika pesan sukses, redirect ke jenis_lihat.php setelah pop-up ditutup
-                    // Hanya redirect jika itu pesan sukses DAN pengguna mengonfirmasi
+                    // Only redirect if it's a success message AND the user confirms
                     if (messageType === 'success' && result.isConfirmed) {
                         window.location.href = 'jenis_lihat.php';
                     }
