@@ -58,11 +58,11 @@ if (isset($_POST['tambah_jenis_submit'])) {
         $stmt_jenis->bind_param("s", $jenis_baru); // 's' for string type
 
         if ($stmt_jenis->execute()) {
-            $_SESSION['form_message'] = "Jenis pengaduan '" . htmlspecialchars($jenis_baru) . "' berhasil ditambahkan!";
-            $_SESSION['form_message_type'] = 'success';
-            // Redirect ke halaman lihat setelah sukses
-            header("Location: jenis_lihat.php");
-            exit();
+                $_SESSION['form_message'] = "Jenis pengaduan '" . htmlspecialchars($jenis_baru) . "' berhasil ditambahkan!";
+                $_SESSION['form_message_type'] = 'success';
+                // TETAP DI HALAMAN INI, SweetAlert2 akan menangani redirect setelahnya
+                header("Location: jenis_tambah.php"); // Tambahkan redirect ke halaman ini sendiri agar pesan session terload kembali
+                exit(); // Penting untuk menghentikan eksekusi setelah redirect
         } else {
             $_SESSION['form_message'] = "Gagal menambahkan Jenis Pengaduan: " . $stmt_jenis->error;
             $_SESSION['form_message_type'] = 'error';
