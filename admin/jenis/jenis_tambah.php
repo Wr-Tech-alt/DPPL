@@ -4,11 +4,11 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// --- DEBUGGING: Tampilkan isi sesi saat halaman dimuat ---
-echo '<pre>';
-echo 'DEBUG: Isi $_SESSION saat awal load:';
-var_dump($_SESSION);
-echo '</pre>';
+// --- DEBUGGING: Tampilkan isi sesi saat halaman dimuat (sementara) ---
+// echo '<pre>';
+// echo 'DEBUG: Isi $_SESSION saat awal load:';
+// var_dump($_SESSION);
+// echo '</pre>';
 // --- AKHIR DEBUGGING ---
 
 // PENTING: Pastikan ini adalah hal pertama untuk melindungi halaman.
@@ -29,11 +29,11 @@ if (isset($_SESSION['message'])) {
     unset($_SESSION['message']);
     unset($_SESSION['message_type']);
 
-    // --- DEBUGGING: Tampilkan isi sesi setelah unset ---
-    echo '<pre>';
-    echo 'DEBUG: Isi $_SESSION setelah unset:';
-    var_dump($_SESSION);
-    echo '</pre>';
+    // --- DEBUGGING: Tampilkan isi sesi setelah unset (sementara) ---
+    // echo '<pre>';
+    // echo 'DEBUG: Isi $_SESSION setelah unset:';
+    // var_dump($_SESSION);
+    // echo '</pre>';
     // --- AKHIR DEBUGGING ---
 }
 
@@ -81,9 +81,8 @@ if (isset($_POST['tambah_jenis_submit'])) {
         if ($stmt_jenis->execute()) {
             $_SESSION['message'] = "Jenis pengaduan '" . htmlspecialchars($jenis_baru) . "' berhasil ditambahkan!";
             $_SESSION['message_type'] = 'success';
-            // Redirect ke halaman lihat setelah sukses
-            header("Location: jenis_lihat.php");
-            exit();
+            // TIDAK ADA REDIRECT DI SINI! SweetAlert akan menangani pengalihan setelah dikonfirmasi.
+            // Biarkan skrip PHP berlanjut untuk merender halaman dengan pesan sesi yang baru diatur.
         } else {
             $_SESSION['message'] = "Gagal menambahkan Jenis Pengaduan: " . $stmt_jenis->error;
             $_SESSION['message_type'] = 'error';
@@ -327,9 +326,9 @@ if (isset($conn) && $conn instanceof mysqli) {
             const message = "<?php echo $message_from_session; ?>";
             const messageType = "<?php echo $message_type_from_session; ?>";
 
-            // --- DEBUGGING: Tampilkan nilai variabel JavaScript ---
-            console.log("Pesan dari sesi (JS):", message);
-            console.log("Tipe pesan dari sesi (JS):", messageType);
+            // --- DEBUGGING: Tampilkan nilai variabel JavaScript (sementara) ---
+            // console.log("Pesan dari sesi (JS):", message);
+            // console.log("Tipe pesan dari sesi (JS):", messageType);
             // --- AKHIR DEBUGGING ---
 
             if (message) {
