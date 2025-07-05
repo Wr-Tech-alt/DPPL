@@ -4,25 +4,25 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// IMPORTANT: Ensure this is the very first thing to protect the page.
-// Current file is admin/pengadu/pengadu_ubah.php
-// Path to login.php from here is ../../login.php
+// PENTING: Pastikan ini adalah hal pertama untuk melindungi halaman.
+// File saat ini adalah admin/pengadu/pengadu_ubah.php
+// Path ke login.php dari sini adalah ../../login.php
 if (!isset($_SESSION['loggedin']) || $_SESSION['role'] !== 'Admin') {
     header("Location: ../../login.php"); 
     exit();
 }
 
-// Path to koneksi.php from admin/pengadu/
+// Path ke koneksi.php dari admin/pengadu/
 require_once '../../inc/koneksi.php'; 
 
-// Check database connection object ($conn)
+// Periksa objek koneksi database ($conn)
 if (!isset($conn) || $conn->connect_error) {
-    die("Fatal Error: Database connection object (\$conn) is not available or connection failed. Please check ../../inc/koneksi.php.");
+    die("Fatal Error: Objek koneksi database (\$conn) tidak tersedia atau koneksi gagal. Silakan periksa ../../inc/koneksi.php.");
 }
 
-$admin_name = $_SESSION['nama']; // Get admin's name from session
+$admin_name = $_SESSION['nama']; // Dapatkan nama admin dari sesi
 $message = '';
-$message_type = ''; // 'success' or 'error'
+$message_type = ''; // 'success' atau 'error'
 
 // Inisialisasi pesan dan tipe pesan dari sesi (untuk pop-up setelah redirect)
 $message_from_session = '';
@@ -38,13 +38,13 @@ if (isset($_SESSION['form_message'])) {
 
 $iduser_to_edit = null;
 $pengadu_data = [];
-$telegram_data = [];
+// Data Telegram dihapus
 
-// Handle GET request to load existing data
+// Tangani permintaan GET untuk memuat data yang sudah ada
 if (isset($_GET['id'])) {
     $iduser_to_edit = intval($_GET['id']);
 
-    // Fetch user data from 'pengguna' table
+    // Ambil data pengguna dari tabel 'pengguna'
     $stmt_pengguna = $conn->prepare("SELECT iduser, nama, email, password, Role FROM pengguna WHERE iduser = ?");
     $stmt_pengguna->bind_param("i", $iduser_to_edit);
     $stmt_pengguna->execute();
@@ -52,17 +52,7 @@ if (isset($_GET['id'])) {
 
     if ($result_pengguna->num_rows === 1) {
         $pengadu_data = $result_pengguna->fetch_assoc();
-
-        // Fetch Telegram data using the user's name (which is 'user' in tb_telegram)
-        $stmt_telegram = $conn->prepare("SELECT id_telegram, id_chat FROM tb_telegram WHERE user = ?");
-        $stmt_telegram->bind_param("s", $pengadu_data['nama']);
-        $stmt_telegram->execute();
-        $result_telegram = $stmt_telegram->get_result();
-        
-        if ($result_telegram->num_rows === 1) {
-            $telegram_data = $result_telegram->fetch_assoc();
-        }
-        $stmt_telegram->close();
+        // Data Telegram dihapus dari sini
 
     } else {
         $_SESSION['form_message'] = "Pengadu tidak ditemukan.";
@@ -73,19 +63,16 @@ if (isset($_GET['id'])) {
     $stmt_pengguna->close();
 
 } 
-// Handle POST request to update data
+// Tangani permintaan POST untuk memperbarui data
 else if (isset($_POST['ubah_pengadu_submit'])) {
     $iduser_to_edit = intval($_POST['iduser']);
     $nama = $conn->real_escape_string($_POST['nama']);
     $email = $conn->real_escape_string($_POST['email']);
-    $new_password = $_POST['password']; // Password input, might be empty if not changed
+    $new_password = $_POST['password']; // Input password, mungkin kosong jika tidak diubah
 
-    $id_telegram = $conn->real_escape_string($_POST['id_telegram']);
-    $id_chat = $conn->real_escape_string($_POST['id_chat']);
-    $old_nama = $conn->real_escape_string($_POST['old_nama']); // Original name to update telegram table
-
-    if (empty($nama) || empty($id_telegram) || empty($id_chat)) {
-        $_SESSION['form_message'] = "Nama, ID Telegram, dan ID Chat tidak boleh kosong.";
+    // Validasi input disederhanakan
+    if (empty($nama)) {
+        $_SESSION['form_message'] = "Nama tidak boleh kosong.";
         $_SESSION['form_message_type'] = 'error';
         header("Location: pengadu_ubah.php?id=" . $iduser_to_edit);
         exit();
@@ -94,15 +81,12 @@ else if (isset($_POST['ubah_pengadu_submit'])) {
     $conn->begin_transaction();
 
     try {
-        // Update pengguna table
+        // Perbarui tabel pengguna
         $update_password_clause = '';
         if (!empty($new_password)) {
-            // --- SECURITY WARNING ---
+            // --- PERINGATAN KEAMANAN ---
             // Simpan password dalam plaintext. SANGAT TIDAK AMAN.
             // Untuk produksi, gunakan: $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-            // $update_password_clause = ", password = ?";
-            // $password_to_update = $hashed_password;
-            // ------------------------
             $update_password_clause = ", password = ?";
             $password_to_update = $new_password;
         }
@@ -110,7 +94,7 @@ else if (isset($_POST['ubah_pengadu_submit'])) {
         $stmt_pengguna_update = $conn->prepare("UPDATE pengguna SET nama = ?, email = ? " . $update_password_clause . " WHERE iduser = ?");
         
         if ($stmt_pengguna_update === FALSE) {
-            throw new Exception("Prepare statement for pengguna update failed: " . $conn->error);
+            throw new Exception("Gagal menyiapkan statement untuk update pengguna: " . $conn->error);
         }
 
         if (!empty($new_password)) {
@@ -124,17 +108,7 @@ else if (isset($_POST['ubah_pengadu_submit'])) {
         }
         $stmt_pengguna_update->close();
 
-        // Update tb_telegram table (using old_nama if nama changed)
-        $stmt_telegram_update = $conn->prepare("UPDATE tb_telegram SET id_telegram = ?, id_chat = ?, user = ? WHERE user = ?");
-        if ($stmt_telegram_update === FALSE) {
-            throw new Exception("Prepare statement for tb_telegram update failed: " . $conn->error);
-        }
-        $stmt_telegram_update->bind_param("ssss", $id_telegram, $id_chat, $nama, $old_nama);
-
-        if (!$stmt_telegram_update->execute()) {
-            throw new Exception("Gagal mengupdate data Telegram: " . $stmt_telegram_update->error);
-        }
-        $stmt_telegram_update->close();
+        // Fungsi update tb_telegram dihapus sepenuhnya
 
         $conn->commit();
         $_SESSION['form_message'] = "Data pengadu '" . htmlspecialchars($nama) . "' berhasil diperbarui!";
@@ -151,14 +125,14 @@ else if (isset($_POST['ubah_pengadu_submit'])) {
     }
 
 } else if (!isset($_GET['id'])) {
-    // If not a POST request and no ID is provided in GET
+    // Jika bukan permintaan POST dan tidak ada ID yang disediakan di GET
     $_SESSION['form_message'] = "ID Pengadu tidak ditemukan untuk diubah.";
     $_SESSION['form_message_type'] = 'error';
     header("Location: pengadu_lihat.php");
     exit();
 }
 
-// Close connection at the end of script
+// Tutup koneksi di akhir skrip
 if (isset($conn) && $conn instanceof mysqli) {
     $conn->close(); 
 }
@@ -360,7 +334,7 @@ if (isset($conn) && $conn instanceof mysqli) {
             <section class="form-section">
                 <form action="" method="POST">
                     <input type="hidden" name="iduser" value="<?php echo htmlspecialchars($pengadu_data['iduser'] ?? ''); ?>">
-                    <input type="hidden" name="old_nama" value="<?php echo htmlspecialchars($pengadu_data['nama'] ?? ''); ?>">
+                    <!-- old_nama tidak lagi diperlukan karena tidak ada update tb_telegram -->
 
                     <h3>Data Pengadu</h3>
                     <div class="form-group">
@@ -376,16 +350,9 @@ if (isset($conn) && $conn instanceof mysqli) {
                         <input type="password" id="password" name="password" placeholder="********">
                     </div>
 
-                    <div class="form-divider"><span>Data Telegram</span></div>
-
-                    <div class="form-group">
-                        <label for="id_telegram">ID Telegram (Username Telegram):</label>
-                        <input type="text" id="id_telegram" name="id_telegram" placeholder="Masukkan ID Telegram (misal: @username_tele)" value="<?php echo htmlspecialchars($telegram_data['id_telegram'] ?? ''); ?>" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="id_chat">ID Chat Telegram:</label>
-                        <input type="text" id="id_chat" name="id_chat" placeholder="Masukkan ID Chat Telegram" value="<?php echo htmlspecialchars($telegram_data['id_chat'] ?? ''); ?>" required>
-                    </div>
+                    <!-- form-divider Data Telegram dihapus -->
+                    <!-- form-group ID Telegram dihapus -->
+                    <!-- form-group ID Chat Telegram dihapus -->
                     
                     <button type="submit" name="ubah_pengadu_submit" class="btn-submit">Ubah Data Pengadu</button>
                 </form>
