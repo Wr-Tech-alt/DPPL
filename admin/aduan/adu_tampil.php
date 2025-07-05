@@ -367,7 +367,7 @@ if (isset($conn) && $conn instanceof mysqli) {
         /* Filter bar styling from jenis_lihat.php */
         .filter-bar {
             display: flex;
-            justify-content: space-between;
+            /* Removed justify-content: space-between; to allow search input to expand */
             align-items: center;
             margin-bottom: 20px;
             gap: 10px;
@@ -391,6 +391,8 @@ if (isset($conn) && $conn instanceof mysqli) {
         .search-customer {
             position: relative;
             flex-grow: 1; /* Allow search input to take available space */
+            /* Added margin-right to push the filter-select to the right */
+            margin-right: auto; /* This pushes the search bar to the left and the next element to the right */
         }
         .search-customer input {
             width: 100%;
@@ -541,7 +543,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                                         <td><?php echo htmlspecialchars($aduan['idpengaduan']); ?></td>
                                         <td><?php echo htmlspecialchars($aduan['nama_pengadu']); ?></td>
                                         <td><?php echo htmlspecialchars($aduan['judul']); ?></td>
-                                        <td><?php echo date('d M Y, H:i', strtotime($aduan['waktu_aduan'])); ?></td>
+                                        <td><?php echo htmlspecialchars($aduan['waktu_aduan']); ?></td> <!-- Changed to raw value for DataTables sorting -->
                                         <td>
                                             <span class="status-badge <?php echo strtolower(htmlspecialchars($aduan['status'])); ?>">
                                                 <?php echo htmlspecialchars($aduan['status']); ?>
@@ -552,7 +554,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                                                 <a href="adu_detail.php?id=<?php echo $aduan['idpengaduan']; ?>" class="action-button detail" title="Lihat Detail">
                                                     <i class="fas fa-eye"></i> Detail
                                                 </a>
-                                                <a href="adu_detail.php?id=<?php echo $aduan['idpengaduan']; ?>" class="action-button edit" title="Ubah Aduan">
+                                                <a href="adu_ubah.php?id=<?php echo $aduan['idpengaduan']; ?>" class="action-button edit" title="Ubah Aduan">
                                                     <i class="fas fa-edit"></i> Ubah
                                                 </a>
                                                 <a href="adu_hapus.php?id=<?php echo $aduan['idpengaduan']; ?>" class="action-button delete" title="Hapus Aduan">
@@ -603,7 +605,10 @@ if (isset($conn) && $conn instanceof mysqli) {
                 "searching": true,   
                 "lengthChange": true,
                 "dom": 'rtip', // This hides the default search and lengthChange, but keeps table, info, paging
-                "order": [[ 3, "desc" ]] // Order by 'Waktu Kirim' (index 3) in descending order
+                "order": [[ 3, "desc" ]], // Order by 'Waktu Kirim' (index 3) in descending order
+                "columnDefs": [
+                    { "type": "date", "targets": 3 } // Specify column 3 (Waktu Kirim) as date type for proper sorting
+                ]
             });
 
             // Hubungkan input search kustom dengan DataTables
