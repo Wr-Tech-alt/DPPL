@@ -292,7 +292,7 @@ ob_end_flush(); // Kirim semua output yang tertunda
             </section>
 
             <section class="form-section">
-                <form action="" method="POST">
+            awd<form action="pengadu_ubah.php?id=<?php echo htmlspecialchars($pengadu_data['iduser']); ?>" method="POST">
                     <input type="hidden" name="iduser" value="<?php echo htmlspecialchars($pengadu_data['iduser'] ?? ''); ?>">
 
                     <h3>Data Pengadu</h3>
