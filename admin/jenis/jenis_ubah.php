@@ -12,6 +12,10 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['role'] !== 'Admin') {
     exit();
 }
 
+// Inisialisasi pesan dan tipe pesan dari sesi (untuk pop-up setelah redirect)
+$message_from_session = '';
+$message_type_from_session = '';
+
 // Path to koneksi.php from admin/jenis/
 require_once '../../inc/koneksi.php';
 
