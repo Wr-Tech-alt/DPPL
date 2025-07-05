@@ -1,120 +1,195 @@
 <?php
-require_once 'config.php'; //
-require_once 'user_agent_parser.php'; // pastikan ada getBrowser() & getPlatform()
+session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-$error_message = '';
+// Melindungi halaman
+if (!isset($_SESSION['loggedin']) || !in_array($_SESSION['role'], ['Admin', 'Petugas'])) {
+    header("Location: ../../login.php"); // Path disesuaikan
+    exit();
+}
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username_form = $_POST['username'];
-    $password_form = $_POST['password'];
+// Mengambil data sesi pengguna
+$user_name = $_SESSION['nama'];
+$user_role = $_SESSION['role'];
 
-    $stmt = $conn->prepare("SELECT * FROM user WHERE UserName = ?");
-    $stmt->bind_param("s", $username_form);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
-    $stmt->close();
+// Memanggil koneksi database
+require '../../inc/koneksi.php';
 
-    if ($user && password_verify($password_form, $user['PassWord'])) {
-        session_regenerate_id(true); // Penting untuk keamanan
-        $currentSessionId = session_id(); // ID sesi baru setelah regenerate
+// Mengambil data jenis fasilitas
+// Assuming the table for facility types is named 'jenis_fasilitas'
+$query = "SELECT idjenis, jenis FROM jenis_fasilitas ORDER BY idjenis ASC";
 
-        $userAgent = $_SERVER['HTTP_USER_AGENT'];
-        $currentBrowser = getBrowser($userAgent); //
-        $currentPlatform = getPlatform($userAgent); //
-        $currentUserIP = $_SERVER['REMOTE_ADDR'];
+$result = mysqli_query($conn, $query);
 
-        // Cek browser & OS terakhir dari DB
-        $lastBrowser = $user['LastBrowser'] ?? '';
-        $lastOS = $user['LastOS'] ?? '';
-        // Anda mungkin ingin menambahkan pengecekan IP juga di sini jika logikanya begitu
-        // $lastIP = $user['IPAddress'] ?? '';
-        $isFirstLogin = empty($lastBrowser) && empty($lastOS); // Anggap login pertama jika LastBrowser dan LastOS kosong
-
-        // Kondisi untuk meminta PIN: bukan login pertama DAN (browser beda ATAU OS beda)
-        // Anda bisa tambahkan pengecekan IP di sini: || $currentUserIP !== $lastIP
-        if (!$isFirstLogin && ($currentBrowser !== $lastBrowser || $currentPlatform !== $lastOS)) {
-            // Simpan semua informasi yang dibutuhkan untuk pin_auth.php
-            $_SESSION['pending_user_id'] = $user['IdUserPrimary'];
-            $_SESSION['pending_session_id'] = $currentSessionId; // Simpan ID sesi baru ini
-            $_SESSION['pending_ip'] = $currentUserIP;
-            $_SESSION['pending_browser'] = $currentBrowser;
-            $_SESSION['pending_platform'] = $currentPlatform;
-            $_SESSION['pending_username'] = $user['UserName']; // Simpan username jika perlu di pin_auth.php
-            $_SESSION['requested_page'] = 'dashboard.php'; //
-            $_SESSION['pin_attempt'] = 0; // reset percobaan PIN
-
-            // PENTING: JANGAN UPDATE DATABASE DI SINI. Update dilakukan setelah PIN berhasil.
-            // HAPUS blok ini:
-            /*
-            $stmt = $conn->prepare("UPDATE user SET Session = ?, IPAddress = ? WHERE IdUserPrimary = ?");
-            $stmt->bind_param("ssi", $currentSessionId, $currentUserIP, $user['IdUserPrimary']);
-            $stmt->execute();
-            $stmt->close();
-            */
-
-            header("Location: pin_auth.php");
-            exit();
-        }
-
-        // Lolos verifikasi (perangkat sama atau login pertama), update semua info dan masuk dashboard
-        // Untuk login pertama, LastBrowser dan LastOS akan diisi dengan info saat ini
-        $stmt = $conn->prepare("UPDATE user SET Session = ?, IPAddress = ?, LastBrowser = ?, LastOS = ? WHERE IdUserPrimary = ?"); //
-        $stmt->bind_param("ssssi", $currentSessionId, $currentUserIP, $currentBrowser, $currentPlatform, $user['IdUserPrimary']); //
-        $stmt->execute(); //
-        $stmt->close(); //
-
-        // Set session utama setelah semua aman
-        $_SESSION['user_id'] = $user['IdUserPrimary']; //
-        $_SESSION['username'] = $user['UserName']; //
-        // Sebaiknya simpan juga IP, Browser, OS yang terverifikasi ke session untuk auth_check.php
-        $_SESSION['verified_ip'] = $currentUserIP;
-        $_SESSION['verified_browser'] = $currentBrowser;
-        $_SESSION['verified_os'] = $currentPlatform;
-        // $_SESSION['current_session_id_for_user'] = $currentSessionId; // Ini bisa jadi redundant jika auth_check.php membandingkan session_id() dengan DB
-
-        header("Location: dashboard.php"); //
-        exit();
-    } else {
-        $error_message = "Username atau password yang Anda masukkan salah!"; //
-    }
+$jenis_fasilitas = []; // Change variable name to reflect the data being fetched
+if ($result) {
+    $jenis_fasilitas = mysqli_fetch_all($result, MYSQLI_ASSOC);
+} else {
+    // Menampilkan error jika query gagal
+    die("Gagal mengambil data jenis fasilitas: " . mysqli_error($conn));
 }
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <link rel="stylesheet" href="style.css">
-    <title>Login Pengguna</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jenis Fasilitas - SiCepu</title>
+    
+    <link rel="stylesheet" href="../../assets/css/dash_admin.css">
+    <link rel="stylesheet" href="../../assets/css/users.css"> 
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        .error {
-            color: red;
-            border: 1px solid red;
-            padding: 10px;
-            margin-bottom: 15px;
+        /* Tambahan style untuk memastikan konsistensi */
+        .main-content {
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+        .content-container {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .table-header h3 {
+            margin: 0;
+            color: #333;
+        }
+        .filter-box {
+            display: flex;
+            gap: 10px;
+        }
+        .filter-input, .filter-select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        /* Styles for action icons (assuming they are small and inline) */
+        .action-icon {
+            margin-right: 5px; /* Adjust as needed for spacing between icons */
+            color: #007bff; /* Example color */
+        }
+        .action-icon.fa-edit {
+            color: #ffc107; /* Example color for edit */
+        }
+        .action-icon.fa-trash {
+            color: #dc3545; /* Example color for delete */
         }
     </style>
 </head>
 <body>
-    <h2 class="form-title">🔐 Login Aplikasi</h2>
+    <div class="dashboard-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="../../assets/img/logos.png" alt="SiCepu Logo" class="logo">
+                <span class="logo-text">SiCepu</span>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="../../dashboard/dashboard_admin.php" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
+                    <li><a href="#" class="nav-link active"><i class="fas fa-boxes"></i> Jenis Fasilitas</a></li>
+                    <li><a href="../pengadu/pengadu_lihat.php" class="nav-link"><i class="fas fa-users"></i> Pengadu </a></li>
+                </ul>
+                <div class="nav-section-title">SETTINGS</div>
+                <ul>
+                    <li><a href="#" class="nav-link"><i class="fas fa-cog"></i> Settings</a></li>
+                    <li><a href="#" class="nav-link"><i class="fas fa-question-circle"></i> Help</a></li>
+                </ul>
+            </nav>
+        </aside>
 
-<?php
-if (!empty($error_message)) {
-    echo "<div class='error'>" . htmlspecialchars($error_message) . "</div>";
-}
-?>
+        <main class="main-content">
+            <header class="navbar">
+                <div class="top-info-bar">
+                    </div>
 
-<form method="post" action="login.php" class="form-container">
-    <label for="username" class="form-label">Username:</label>
-    <input type="text" name="username" id="username" class="form-input" required>
+                <div class="nav-icons">
+                    <a href="#"><i class="fas fa-bell"></i></a>
+                    <a href="#"><i class="fas fa-comment"></i></a>
+                    <div class="user-profile">
+                        <img src="../../assets/img/admin_pfp.jpg" alt="User Avatar" class="avatar">
+                        <span><?php echo htmlspecialchars($user_name); ?></span>
+                        <a href="../../logout.php"><i class="fas fa-sign-out-alt"></i></a>
+                    </div>
+                </div>
+            </header>
 
-    <label for="password" class="form-label">Password:</label>
-    <input type="password" name="password" id="password" class="form-input" required>
+            <section class="content-header">
+                <h2>Manajemen Jenis Fasilitas</h2>
+            </section>
 
-    <input type="submit" value="Login" class="form-button">
+            <div class="content-container">
+                <div class="table-header">
+                    <h3>Daftar Jenis Fasilitas</h3>
+                    <div class="header-actions">
+                        <div class="filter-box">
+                            <input type="text" placeholder="Cari jenis fasilitas..." class="filter-input">
+                            <button class="btn-secondary"><i class="fas fa-plus"></i> Tambah Baru</button> </div>
+                    </div>
+                </div>
 
-    <p class="form-footer">Belum punya akun? <a href="register.php">Daftar di sini</a></p>
-</form>
+                <section class="customer-table-section">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID Jenis</th>
+                                <th>Jenis Fasilitas</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (!empty($jenis_fasilitas)): ?>
+                                <?php foreach ($jenis_fasilitas as $jenis_fa): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($jenis_fa['idjenis']); ?></td>
+                                        <td><?php echo htmlspecialchars($jenis_fa['jenis']); ?></td>
+                                        <td>
+                                            <a href="jenis_fasilitas_edit.php?id=<?php echo $jenis_fa['idjenis']; ?>" title="Edit"><i class="fas fa-edit action-icon"></i></a>
+                                            <a href="jenis_fasilitas_delete.php?id=<?php echo $jenis_fa['idjenis']; ?>" title="Hapus" onclick="return confirm('Apakah Anda yakin ingin menghapus jenis fasilitas ini?');"><i class="fas fa-trash action-icon"></i></a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="3" style="text-align: center; padding: 20px;">Belum ada data jenis fasilitas.</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </section>
+
+                <div class="pagination">
+                    <a href="#" class="page-arrow"><i class="fas fa-chevron-left"></i></a>
+                    <a href="#" class="page-number active">1</a>
+                    <a href="#" class="page-arrow"><i class="fas fa-chevron-right"></i></a>
+                </div>
+            </div>
+
+        </main>
+    </div>
 
 </body>
 </html>
