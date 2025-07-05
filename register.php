@@ -3,75 +3,72 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-session_start(); // Mulai sesi
+session_start(); // Start a PHP session at the very beginning of the page
+ob_start();      // Mulai output buffering untuk mencegah 'headers already sent'
 
-require_once 'inc/koneksi.php'; // Sertakan file koneksi database
+require_once 'inc/koneksi.php'; // Path is correct as 'inc' is a direct child of the root
 
-$success_message = '';
 $error_message = '';
 
-if (isset($_POST['register_submit'])) {
-    // Escape string untuk mencegah SQL Injection
-    $nama_pengguna = $conn->real_escape_string($_POST['nama_pengguna']);
+if (isset($_POST['login_submit'])) {
+    $nama = $conn->real_escape_string($_POST['nama']);
     $password = $conn->real_escape_string($_POST['password']);
-    $confirm_password = $conn->real_escape_string($_POST['confirm_password']);
-    $nim = $conn->real_escape_string($_POST['nim']); // Ambil nilai NIM dari form
 
-    // Validasi input
-    if (empty($nama_pengguna) || empty($password) || empty($confirm_password) || empty($nim)) {
-        $error_message = "Nama Pengguna, Password, Konfirmasi Password, dan NIM harus diisi.";
-    } elseif ($password !== $confirm_password) {
-        $error_message = "Konfirmasi password tidak cocok.";
-    } elseif (strlen($password) < 6) {
-        $error_message = "Password minimal 6 karakter.";
-    } elseif (!preg_match("/^[0-9]+$/", $nim)) { // Validasi NIM hanya angka
-        $error_message = "NIM hanya boleh mengandung angka.";
-    } elseif (strlen($nim) < 5 || strlen($nim) > 20) { // Contoh batasan panjang NIM
-        $error_message = "Panjang NIM tidak valid. (Contoh: 5-20 digit)";
-    }
-    else {
-        // Peran default untuk semua pendaftar dari halaman ini
-        $assigned_role = 'Pengadu'; 
-
-        // Periksa apakah nama pengguna sudah ada
-        $stmt_check_user = $conn->prepare("SELECT iduser FROM pengguna WHERE nama = ?");
-        $stmt_check_user->bind_param("s", $nama_pengguna);
-        $stmt_check_user->execute();
-        $result_check_user = $stmt_check_user->get_result();
-
-        if ($result_check_user->num_rows > 0) {
-            $error_message = "Nama pengguna sudah ada. Silakan pilih nama pengguna lain.";
+    if (empty($nama) || empty($password)) {
+        $error_message = "Nama Pengguna dan Password harus diisi.";
+    } else {
+        $stmt = $conn->prepare("SELECT iduser, Role, password, nama FROM pengguna WHERE nama = ?");
+        if ($stmt === FALSE) {
+            $error_message = "Terjadi kesalahan saat menyiapkan query.";
         } else {
-            // Periksa apakah NIM sudah terdaftar (menggunakan kolom 'email' untuk NIM)
-            $stmt_check_nim = $conn->prepare("SELECT iduser FROM pengguna WHERE email = ?");
-            $stmt_check_nim->bind_param("s", $nim);
-            $stmt_check_nim->execute();
-            $result_check_nim = $stmt_check_nim->get_result();
+            $stmt->bind_param("s", $nama);
+            $stmt->execute();
+            $result = $stmt->get_result();
 
-            if ($result_check_nim->num_rows > 0) {
-                $error_message = "NIM ini sudah terdaftar. Silakan login atau hubungi admin.";
-            } else {
-                // Password tetap plain text sesuai permintaan
-                $hashed_password = $password; 
+            if ($result->num_rows === 1) {
+                $user = $result->fetch_assoc();
+                
+                // Jika password di database di-hash, gunakan password_verify()
+                // if (password_verify($password, $user['password'])) {
+                // Untuk saat ini, asumsikan password masih plain text (HARAP GANTI DENGAN HASHING DI PRODUKSI!)
+                if ($password === $user['password']) { 
+                    $_SESSION['loggedin'] = true;
+                    $_SESSION['iduser'] = $user['iduser'];
+                    $_SESSION['nama'] = $user['nama'];
+                    $_SESSION['role'] = $user['Role'];
 
-                // Masukkan data pengguna baru ke database
-                // Kolom yang dimasukkan: nama, password, Role, dan email (untuk NIM)
-                $stmt_insert = $conn->prepare("INSERT INTO pengguna (nama, password, Role, email) VALUES (?, ?, ?, ?)");
-                $stmt_insert->bind_param("ssss", $nama_pengguna, $hashed_password, $assigned_role, $nim);
+                    $redirect_url = '';
+                    switch ($user['Role']) {
+                        case 'Admin':
+                            $redirect_url = "dashboard/dashboard_admin.php";
+                            break;
+                        case 'Petugas':
+                            $redirect_url = "dashboard/dashboard_petugas.php";
+                            break;
+                        case 'Pengadu':
+                            $redirect_url = "dashboard/dashboard_pengadu.php";
+                            break;
+                        default:
+                            $redirect_url = "index.php";
+                            break;
+                    }
+                    
+                    if (!empty($redirect_url)) {
+                        header("Location: " . $redirect_url);
+                        exit();
+                    } else {
+                        $error_message = "Role pengguna tidak valid atau URL redirect tidak ditemukan.";
+                    }
 
-                if ($stmt_insert->execute()) {
-                    $success_message = "Pendaftaran berhasil! Silakan login.";
-                    // Opsional: Redirect ke halaman login setelah sukses
-                    // header("Location: index.php?registration=success");
-                    // exit();
                 } else {
-                    $error_message = "Terjadi kesalahan saat mendaftar: " . $stmt_insert->error;
+                    $error_message = "Nama Pengguna atau Password salah.";
                 }
-                $stmt_insert->close();
+            } else {
+                $error_message = "Nama Pengguna atau Password salah.";
             }
-            $stmt_check_nim->close();
+
+            $stmt->close();
         }
-        $stmt_check_user->close();
     }
     $conn->close();
 }
@@ -82,24 +79,13 @@ if (isset($_POST['register_submit'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - SiCepu</title>
-    <link rel="stylesheet" href="assets/css/login.css"> <!-- Re-use login.css for consistent styling -->
+    <title>SICepu Login</title>
+    <link rel="stylesheet" href="assets/css/login.css"> 
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Custom styles for register page if needed, or override login.css */
-        .login-container {
-            max-width: 500px; /* Adjust width for register form */
-        }
-        .login-form-panel {
-            padding: 40px;
-        }
-        .login-button {
-            width: 100%;
-            padding: 12px;
-            font-size: 1.1em;
-        }
-        .back-to-login {
+        /* Tambahan style untuk tombol register */
+        .register-link {
             display: block;
             text-align: center;
             margin-top: 20px;
@@ -108,38 +94,10 @@ if (isset($_POST['register_submit'])) {
             font-weight: 600;
             transition: color 0.3s ease;
         }
-        .back-to-login:hover {
+        .register-link:hover {
             color: #0056b3;
         }
-        /* Penyesuaian gaya untuk input agar terlihat rapi seperti di halaman login */
-        .input-group {
-            display: flex; /* Gunakan flexbox untuk perataan */
-            align-items: center; /* Pusatkan item secara vertikal */
-            margin-bottom: 20px; /* Spasi antar grup input */
-            background-color: rgba(255, 255, 255, 0.1); /* Latar belakang transparan putih */
-            border-radius: 5px; /* Sudut membulat */
-            padding: 5px 15px; /* Padding di dalam grup input */
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); /* Bayangan dalam halus */
-        }
-        .input-group i {
-            margin-right: 15px; /* Spasi antara ikon dan input */
-            color: #fff; /* Warna ikon putih */
-            font-size: 1.2em;
-        }
-        .input-group input {
-            flex-grow: 1; /* Input mengambil sisa ruang */
-            background: none; /* Latar belakang transparan */
-            border: none; /* Tanpa border */
-            outline: none; /* Tanpa outline saat fokus */
-            color: #fff; /* Warna teks putih */
-            padding: 10px 0; /* Padding vertikal untuk teks input */
-            font-size: 1em;
-            height: auto; /* Biarkan padding menentukan tinggi */
-        }
-        .input-group input::placeholder {
-            color: rgba(255, 255, 255, 0.7); /* Warna placeholder lebih terang */
-        }
-        /* Style untuk tabs */
+        /* Menyesuaikan lebar tab agar pas */
         .tabs {
             display: flex;
             justify-content: center;
@@ -184,19 +142,13 @@ if (isset($_POST['register_submit'])) {
         <div class="login-container">
             <div class="login-form-panel">
                 <div class="tabs">
-                    <button class="tab-button active" data-tab="register">Daftar</button>
+                    <button class="tab-button active" data-tab="login">Login</button>
                     <button class="tab-button" data-tab="info">Tentang SiCepu</button>
                 </div>
 
-                <div id="register-form-content" class="form-content active">
-                    <h1>Daftar Akun Baru</h1>
-                    <p>Silakan isi detail Anda untuk mendaftar</p>
-
-                    <?php if (!empty($success_message)): ?>
-                        <div style="color: green; text-align: center; margin-bottom: 15px; background-color: rgba(0,255,0,0.2); padding: 10px; border-radius: 5px;">
-                            <?php echo htmlspecialchars($success_message); ?>
-                        </div>
-                    <?php endif; ?>
+                <div id="login-form-content" class="form-content active">
+                    <h1>Selamat Datang!</h1>
+                    <p>Log in untuk melanjutkan</p>
 
                     <?php if (!empty($error_message)): ?>
                         <div style="color: red; text-align: center; margin-bottom: 15px; background-color: rgba(255,0,0,0.2); padding: 10px; border-radius: 5px;">
@@ -207,25 +159,24 @@ if (isset($_POST['register_submit'])) {
                     <form action="" method="POST">
                         <div class="input-group">
                             <i class="fa-solid fa-user"></i>
-                            <input type="text" placeholder="Nama Pengguna (Username)" name="nama_pengguna" required value="<?php echo isset($_POST['nama_pengguna']) ? htmlspecialchars($_POST['nama_pengguna']) : ''; ?>">
+                            <input type="text" placeholder="Masukkan Nama Pengguna Anda" name="nama" required>
                         </div>
                         <div class="input-group">
                             <i class="fa-solid fa-lock"></i>
-                            <input type="password" placeholder="Password" name="password" required>
+                            <input type="password" placeholder="********" name="password" required>
                         </div>
-                        <div class="input-group">
-                            <i class="fa-solid fa-lock"></i>
-                            <input type="password" placeholder="Konfirmasi Password" name="confirm_password" required>
-                        </div>
-                        <div class="input-group">
-                            <i class="fa-solid fa-id-card"></i> <!-- Menggunakan ikon ID card untuk NIM -->
-                            <input type="text" placeholder="NIM" name="nim" required value="<?php echo isset($_POST['nim']) ? htmlspecialchars($_POST['nim']) : ''; ?>">
-                        </div>
-                        
-                        <button type="submit" class="login-button" name="register_submit">Daftar</button>
-                    </form>
 
-                    <a href="index.php" class="back-to-login">Sudah punya akun? Login di sini</a>
+                        <div class="options">
+                            <label class="remember-me">
+                                <input type="checkbox">
+                                Ingat saya
+                            </label>
+                            <a href="#" class="forgot-password">Lupa Password?</a>
+                        </div>
+
+                        <button type="submit" class="login-button" name="login_submit">Log In</button>
+                    </form>
+                    <a href="register.php" class="register-link">Belum punya akun? Daftar di sini</a>
                 </div>
 
                 <div id="info-form-content" class="form-content">
