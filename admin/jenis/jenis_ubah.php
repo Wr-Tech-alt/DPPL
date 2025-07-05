@@ -121,7 +121,8 @@ if (isset($conn) && $conn instanceof mysqli) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ubah Jenis Pengaduan - SiCepu</title> <link rel="stylesheet" href="../../assets/css/users.css">
+    <title>Ubah Jenis Pengaduan - SiCepu</title>
+    <link rel="stylesheet" href="../../assets/css/users.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
     
@@ -170,39 +171,46 @@ if (isset($conn) && $conn instanceof mysqli) {
             outline: none;
             box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
         }
-        .btn-submit {
-            background-color: #007bff;
-            color: white;
+
+        /* New container for buttons */
+        .form-actions {
+            display: flex; /* Enable flexbox */
+            gap: 10px; /* Space between buttons */
+            justify-content: space-between; /* Distribute space evenly */
+            margin-top: 20px; /* Add some space above the buttons */
+        }
+
+        /* Styles for both submit and back buttons within form-actions */
+        .btn-submit,
+        .btn-back {
+            width: 50%; /* Each button takes half the width of the container, adjusting for gap */
+            box-sizing: border-box; /* Include padding/border in width calculation */
             padding: 12px 25px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
             font-size: 1.1em;
             transition: background-color 0.2s ease;
-            width: 100%;
-            margin-bottom: 10px; /* Added margin for spacing with back button */
+            text-align: center; /* Ensure text is centered for the anchor tag as well */
+            text-decoration: none; /* Remove underline for anchor tag */
+        }
+
+        .btn-submit {
+            background-color: #007bff;
+            color: white;
         }
         .btn-submit:hover {
             background-color: #0056b3;
         }
-        /* Style for the back button */
+
         .btn-back {
             background-color: #6c757d; /* A neutral gray */
             color: white;
-            padding: 12px 25px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1.1em;
-            transition: background-color 0.2s ease;
-            width: 100%;
-            text-align: center;
-            display: block; /* Make it a block element to take full width */
-            text-decoration: none; /* Remove underline for anchor tag */
         }
         .btn-back:hover {
             background-color: #5a6268;
         }
+        
         /* .message (SweetAlert2 will handle this) */
         .form-divider { /* Not strictly needed for a single field, but can be kept for consistency */
             text-align: center;
@@ -277,6 +285,21 @@ if (isset($conn) && $conn instanceof mysqli) {
                 display: none;
             }
         }
+
+        /* Media query for responsiveness: Stack buttons on small screens */
+        @media (max-width: 480px) {
+            .form-actions {
+                flex-direction: column; /* Stack buttons vertically on small screens */
+            }
+            .btn-submit,
+            .btn-back {
+                width: 100%; /* Make them full width when stacked */
+                margin-bottom: 10px; /* Add some space between stacked buttons */
+            }
+            .btn-back {
+                margin-bottom: 0; /* No margin below the last button when stacked */
+            }
+        }
     </style>
 </head>
 <body>
@@ -325,18 +348,26 @@ if (isset($conn) && $conn instanceof mysqli) {
             </header>
 
             <section class="content-header">
-                <h2>Ubah Jenis Pengaduan</h2> </section>
+                <h2>Ubah Jenis Pengaduan</h2>
+            </section>
 
             <section class="form-section">
                 <form action="" method="POST">
+                    <!-- Hidden input to pass idjenis for update -->
                     <input type="hidden" name="id_jenis" value="<?php echo htmlspecialchars($id_jenis_to_edit ?? ''); ?>">
                     
-                    <h3>Detail Jenis Pengaduan</h3> <div class="form-group">
+                    <h3>Detail Jenis Pengaduan</h3>
+                    <div class="form-group">
                         <label for="jenis">Nama Jenis Pengaduan:</label>
+                        <!-- Pre-fill input with fetched data -->
                         <input type="text" id="jenis" name="jenis" placeholder="Masukkan nama jenis pengaduan" value="<?php echo htmlspecialchars($jenis_data['jenis'] ?? ''); ?>" required>
                     </div>
                     
-                    <button type="submit" name="ubah_jenis_submit" class="btn-submit">Ubah Jenis Pengaduan</button> <a href="jenis_lihat.php" class="btn-back">Kembali</a> </form>
+                    <div class="form-actions">
+                        <button type="submit" name="ubah_jenis_submit" class="btn-submit">Ubah Jenis Pengaduan</button>
+                        <a href="jenis_lihat.php" class="btn-back">Kembali</a>
+                    </div>
+                </form>
             </section>
         </main>
     </div>
