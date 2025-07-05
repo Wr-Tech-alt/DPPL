@@ -44,33 +44,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($idjenis)) $errors[] = "Jenis aduan harus dipilih.";
     if (empty($lokasi)) $errors[] = "Lokasi kejadian tidak boleh kosong.";
 
-    // --- Proses Upload Gambar ---
-    if (isset($_FILES['gambar']) && $_FILES['gambar']['error'] == 0) {
-        // Proses file upload
+    // Direktori upload
+    $upload_dir = __DIR__ . '/../uploads/';
+    if (!is_dir($upload_dir)) {
+        mkdir($upload_dir, 0755, true);
+    }
+
+    // --- Proses Upload Gambar dari Galeri ---
+    $file_uploaded = false;
+
+    if (isset($_FILES['gambar_galeri']) && $_FILES['gambar_galeri']['error'] == 0) {
         $allowed_types = ['image/jpeg', 'image/png', 'image/jpg'];
         $max_size = 2 * 1024 * 1024; // 2MB
 
-        if (in_array($_FILES['gambar']['type'], $allowed_types) && $_FILES['gambar']['size'] <= $max_size) {
-            $file_extension = pathinfo($_FILES['gambar']['name'], PATHINFO_EXTENSION);
+        if (in_array($_FILES['gambar_galeri']['type'], $allowed_types) && $_FILES['gambar_galeri']['size'] <= $max_size) {
+            $file_extension = pathinfo($_FILES['gambar_galeri']['name'], PATHINFO_EXTENSION);
             $unique_filename = time() . '_' . uniqid() . '.' . $file_extension;
-            $upload_dir = __DIR__ . '/../uploads/';
-            if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
             $upload_path = $upload_dir . $unique_filename;
 
-            if (move_uploaded_file($_FILES['gambar']['tmp_name'], $upload_path)) {
+            if (move_uploaded_file($_FILES['gambar_galeri']['tmp_name'], $upload_path)) {
                 $gambar_path = $unique_filename;
+                $file_uploaded = true;
             } else {
-                $errors[] = "Gagal memindahkan file yang diunggah.";
+                $errors[] = "Gagal memindahkan file gambar yang diunggah.";
             }
         } else {
-            $errors[] = "File tidak valid. Pastikan formatnya JPG/PNG dan maksimal 2MB.";
+            $errors[] = "File gambar tidak valid. Pastikan formatnya JPG/PNG dan maksimal 2MB.";
         }
+    } 
 
-    } else {
-        $errors[] = "Silakan unggah gambar atau ambil foto.";
+    // Jika tidak ada gambar yang diunggah
+    if (!$file_uploaded) {
+        $errors[] = "Silakan unggah gambar dari galeri sebagai bukti.";
     }
-
-
 
     // --- Simpan ke Database jika tidak ada error ---
     if (empty($errors)) {
@@ -162,6 +168,8 @@ $conn->close();
         }
         .form-group input[type="file"] {
             padding: 8px;
+            border: 1px solid var(--border-color); /* Tambahkan border untuk input file */
+            border-radius: 8px; /* Tambahkan border-radius */
         }
         .btn-submit {
             background-color: var(--primary-color); color: white; padding: 12px 25px; border: none;
@@ -263,73 +271,12 @@ $conn->close();
                         <label for="keterangan">Keterangan Lengkap</label>
                         <textarea id="keterangan" name="keterangan" rows="6" placeholder="Jelaskan detail aduan Anda di sini..." required></textarea>
                     </div>
-                    <div class="form-group">
-                        <label>Metode Unggah Gambar Bukti:</label><br>
-                        <input type="radio" name="metode" value="galeri" checked onclick="switchMetode('galeri')"> Dari Galeri
-                        <input type="radio" name="metode" value="kamera" onclick="switchMetode('kamera')"> Ambil dari Kamera
-                    </div>
-
-                    <!-- Input Galeri -->
+                    
+                    <!-- Hanya input Galeri yang tersisa -->
                     <div class="form-group" id="galeriInput">
-                        <label for="gambarGaleri">Pilih dari Galeri (JPG, PNG, maks. 2MB)</label>
-                        <input type="file" id="gambarGaleri" name="gambar" accept="image/jpeg, image/png">
+                        <label for="gambarGaleri">Pilih Gambar Bukti dari Galeri (JPG, PNG, maks. 2MB)</label>
+                        <input type="file" id="gambarGaleri" name="gambar_galeri" accept="image/jpeg, image/png">
                     </div>
-
-                    <!-- Input Kamera -->
-                    <div class="form-group" id="kameraInput" style="display: none;">
-                        <label for="gambarKamera">Ambil Foto dengan Kamera</label>
-                        <input type="file" id="gambarKamera" name="gambar" accept="image/*" capture="environment">
-                    </div>
-
-                    <script>
-                        function switchMetode(mode) {
-                            document.getElementById('galeriInput').style.display = mode === 'galeri' ? 'block' : 'none';
-                            document.getElementById('kameraInput').style.display = mode === 'kamera' ? 'block' : 'none';
-                        }
-                    </script>
-
-                    <script>
-                        // Toggle input berdasarkan metode
-                        function switchMetode(mode) {
-                            document.getElementById('galeriInput').style.display = mode === 'galeri' ? 'block' : 'none';
-                            document.getElementById('kameraInput').style.display = mode === 'kamera' ? 'block' : 'none';
-                        }
-
-                        // Inisialisasi kamera
-                        navigator.mediaDevices.getUserMedia({
-                            video: { facingMode: { exact: "environment" } }
-                        })
-                        .then(function (stream) {
-                            document.getElementById('preview').srcObject = stream;
-                        })
-                        .catch(function (error) {
-                        // Fallback ke kamera depan
-                        console.warn("Kamera belakang tidak tersedia, gunakan kamera depan:", error);
-                         return navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-                        })
-                        .then(function (stream) {
-                        if (stream) {
-                            document.getElementById('preview').srcObject = stream;
-                        }
-                        });
-
-
-
-                        // Ambil foto dari kamera
-                        function takePhoto() {
-                            var video = document.getElementById('preview');
-                            var canvas = document.getElementById('snapshot');
-                            var context = canvas.getContext('2d');
-
-                            canvas.width = video.videoWidth;
-                            canvas.height = video.videoHeight;
-                            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-                            var imageData = canvas.toDataURL('image/png');
-                            document.getElementById('gambarData').value = imageData;
-                            alert("Foto berhasil diambil!");
-                        }
-                    </script>
 
                     <div class="form-group">
                         <button type="submit" class="btn-submit"><i class="fas fa-paper-plane"></i> Kirim Aduan</button>
