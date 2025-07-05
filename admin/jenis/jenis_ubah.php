@@ -69,8 +69,9 @@ if (isset($_GET['id'])) {
     }
     $stmt_jenis->close();
 }
+
 // Handle POST request to update data
-else if (isset($_POST['ubah_jenis_submit'])) {
+if (isset($_POST['ubah_jenis_submit'])) {
     $id_jenis_to_edit = intval($_POST['id_jenis']); // Get hidden ID
     $jenis_baru = $conn->real_escape_string($_POST['jenis']);
 
