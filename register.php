@@ -185,8 +185,8 @@ if (isset($_POST['register_submit'])) {
                             <input type="password" placeholder="Konfirmasi Password" name="confirm_password" required>
                         </div>
                         <div class="input-group">
-                            <i class="fa-solid fa-email"></i> <!-- Menggunakan ikon ID card untuk NIM -->
-                            <input type="email" placeholder="Email kampus" name="nim" required value="<?php echo isset($_POST['nim']) ? htmlspecialchars($_POST['nim']) : ''; ?>">
+                            <i class="fa-solid fa-envelope"></i> <!-- Menggunakan ikon ID card untuk NIM -->
+                            <input type="email" placeholder="Email Kampus" name="nim" required value="<?php echo isset($_POST['nim']) ? htmlspecialchars($_POST['nim']) : ''; ?>">
                         </div>
                         
                         <button type="submit" class="login-button" name="register_submit">Daftar</button>
