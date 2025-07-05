@@ -107,9 +107,9 @@ if ($result) {
             </div>
             <nav class="sidebar-nav">
                 <ul>
-                    <!-- Path link disesuaikan dari lokasi file ini -->
                     <li><a href="../../dashboard/dashboard_admin.php" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
                     <li><a href="#" class="nav-link active"><i class="fas fa-boxes"></i> Aduan Fasilitas</a></li>
+                    <li><a href="../jenis/jenis_lihat.php" class="nav-link"><i class="fas fa-file-alt"></i> Jenis Aduan </a></li>
                     <li><a href="../pengadu/pengadu_lihat.php" class="nav-link"><i class="fas fa-users"></i> Pengadu </a></li>
                 </ul>
                 <div class="nav-section-title">SETTINGS</div>
