@@ -38,12 +38,12 @@ $admin_name = $_SESSION['nama']; // Get admin's name from session
 $message_from_session = '';
 $message_type_from_session = '';
 
-if (isset($_SESSION['form_message'])) {
-    $message_from_session = $_SESSION['form_message'];
-    $message_type_from_session = $_SESSION['form_message_type'];
+if (isset($_SESSION['message'])) {
+    $message_from_session = $_SESSION['message'];
+    $message_type_from_session = $_SESSION['message_type'];
     // Hapus pesan dari sesi agar tidak muncul lagi setelah refresh
-    unset($_SESSION['form_message']);
-    unset($_SESSION['form_message_type']);
+    unset($_SESSION['message']);
+    unset($_SESSION['message_type']);
 }
 
 
@@ -53,31 +53,32 @@ if (isset($_POST['tambah_jenis_submit'])) {
 
     // Basic validation
     if (empty($jenis_baru)) {
-        $_SESSION['form_message'] = "Nama Jenis Pengaduan harus diisi.";
-        $_SESSION['form_message_type'] = 'error';
+        $_SESSION['message'] = "Nama Jenis Pengaduan harus diisi.";
+        $_SESSION['message_type'] = 'error';
         header("Location: jenis_tambah.php"); // Redirect kembali ke halaman ini untuk menampilkan error
         exit();
     } else {
         // Prepare statement for inserting into jenis_pengaduan table
         $stmt_jenis = $conn->prepare("INSERT INTO jenis_pengaduan (jenis) VALUES (?)");
+        $stmt_jenis->bind_param("s", $jenis_baru); // 's' for string type
+        
         if ($stmt_jenis === FALSE) {
             // Handle error if prepare fails
-            $_SESSION['form_message'] = "Prepare statement failed: " . $conn->error;
-            $_SESSION['form_message_type'] = 'error';
+            $_SESSION['message'] = "Prepare statement failed: " . $conn->error;
+            $_SESSION['message_type'] = 'error';
             header("Location: jenis_tambah.php");
             exit();
         }
-        $stmt_jenis->bind_param("s", $jenis_baru); // 's' for string type
 
         if ($stmt_jenis->execute()) {
-            $_SESSION['form_message'] = "Jenis pengaduan '" . htmlspecialchars($jenis_baru) . "' berhasil ditambahkan!";
-            $_SESSION['form_message_type'] = 'success';
+            $_SESSION['message'] = "Jenis pengaduan '" . htmlspecialchars($jenis_baru) . "' berhasil ditambahkan!";
+            $_SESSION['message_type'] = 'success';
             // Redirect ke halaman lihat setelah sukses
             header("Location: jenis_lihat.php");
             exit();
         } else {
-            $_SESSION['form_message'] = "Gagal menambahkan Jenis Pengaduan: " . $stmt_jenis->error;
-            $_SESSION['form_message_type'] = 'error';
+            $_SESSION['message'] = "Gagal menambahkan Jenis Pengaduan: " . $stmt_jenis->error;
+            $_SESSION['message_type'] = 'error';
             header("Location: jenis_tambah.php"); // Redirect kembali ke halaman ini jika ada error
             exit();
         }
