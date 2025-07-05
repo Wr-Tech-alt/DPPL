@@ -285,7 +285,11 @@ if (isset($_POST['ubah_pengadu_submit'])) {
         </div>
         <script src="../../assets/js/jquery-1.10.2.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
-
+        <script>
+            // Kirim variabel PHP ke JS
+            const message_from_session = <?php echo json_encode($message_from_session); ?>;
+            const message_type_from_session = <?php echo json_encode($message_type_from_session); ?>;
+        </script>
         <script>
             // Fungsi untuk mengupdate waktu dan tanggal saat ini
             function updateDateTime() {
@@ -303,8 +307,6 @@ if (isset($_POST['ubah_pengadu_submit'])) {
                 // Tangani pesan dari sesi menggunakan SweetAlert2
                 const message = message_from_session;
                 const messageType = message_type_from_session;
-
-
 
                 if (message) {
                     Swal.fire({
