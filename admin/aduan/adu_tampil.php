@@ -401,6 +401,11 @@ if (isset($conn) && $conn instanceof mysqli) {
             border-radius: 6px;
             box-sizing: border-box;
         }
+        .search-customer input:focus { /* MODIFIED: Added outline: none; here */
+            outline: none; /* Remove the default outline */
+            border-color: #007bff; /* Keep your desired border color on focus */
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); /* Keep your desired shadow */
+        }
         .search-customer i {
             position: absolute;
             left: 12px;
