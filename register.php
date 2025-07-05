@@ -50,6 +50,7 @@ if (isset($_POST['register_submit'])) {
 
             if ($result_check_nim->num_rows > 0) {
                 $error_message = "Email ini sudah terdaftar. Silakan login atau hubungi admin.";
+                $redirect_to_login = true;
             } else {
                 // Password tetap plain text sesuai permintaan
                 $hashed_password = $password; 
@@ -61,6 +62,7 @@ if (isset($_POST['register_submit'])) {
 
                 if ($stmt_insert->execute()) {
                     $success_message = "Pendaftaran berhasil! Silakan login.";
+                    $redirect_to_login = true;
                     // Opsional: Redirect ke halaman login setelah sukses
                     // header("Location: index.php?registration=success");
                     // exit();
@@ -223,6 +225,12 @@ if (isset($_POST['register_submit'])) {
                     document.getElementById(targetTab + '-form-content').classList.add('active');
                 });
             });
+            
+            <?php if ($redirect_to_login): ?>
+                setTimeout(function() {
+                    window.location.href = 'index.php'; // Redirect ke halaman login
+                }, 1000); // Redirect setelah 1 detik
+            <?php endif; ?>
         });
     </script>
 </body>
