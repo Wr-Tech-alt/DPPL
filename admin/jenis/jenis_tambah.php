@@ -4,6 +4,13 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// --- DEBUGGING: Tampilkan isi sesi saat halaman dimuat ---
+echo '<pre>';
+echo 'DEBUG: Isi $_SESSION saat awal load:';
+var_dump($_SESSION);
+echo '</pre>';
+// --- AKHIR DEBUGGING ---
+
 // PENTING: Pastikan ini adalah hal pertama untuk melindungi halaman.
 // Asumsi file ini berada di admin/jenis/jenis_tambah.php
 // Path ke login.php dari sini adalah ../../login.php
@@ -21,6 +28,13 @@ if (isset($_SESSION['message'])) {
     // Hapus pesan dari sesi agar tidak muncul lagi setelah refresh
     unset($_SESSION['message']);
     unset($_SESSION['message_type']);
+
+    // --- DEBUGGING: Tampilkan isi sesi setelah unset ---
+    echo '<pre>';
+    echo 'DEBUG: Isi $_SESSION setelah unset:';
+    var_dump($_SESSION);
+    echo '</pre>';
+    // --- AKHIR DEBUGGING ---
 }
 
 // Periksa status login dan peran pengguna
@@ -312,6 +326,11 @@ if (isset($conn) && $conn instanceof mysqli) {
             // Tangani pesan dari sesi menggunakan SweetAlert2
             const message = "<?php echo $message_from_session; ?>";
             const messageType = "<?php echo $message_type_from_session; ?>";
+
+            // --- DEBUGGING: Tampilkan nilai variabel JavaScript ---
+            console.log("Pesan dari sesi (JS):", message);
+            console.log("Tipe pesan dari sesi (JS):", messageType);
+            // --- AKHIR DEBUGGING ---
 
             if (message) {
                 Swal.fire({
