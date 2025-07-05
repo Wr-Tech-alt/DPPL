@@ -396,7 +396,6 @@ if (isset($conn) && $conn instanceof mysqli) {
         .search-customer input {
             width: 100%;
             padding: 8px 12px 8px 35px;
-            border: 1px solid #ccc;
             border-radius: 6px;
             box-sizing: border-box;
         }
