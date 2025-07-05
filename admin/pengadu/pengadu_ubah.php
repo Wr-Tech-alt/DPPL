@@ -1,22 +1,46 @@
 <?php
 session_start();
-require '../../inc/koneksi.php'; // sesuaikan path file koneksi kamu
+require '../../inc/koneksi.php'; // Sesuaikan path file koneksinya
+
+$pengadu_data = [
+    'iduser' => '',
+    'nama' => '',
+    'email' => ''
+];
 
 $message_from_session = '';
 $message_type_from_session = '';
 
+// Ambil data pengguna berdasarkan ID dari URL
+if (isset($_GET['id'])) {
+    $iduser = intval($_GET['id']);
+
+    $stmt = $conn->prepare("SELECT iduser, nama, email FROM pengguna WHERE iduser = ?");
+    $stmt->bind_param("i", $iduser);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result && $result->num_rows > 0) {
+        $pengadu_data = $result->fetch_assoc();
+    } else {
+        $message_from_session = "Data pengguna tidak ditemukan.";
+        $message_type_from_session = "error";
+    }
+
+    $stmt->close();
+}
+
+// Proses Update (dari jawaban sebelumnya)
 if (isset($_POST['ubah_pengadu_submit'])) {
     $iduser = $_POST['iduser'];
     $nama = $_POST['nama'];
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    // validasi sederhana
     if (empty($iduser) || empty($nama)) {
         $message_from_session = "ID dan Nama wajib diisi!";
         $message_type_from_session = "error";
     } else {
-        // Update data
         if (!empty($password)) {
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
             $query = "UPDATE pengguna SET nama = ?, email = ?, password = ? WHERE iduser = ?";
@@ -40,6 +64,7 @@ if (isset($_POST['ubah_pengadu_submit'])) {
     }
 }
 ?>
+
 
 
 <!DOCTYPE html>
@@ -260,7 +285,11 @@ if (isset($_POST['ubah_pengadu_submit'])) {
         </div>
         <script src="../../assets/js/jquery-1.10.2.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
-
+        <script>
+            // Kirim variabel PHP ke JS
+            const message_from_session = <?php echo json_encode($message_from_session); ?>;
+            const message_type_from_session = <?php echo json_encode($message_type_from_session); ?>;
+        </script>
         <script>
             // Fungsi untuk mengupdate waktu dan tanggal saat ini
             function updateDateTime() {
@@ -278,8 +307,6 @@ if (isset($_POST['ubah_pengadu_submit'])) {
                 // Tangani pesan dari sesi menggunakan SweetAlert2
                 const message = message_from_session;
                 const messageType = message_type_from_session;
-
-
 
                 if (message) {
                     Swal.fire({

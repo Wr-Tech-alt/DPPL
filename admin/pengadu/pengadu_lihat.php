@@ -4,6 +4,17 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+$message_from_session = '';
+$message_type_from_session = '';
+
+if (isset($_SESSION['form_message'])) {
+    $message_from_session = $_SESSION['form_message'];
+    $message_type_from_session = $_SESSION['form_message_type'];
+    // Hapus pesan dari sesi agar tidak muncul lagi setelah refresh
+    unset($_SESSION['form_message']);
+    unset($_SESSION['form_message_type']);
+}
+
 // IMPORTANT: Ensure this is the very first thing to protect the page.
 if (!isset($_SESSION['loggedin']) || $_SESSION['role'] !== 'Admin') {
     header("Location: ../../login.php"); 
@@ -412,6 +423,10 @@ if (isset($conn) && $conn instanceof mysqli) {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
 
     <script>
+        const message_from_session = <?php echo json_encode($message_from_session); ?>;
+        const message_type_from_session = <?php echo json_encode($message_type_from_session); ?>;
+
+
         // MODIFIKASI: Fungsi updateDateTime dipindahkan ke sini
         function updateDateTime() {
             const now = new Date();
@@ -434,6 +449,18 @@ if (isset($conn) && $conn instanceof mysqli) {
                 "lengthChange": true,
                 "dom": 'rtip' 
             });
+
+            const message = message_from_session;
+            const messageType = message_type_from_session;
+
+            if (message) {
+                Swal.fire({
+                    title: messageType === 'success' ? 'Berhasil!' : 'Gagal!',
+                    text: message,
+                    icon: messageType, // 'success' atau 'error'
+                    confirmButtonText: 'Oke'
+                });
+            }
 
             // Hubungkan input search kustom dengan DataTables
             $('#customSearchInput').on('keyup change', function() {

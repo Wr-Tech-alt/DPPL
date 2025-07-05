@@ -319,10 +319,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                 </div>
             </header>
 
-            <section class="content-header">
-                <h2>Tambah Pengadu Baru</h2>
-            </section>
-
             <section class="form-section">
                 <form action="" method="POST">
                     <h3>Data Pengadu</h3>

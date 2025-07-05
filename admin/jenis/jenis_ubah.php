@@ -12,6 +12,10 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['role'] !== 'Admin') {
     exit();
 }
 
+// Inisialisasi pesan dan tipe pesan dari sesi (untuk pop-up setelah redirect)
+$message_from_session = '';
+$message_type_from_session = '';
+
 // Path to koneksi.php from admin/jenis/
 require_once '../../inc/koneksi.php';
 
@@ -65,8 +69,9 @@ if (isset($_GET['id'])) {
     }
     $stmt_jenis->close();
 }
+
 // Handle POST request to update data
-else if (isset($_POST['ubah_jenis_submit'])) {
+if (isset($_POST['ubah_jenis_submit'])) {
     $id_jenis_to_edit = intval($_POST['id_jenis']); // Get hidden ID
     $jenis_baru = $conn->real_escape_string($_POST['jenis']);
 
@@ -102,12 +107,6 @@ else if (isset($_POST['ubah_jenis_submit'])) {
     }
     $stmt_update->close();
 
-} else {
-    // If not a POST request and no ID is provided in GET
-    $_SESSION['form_message'] = "ID Jenis Pengaduan tidak ditemukan untuk diubah.";
-    $_SESSION['form_message_type'] = 'error';
-    header("Location: jenis_lihat.php");
-    exit();
 }
 
 // Close connection at the end of script
