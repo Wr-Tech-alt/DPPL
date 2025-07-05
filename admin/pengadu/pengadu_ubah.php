@@ -1,150 +1,102 @@
 <?php
-session_start();
+ob_start(); // Aktifkan output buffering (fix untuk header redirect)
 
+session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// PENTING: Pastikan ini adalah hal pertama untuk melindungi halaman.
-// File saat ini adalah admin/pengadu/pengadu_ubah.php
-// Path ke login.php dari sini adalah ../../login.php
+// Cek login dan role
 if (!isset($_SESSION['loggedin']) || $_SESSION['role'] !== 'Admin') {
     header("Location: ../../login.php"); 
     exit();
 }
 
-// Path ke koneksi.php dari admin/pengadu/
 require_once '../../inc/koneksi.php'; 
 
-// Periksa objek koneksi database ($conn)
 if (!isset($conn) || $conn->connect_error) {
-    die("Fatal Error: Objek koneksi database (\$conn) tidak tersedia atau koneksi gagal. Silakan periksa ../../inc/koneksi.php.");
+    die("Fatal Error: Objek koneksi database tidak tersedia.");
 }
 
-$admin_name = $_SESSION['nama']; // Dapatkan nama admin dari sesi
-$message = '';
-$message_type = ''; // 'success' atau 'error'
+$admin_name = $_SESSION['nama'] ?? '';
 
-// Inisialisasi pesan dan tipe pesan dari sesi (untuk pop-up setelah redirect)
-$message_from_session = '';
-$message_type_from_session = '';
-
-if (isset($_SESSION['form_message'])) {
-    $message_from_session = $_SESSION['form_message'];
-    $message_type_from_session = $_SESSION['form_message_type'];
-    // Hapus pesan dari sesi agar tidak muncul lagi setelah refresh
-    unset($_SESSION['form_message']);
-    unset($_SESSION['form_message_type']);
-}
+// Pesan dari session
+$message_from_session = $_SESSION['form_message'] ?? '';
+$message_type_from_session = $_SESSION['form_message_type'] ?? '';
+unset($_SESSION['form_message'], $_SESSION['form_message_type']);
 
 $iduser_to_edit = null;
 $pengadu_data = [];
 
-// Tangani permintaan GET untuk memuat data yang sudah ada
+// ✅ GET → tampilkan data untuk diubah
 if (isset($_GET['id'])) {
     $iduser_to_edit = intval($_GET['id']);
-
-    // Ambil data pengguna dari tabel 'pengguna'
-    $stmt_pengguna = $conn->prepare("SELECT iduser, nama, email, password, Role FROM pengguna WHERE iduser = ?");
-    $stmt_pengguna->bind_param("i", $iduser_to_edit);
-    $stmt_pengguna->execute();
-    $result_pengguna = $stmt_pengguna->get_result();
-
-    if ($result_pengguna->num_rows === 1) {
-        $pengadu_data = $result_pengguna->fetch_assoc();
+    $stmt = $conn->prepare("SELECT iduser, nama, email FROM pengguna WHERE iduser = ?");
+    $stmt->bind_param("i", $iduser_to_edit);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows === 1) {
+        $pengadu_data = $result->fetch_assoc();
     } else {
         $_SESSION['form_message'] = "Pengadu tidak ditemukan.";
         $_SESSION['form_message_type'] = 'error';
         header("Location: pengadu_lihat.php");
         exit();
     }
-    $stmt_pengguna->close();
+    $stmt->close();
 
-} 
-// Tangani permintaan POST untuk memperbarui data
-if (isset($_POST['ubah_pengadu_submit'])) {
+// ✅ POST → proses update
+} elseif (isset($_POST['ubah_pengadu_submit'])) {
     $iduser_to_edit = intval($_POST['iduser']);
-    $nama = $conn->real_escape_string($_POST['nama']);
-    $email = $conn->real_escape_string($_POST['email']);
-    $new_password = $_POST['password']; // Input password, mungkin kosong jika tidak diubah
+    $nama = trim($_POST['nama']);
+    $email = trim($_POST['email']);
+    $password = $_POST['password'];
 
-    // --- DEBUG LOG: Data POST yang diterima ---
-    error_log("DEBUG: Data POST diterima: " . print_r($_POST, true));
-
-    // Validasi input disederhanakan
     if (empty($nama)) {
         $_SESSION['form_message'] = "Nama tidak boleh kosong.";
         $_SESSION['form_message_type'] = 'error';
-        header("Location: pengadu_ubah.php?id=" . $iduser_to_edit);
+        header("Location: pengadu_ubah.php?id=$iduser_to_edit");
         exit();
     }
 
     $conn->begin_transaction();
-
     try {
-        // Perbarui tabel pengguna
-        $update_password_clause = '';
-        $password_to_update = null; // Inisialisasi null
-        if (!empty($new_password)) {
-            $update_password_clause = ", password = ?";
-            $password_to_update = $new_password;
-        }
-
-        $sql_query = "UPDATE pengguna SET nama = ?, email = ? " . $update_password_clause . " WHERE iduser = ?";
-        // --- DEBUG LOG: Kueri SQL yang disiapkan ---
-        error_log("DEBUG: Kueri SQL: " . $sql_query);
-
-        $stmt_pengguna_update = $conn->prepare($sql_query);
-        
-        if ($stmt_pengguna_update === FALSE) {
-            throw new Exception("Gagal menyiapkan statement untuk update pengguna: " . $conn->error);
-        }
-
-        if (!empty($new_password)) {
-            // --- DEBUG LOG: Parameter yang diikat (dengan password) ---
-            error_log("DEBUG: Parameter diikat (dengan password): nama=" . $nama . ", email=" . $email . ", password=" . $password_to_update . ", iduser=" . $iduser_to_edit);
-            $stmt_pengguna_update->bind_param("sssi", $nama, $email, $password_to_update, $iduser_to_edit);
+        if (!empty($password)) {
+            $stmt = $conn->prepare("UPDATE pengguna SET nama=?, email=?, password=? WHERE iduser=?");
+            $stmt->bind_param("sssi", $nama, $email, $password, $iduser_to_edit);
         } else {
-            // --- DEBUG LOG: Parameter yang diikat (tanpa password) ---
-            error_log("DEBUG: Parameter diikat (tanpa password): nama=" . $nama . ", email=" . $email . ", iduser=" . $iduser_to_edit);
-            $stmt_pengguna_update->bind_param("ssi", $nama, $email, $iduser_to_edit);
+            $stmt = $conn->prepare("UPDATE pengguna SET nama=?, email=? WHERE iduser=?");
+            $stmt->bind_param("ssi", $nama, $email, $iduser_to_edit);
         }
 
-        if (!$stmt_pengguna_update->execute()) {
-            throw new Exception("Gagal mengupdate Pengadu: " . $stmt_pengguna_update->error);
+        if (!$stmt->execute()) {
+            throw new Exception("Gagal update data: " . $stmt->error);
         }
-        
-        // --- DEBUG LOG: Jumlah baris yang terpengaruh ---
-        error_log("DEBUG: Baris terpengaruh (pengguna): " . $stmt_pengguna_update->affected_rows);
 
-        $stmt_pengguna_update->close();
-
+        $stmt->close();
         $conn->commit();
-        $_SESSION['form_message'] = "Data pengadu '" . htmlspecialchars($nama) . "' berhasil diperbarui!";
+
+        $_SESSION['form_message'] = "Data pengadu berhasil diperbarui.";
         $_SESSION['form_message_type'] = 'success';
         header("Location: pengadu_lihat.php");
         exit();
-
     } catch (Exception $e) {
         $conn->rollback();
         $_SESSION['form_message'] = "Terjadi kesalahan: " . $e->getMessage();
         $_SESSION['form_message_type'] = 'error';
-        header("Location: pengadu_ubah.php?id=" . $iduser_to_edit);
+        header("Location: pengadu_ubah.php?id=$iduser_to_edit");
         exit();
     }
-
-} else if (!isset($_GET['id'])) {
-    // Jika bukan permintaan POST dan tidak ada ID yang disediakan di GET
-    $_SESSION['form_message'] = "ID Pengadu tidak ditemukan untuk diubah.";
+} else {
+    $_SESSION['form_message'] = "ID Pengadu tidak valid.";
     $_SESSION['form_message_type'] = 'error';
     header("Location: pengadu_lihat.php");
     exit();
 }
 
-// Tutup koneksi di akhir skrip
-if (isset($conn) && $conn instanceof mysqli) {
-    $conn->close(); 
-}
+$conn->close(); 
+ob_end_flush(); // Kirim semua output yang tertunda
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
