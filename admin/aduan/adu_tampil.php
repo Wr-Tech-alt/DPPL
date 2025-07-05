@@ -388,22 +388,22 @@ if (isset($conn) && $conn instanceof mysqli) {
             background-color: #e2e6ea;
             border-color: #c6c6c6;
         }
-        .search-customer {
+       .search-customer {
             position: relative;
-            flex-grow: 1; /* Allow search input to take available space */
-            /* Added margin-right to push the filter-select to the right */
-            margin-right: auto; /* This pushes the search bar to the left and the next element to the right */
+            flex-grow: 1;
+            margin-right: auto;
         }
         .search-customer input {
             width: 100%;
-            padding: 8px 12px 8px 35px; /* Adjust padding for icon */
+            padding: 8px 12px 8px 35px;
             border: 1px solid #ccc;
             border-radius: 6px;
+            box-sizing: border-box;
         }
-        .search-customer input:focus { /* MODIFIED: Added outline: none; here */
-            outline: none; /* Remove the default outline */
-            border-color: #007bff; /* Keep your desired border color on focus */
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); /* Keep your desired shadow */
+        .search-customer input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
         }
         .search-customer i {
             position: absolute;
@@ -411,6 +411,7 @@ if (isset($conn) && $conn instanceof mysqli) {
             top: 50%;
             transform: translateY(-50%);
             color: #888;
+            pointer-events: none;
         }
 
         /* Table container for DataTables responsiveness */
