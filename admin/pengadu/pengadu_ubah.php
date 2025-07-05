@@ -38,7 +38,6 @@ if (isset($_SESSION['form_message'])) {
 
 $iduser_to_edit = null;
 $pengadu_data = [];
-// Data Telegram dihapus
 
 // Tangani permintaan GET untuk memuat data yang sudah ada
 if (isset($_GET['id'])) {
@@ -52,8 +51,6 @@ if (isset($_GET['id'])) {
 
     if ($result_pengguna->num_rows === 1) {
         $pengadu_data = $result_pengguna->fetch_assoc();
-        // Data Telegram dihapus dari sini
-
     } else {
         $_SESSION['form_message'] = "Pengadu tidak ditemukan.";
         $_SESSION['form_message_type'] = 'error';
@@ -70,6 +67,9 @@ else if (isset($_POST['ubah_pengadu_submit'])) {
     $email = $conn->real_escape_string($_POST['email']);
     $new_password = $_POST['password']; // Input password, mungkin kosong jika tidak diubah
 
+    // --- DEBUG LOG: Data POST yang diterima ---
+    error_log("DEBUG: Data POST diterima: " . print_r($_POST, true));
+
     // Validasi input disederhanakan
     if (empty($nama)) {
         $_SESSION['form_message'] = "Nama tidak boleh kosong.";
@@ -83,32 +83,40 @@ else if (isset($_POST['ubah_pengadu_submit'])) {
     try {
         // Perbarui tabel pengguna
         $update_password_clause = '';
+        $password_to_update = null; // Inisialisasi null
         if (!empty($new_password)) {
-            // --- PERINGATAN KEAMANAN ---
-            // Simpan password dalam plaintext. SANGAT TIDAK AMAN.
-            // Untuk produksi, gunakan: $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
             $update_password_clause = ", password = ?";
             $password_to_update = $new_password;
         }
 
-        $stmt_pengguna_update = $conn->prepare("UPDATE pengguna SET nama = ?, email = ? " . $update_password_clause . " WHERE iduser = ?");
+        $sql_query = "UPDATE pengguna SET nama = ?, email = ? " . $update_password_clause . " WHERE iduser = ?";
+        // --- DEBUG LOG: Kueri SQL yang disiapkan ---
+        error_log("DEBUG: Kueri SQL: " . $sql_query);
+
+        $stmt_pengguna_update = $conn->prepare($sql_query);
         
         if ($stmt_pengguna_update === FALSE) {
             throw new Exception("Gagal menyiapkan statement untuk update pengguna: " . $conn->error);
         }
 
         if (!empty($new_password)) {
+            // --- DEBUG LOG: Parameter yang diikat (dengan password) ---
+            error_log("DEBUG: Parameter diikat (dengan password): nama=" . $nama . ", email=" . $email . ", password=" . $password_to_update . ", iduser=" . $iduser_to_edit);
             $stmt_pengguna_update->bind_param("sssi", $nama, $email, $password_to_update, $iduser_to_edit);
         } else {
+            // --- DEBUG LOG: Parameter yang diikat (tanpa password) ---
+            error_log("DEBUG: Parameter diikat (tanpa password): nama=" . $nama . ", email=" . $email . ", iduser=" . $iduser_to_edit);
             $stmt_pengguna_update->bind_param("ssi", $nama, $email, $iduser_to_edit);
         }
 
         if (!$stmt_pengguna_update->execute()) {
             throw new Exception("Gagal mengupdate Pengadu: " . $stmt_pengguna_update->error);
         }
-        $stmt_pengguna_update->close();
+        
+        // --- DEBUG LOG: Jumlah baris yang terpengaruh ---
+        error_log("DEBUG: Baris terpengaruh (pengguna): " . $stmt_pengguna_update->affected_rows);
 
-        // Fungsi update tb_telegram dihapus sepenuhnya
+        $stmt_pengguna_update->close();
 
         $conn->commit();
         $_SESSION['form_message'] = "Data pengadu '" . htmlspecialchars($nama) . "' berhasil diperbarui!";
@@ -334,7 +342,6 @@ if (isset($conn) && $conn instanceof mysqli) {
             <section class="form-section">
                 <form action="" method="POST">
                     <input type="hidden" name="iduser" value="<?php echo htmlspecialchars($pengadu_data['iduser'] ?? ''); ?>">
-                    <!-- old_nama tidak lagi diperlukan karena tidak ada update tb_telegram -->
 
                     <h3>Data Pengadu</h3>
                     <div class="form-group">
@@ -349,10 +356,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                         <label for="password">Password (Biarkan kosong jika tidak diubah):</label>
                         <input type="password" id="password" name="password" placeholder="********">
                     </div>
-
-                    <!-- form-divider Data Telegram dihapus -->
-                    <!-- form-group ID Telegram dihapus -->
-                    <!-- form-group ID Chat Telegram dihapus -->
                     
                     <button type="submit" name="ubah_pengadu_submit" class="btn-submit">Ubah Data Pengadu</button>
                 </form>
