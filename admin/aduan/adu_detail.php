@@ -1,450 +1,260 @@
 <?php
 session_start();
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Melindungi halaman
-if (!isset($_SESSION['loggedin']) || !in_array($_SESSION['role'], ['Admin', 'Petugas'])) {
-    header("Location: ../../login.php"); // Path disesuaikan
+// PENTING: Pastikan ini adalah hal pertama untuk melindungi halaman.
+if (!isset($_SESSION['loggedin']) || !in_array($_SESSION['role'], ['Admin', 'Petugas', 'Pengadu'])) {
+    // Jika tidak login atau peran tidak dikenali, arahkan ke halaman login.
+    header("Location: ../login.php");
     exit();
 }
 
-// Mengambil data sesi pengguna
+// Sertakan file koneksi database Anda
+include "../../inc/koneksi.php"; // Sesuaikan path jika diperlukan
+
+// Ambil data spesifik pengguna dari sesi
 $user_name = $_SESSION['nama'];
 $user_role = $_SESSION['role'];
 
-// Memanggil koneksi database
-require '../../inc/koneksi.php';
+$complaint_detail = null;
+$error_message = "";
 
-// Add this check immediately after including koneksi.php
-if (!isset($conn) || $conn->connect_error) {
-    die("Fatal Error: Database connection object (\$conn) is not available or connection failed. Please check ../../inc/koneksi.php.");
+// Tangani permintaan pembaruan status
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_status') {
+    // Pastikan hanya Admin yang bisa melakukan ini
+    if ($user_role === 'Admin' && isset($_POST['idpengaduan'])) {
+        $id_pengaduan_to_update = mysqli_real_escape_string($conn, $_POST['idpengaduan']);
+
+        // Periksa status aduan saat ini sebelum memperbarui
+        $current_status_query = mysqli_query($conn, "SELECT status FROM pengaduan WHERE idpengaduan = '$id_pengaduan_to_update'");
+        $current_status_row = mysqli_fetch_assoc($current_status_query);
+        $current_status = $current_status_row['status'];
+
+        if ($current_status === 'Pending') {
+            $update_query = mysqli_query($conn, "UPDATE pengaduan SET status = 'Diproses' WHERE idpengaduan = '$id_pengaduan_to_update'");
+            if ($update_query) {
+                $_SESSION['update_message'] = ['type' => 'success', 'text' => 'Status aduan berhasil diperbarui menjadi "Diproses".'];
+            } else {
+                $_SESSION['update_message'] = ['type' => 'error', 'text' => 'Gagal memperbarui status aduan: ' . mysqli_error($conn)];
+            }
+        } elseif ($current_status === 'Diproses') { // Tambahkan logika untuk mengubah ke 'Selesai'
+            $update_query = mysqli_query($conn, "UPDATE pengaduan SET status = 'Selesai' WHERE idpengaduan = '$id_pengaduan_to_update'");
+            if ($update_query) {
+                $_SESSION['update_message'] = ['type' => 'success', 'text' => 'Status aduan berhasil diperbarui menjadi "Selesai".'];
+            } else {
+                $_SESSION['update_message'] = ['type' => 'error', 'text' => 'Gagal memperbarui status aduan: ' . mysqli_error($conn)];
+            }
+        } else {
+            $_SESSION['update_message'] = ['type' => 'error', 'text' => 'Status aduan tidak dapat diperbarui karena bukan "Pending" atau "Diproses".'];
+        }
+    } else {
+        $_SESSION['update_message'] = ['type' => 'error', 'text' => 'Anda tidak memiliki izin untuk melakukan tindakan ini atau ID aduan tidak valid.'];
+    }
+    // Arahkan kembali untuk mencegah pengiriman ulang formulir dan menampilkan data yang diperbarui
+    header("Location: adu_detail.php?id=" . $id_pengaduan_to_update);
+    exit();
 }
 
-// Mengambil data aduan
-$query = "SELECT 
-            a.idpengaduan, 
-            a.judul, 
-            a.status, 
-            a.waktu_aduan, 
-            p.nama AS nama_pengadu
-          FROM pengaduan a
-          JOIN pengguna p ON a.iduser = p.iduser
-          ORDER BY a.waktu_aduan DESC";
+// Periksa apakah idpengaduan disediakan di URL
+if (isset($_GET['id']) && !empty($_GET['id'])) {
+    $id_pengaduan = mysqli_real_escape_string($conn, $_GET['id']);
 
-$result = mysqli_query($conn, $query);
-
-$pengaduan = [];
-if ($result) {
-    $pengaduan = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    if ($conn) {
+        // Kueri untuk mengambil semua detail untuk ID aduan spesifik
+        $query_detail = mysqli_query($conn, "SELECT 
+                                                p.idpengaduan,
+                                                p.waktu_aduan,
+                                                p.judul,
+                                                p.notelp,
+                                                p.keterangan,
+                                                p.lokasi,
+                                                p.tanggapan,
+                                                p.status,
+                                                p.gambar,
+                                                p.author,
+                                                u.nama AS nama_pengadu,
+                                                j.jenis AS jenis_aduan
+                                            FROM 
+                                                pengaduan p
+                                            LEFT JOIN 
+                                                pengguna u ON p.iduser = u.iduser
+                                            LEFT JOIN 
+                                                jenis_pengaduan j ON p.idjenis = j.idjenis
+                                            WHERE 
+                                                p.idpengaduan = '$id_pengaduan'");
+        
+        if ($query_detail && mysqli_num_rows($query_detail) > 0) {
+            $complaint_detail = mysqli_fetch_assoc($query_detail);
+        } else {
+            $error_message = "Aduan tidak ditemukan atau ID tidak valid.";
+        }
+    } else {
+        $error_message = "Koneksi database gagal. Silakan coba lagi nanti.";
+    }
 } else {
-    // Menampilkan error jika query gagal
-    die("Gagal mengambil data aduan: " . mysqli_error($conn)); 
-}
-
-// Data for Notification Badge (from jenis_lihat.php logic)
-$query_masuk_aduan = mysqli_query($conn, "SELECT COUNT(*) AS total FROM pengaduan WHERE status = 'Masuk'");
-$data_masuk_aduan = mysqli_fetch_assoc($query_masuk_aduan);
-$new_complaints_count = $data_masuk_aduan['total'];
-
-// Close the connection after fetching data
-if (isset($conn) && $conn instanceof mysqli) {
-    $conn->close();
+    $error_message = "ID aduan tidak disediakan.";
 }
 ?>
-
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aduan Fasilitas - SiCepu</title>
-    
-    <!-- CSS dari Dashboard -->
-    <link rel="stylesheet" href="../../assets/css/dash_admin.css">
-    <!-- CSS khusus untuk tabel (jika ada styling unik) -->
-    <link rel="stylesheet" href="../../assets/css/users.css"> 
-    
+    <title>Detail Aduan - SiCepu</title>
+    <link rel="stylesheet" href="../../assets/css/dash_admin.css"> <!-- Sesuaikan path CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="../../assets/js/dataTables/dataTables.bootstrap.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    
     <style>
-        /* Tambahan style untuk memastikan konsistensi */
-        .main-content {
-            padding: 20px;
-            background-color: #f0f2f5;
-        }
-        .content-container {
+        /* General styling for the detail page */
+        .detail-container {
             background-color: #fff;
-            padding: 25px;
+            padding: 30px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .table-header {
+            max-width: 900px;
+            margin: 30px auto;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column; /* Default to column, will change for larger screens */
+            gap: 20px;
+        }
+        .detail-header {
+            text-align: center;
             margin-bottom: 20px;
+            position: relative; /* Untuk memposisikan tombol update */
         }
-        .table-header h3 {
-            margin: 0;
+        .detail-header h2 {
             color: #333;
+            font-size: 2em;
+            margin-bottom: 10px;
         }
-        .filter-box {
+        /* New styles for image at the top */
+        .detail-image-top {
+            text-align: center;
+            margin-bottom: 20px; /* Spasi di bawah gambar */
+        }
+        .detail-image-top label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 10px;
+            font-size: 1em;
+            display: block; /* Membuat label mengambil lebar penuh */
+        }
+        .detail-image-top img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        /* New styles for two-column layout */
+        .detail-content-columns {
             display: flex;
-            gap: 10px;
+            flex-wrap: wrap; /* Memungkinkan kolom untuk membungkus pada layar yang lebih kecil */
+            gap: 30px; /* Spasi antar kolom */
         }
-        .filter-input, .filter-select {
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
+
+        .detail-left-column,
+        .detail-right-column {
+            flex: 1; /* Setiap kolom mengambil ruang yang sama */
+            min-width: 300px; /* Lebar minimum sebelum membungkus */
         }
-        .btn-secondary {
-            background-color: #6c757d;
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+        .detail-item label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+            font-size: 0.95em;
+        }
+        .detail-item p {
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            padding: 10px 15px;
+            border-radius: 5px;
+            color: #333;
+            font-size: 1em;
+            word-wrap: break-word; /* Memastikan teks panjang membungkus */
+        }
+        .detail-item.status-info p {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-pending { background-color: #ffe0e0; color: #d32f2f; border-color: #d32f2f; } /* Merah muda */
+        .status-diproses { background-color: #fff3e0; color: #f57c00; border-color: #f57c00; } /* Oranye muda */
+        .status-selesai { background-color: #e8f5e9; color: #388e3c; border-color: #388e3c; } /* Hijau muda */
+
+        /* Update Status Button */
+        .update-status-button {
+            background-color: #007bff; /* Biru */
             color: white;
-            padding: 8px 15px;
+            padding: 10px 20px;
             border: none;
-            border-radius: 6px;
+            border-radius: 5px;
+            font-size: 1em;
             cursor: pointer;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 15px; /* Spasi di bawah header */
+            float: right; /* Posisikan ke kanan */
         }
-        .btn-secondary:hover {
+        .update-status-button:hover {
+            background-color: #0056b3;
+        }
+        .update-status-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .back-button-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .back-button {
+            display: inline-block;
+            background-color: #6c757d; /* Abu-abu */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 1em;
+            transition: background-color 0.2s ease;
+        }
+        .back-button:hover {
             background-color: #5a6268;
         }
 
-        /* Styles for action buttons - copied from jenis_lihat.php */
-        .action-buttons {
-            display: flex;
-            gap: 5px; /* Space between buttons */
-            justify-content: center; /* Center buttons within their cell */
-        }
-        .action-button {
-            padding: 8px 12px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            color: white;
-            font-size: 0.9em;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.2s ease, transform 0.1s ease;
-        }
-        .action-button i {
-            margin-right: 5px;
-        }
-        .action-button:hover {
-            transform: translateY(-1px);
-        }
-
-        .action-button.edit {
-            background-color: #007bff; /* Blue */
-        }
-        .action-button.edit:hover {
-            background-color: #0056b3;
-        }
-
-        .action-button.detail {
-            background-color: #17a2b8; /* Info Blue */
-        }
-        .action-button.detail:hover {
-            background-color: #138496;
-        }
-
-        .action-button.delete {
-            background-color: #dc3545; /* Red */
-        }
-        .action-button.delete:hover {
-            background-color: #c82333;
-        }
-
-        /* Adjust table header for Action column */
-        table thead th:last-child {
-            text-align: center; /* Center "Action" header text */
-        }
-        table tbody td:last-child {
-            text-align: center; /* Center buttons within cells */
-        }
-
-        /* Notification badge styling (from jenis_lihat.php) */
-        .nav-icons .notification-badge {
-            position: absolute;
-            top: -5px; /* Adjust as needed */
-            right: -5px; /* Adjust as needed */
-            background-color: red;
-            color: white;
-            border-radius: 50%;
-            padding: 2px 6px;
-            font-size: 0.7em;
-            font-weight: bold;
-            line-height: 1;
-            min-width: 18px; /* Ensure it's a circle even with single digit */
-            text-align: center;
-        }
-        .nav-icons .icon-wrapper {
-            position: relative;
-            display: inline-block; /* To contain the absolute positioned badge */
-            margin-right: 15px; /* Space between icons */
-        }
-        /* Styles for top-info-bar */
-        .navbar .top-info-bar { 
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            flex-grow: 1; 
-            padding-left: 20px; 
-            color: #000; /* IMPORTANT MODIFICATION: Text color changed to black */
-        }
-        .top-info-bar .status-info,
-        .top-info-bar .time-location-info {
-            display: flex;
-            align-items: center;
-            font-size: 0.95em;
-            color: #000; /* IMPORTANT MODIFICATION: Ensure inner text is also black */
-        }
-        .top-info-bar .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-        .top-info-bar .status-connected {
-            background-color: #28a745; 
-        }
-        .top-info-bar .status-disconnected {
-            background-color: #dc3545; 
-        }
-        /* Make sure it's responsive */
-        @media (max-width: 992px) { 
-            .navbar .top-info-bar {
-                display: none; 
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .detail-container {
+                margin: 20px 15px;
+                padding: 20px;
+            }
+            .detail-header h2 {
+                font-size: 1.8em;
+            }
+            .detail-content-columns {
+                flex-direction: column; /* Tumpuk kolom pada layar kecil */
+                gap: 0; /* Hapus spasi saat ditumpuk */
+            }
+            .update-status-button {
+                float: none; /* Hapus float pada layar kecil */
+                width: 100%; /* Tombol lebar penuh */
+                justify-content: center; /* Pusatkan konten */
             }
         }
-
-        /* --- Custom DataTables Pagination Styles --- (Copied from jenis_lihat.php) */
-        div.dataTables_paginate {
-            display: flex;
-            justify-content: flex-end; /* Move pagination to the right */
-            margin-top: 20px;
-            margin-bottom: 20px;
-            width: 100%;
-        }
-        div.dataTables_paginate ul.pagination {
-            display: inline-flex; /* For horizontal arrangement of buttons */
-            padding-left: 0;
-            margin: 0; /* Remove default Bootstrap margin */
-            border-radius: .25rem;
-            overflow: hidden; /* Ensure rounded corners */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Soft shadow */
-            list-style: none; /* Remove bullet list */
-        }
-
-        div.dataTables_paginate .paginate_button {
-            padding: 8px 15px;
-            border: 1px solid #dee2e6; /* Soft border */
-            background-color: #fff;
-            color: #495057; /* Dark gray text */
-            text-decoration: none;
-            cursor: pointer;
-            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-            min-width: 40px;
-            text-align: center;
-            line-height: 1.42857143;
-            /* Ensure no double left border for subsequent buttons */
-            border-left: none; 
-        }
-        /* Left border for the first button */
-        div.dataTables_paginate .paginate_button:first-child {
-            border-left: 1px solid #dee2e6; 
-        }
-
-
-        div.dataTables_paginate .paginate_button:hover:not(.current):not(.disabled) {
-            background-color: #e9ecef; /* Light gray on hover */
-            color: #343a40; /* Darker text on hover */
-            border-color: #c0c0c0;
-        }
-
-        div.dataTables_paginate .paginate_button.current {
-            background-color: #007bff; /* Primary blue for active */
-            color: white;
-            border-color: #007bff;
-            cursor: default;
-        }
-
-        div.dataTables_paginate .paginate_button.current:hover {
-            background-color: #0056b3; /* Darker blue on hover for active button */
-            border-color: #0056b3;
-        }
-
-        div.dataTables_paginate .paginate_button.disabled {
-            background-color: #f8f9fa; /* Very light gray for disabled */
-            color: #adb5bd; /* Faded gray text */
-            border-color: #dee2e2; 
-            cursor: not-allowed;
-            opacity: 0.8;
-        }
-        div.dataTables_paginate .paginate_button.disabled:hover {
-            background-color: #f8f9fa; /* No hover change for disabled */
-            color: #adb5bd;
-            border-color: #dee2e2; 
-        }
-
-        /* Arrow icons for Previous/Next */
-        div.dataTables_paginate .paginate_button.previous,
-        div.dataTables_paginate .paginate_button.next {
-            text-indent: -9999px; /* Hide text */
-            position: relative;
-            overflow: hidden;
-            min-width: 38px; /* Adjust minimum width */
-        }
-        div.dataTables_paginate .paginate_button.previous::before {
-            content: "\f053"; /* fa-chevron-circle-left */
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-indent: 0;
-            color: #495057; /* Icon color */
-        }
-        div.dataTables_paginate .paginate_button.next::before {
-            content: "\f054"; /* fa-chevron-circle-right */
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-indent: 0;
-            color: #495057; /* Icon color */
-        }
-        div.dataTables_paginate .paginate_button.current.previous::before,
-        div.dataTables_paginate .paginate_button.current.next::before {
-            color: white; /* White icon for active button */
-        }
-        div.dataTables_paginate .paginate_button.disabled.previous::before,
-        div.dataTables_paginate .paginate_button.disabled.next::before {
-            color: #adb5bd; /* Disabled icon color */
-        }
-        
-        /* Border radius for pagination ends */
-        div.dataTables_paginate .paginate_button:first-child {
-            border-top-left-radius: .25rem;
-            border-bottom-left-radius: .25rem;
-        }
-        div.dataTables_paginate .paginate_button:last-child {
-            border-top-right-radius: .25rem;
-            border-bottom-right-radius: .25rem;
-        }
-        /* MODIFICATION: Ensure borders between buttons are clearly defined */
-        div.dataTables_paginate .paginate_button:not(:first-child) {
-            border-left: 1px solid #dee2e6; /* Add left border for subsequent buttons */
-        }
-
-        /* Styles for btn-primary (Add New Button) from jenis_lihat.php */
-        .btn-primary {
-            background-color: #007bff;
-            color: white;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            text-decoration: none; /* For anchor tags styled as buttons */
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: background-color 0.2s ease;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-
-        /* Filter bar styling from jenis_lihat.php */
-        .filter-bar {
-            display: flex;
-            /* Removed justify-content: space-between; to allow search input to expand */
-            align-items: center;
-            margin-bottom: 20px;
-            gap: 10px;
-        }
-        .btn-filter {
-            background-color: #f8f9fa; /* Light background */
-            color: #333;
-            padding: 8px 15px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: background-color 0.2s ease, border-color 0.2s ease;
-        }
-        .btn-filter:hover {
-            background-color: #e2e6ea;
-            border-color: #c6c6c6;
-        }
-        .search-customer {
-            position: relative;
-            flex-grow: 1; /* Allow search input to take available space */
-            /* Added margin-right to push the filter-select to the right */
-            margin-right: auto; /* This pushes the search bar to the left and the next element to the right */
-        }
-        .search-customer input {
-            width: 100%;
-            padding: 8px 12px 8px 35px; /* Adjust padding for icon */
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
-        .search-customer i {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #888;
-        }
-
-        /* Table container for DataTables responsiveness */
-        .table-container {
-            overflow-x: auto; /* Enable horizontal scrolling on small screens */
-            width: 100%;
-        }
-
-        /* Status badge styling */
-        .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.85em;
-            font-weight: 600;
-            color: white;
-            text-align: center;
-        }
-
-        .status-badge.masuk {
-            background-color: #007bff; /* Blue */
-        }
-        .status-badge.diproses {
-            background-color: #ffc107; /* Yellow */
-            color: #333; /* Dark text for yellow background */
-        }
-        .status-badge.selesai {
-            background-color: #28a745; /* Green */
-        }
-        .status-badge.pending { /* Assuming 'Pending' might be a status */
-            background-color: #6c757d; /* Gray */
-        }
-
     </style>
 </head>
 <body>
     <div class="dashboard-wrapper">
-        <!-- Sidebar disalin dari dashboard_admin.php dengan path yang disesuaikan -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <img src="../../assets/img/logos.png" alt="SiCepu Logo" class="logo">
@@ -466,7 +276,6 @@ if (isset($conn) && $conn instanceof mysqli) {
         </aside>
 
         <main class="main-content">
-            <!-- Header disalin dari dashboard_admin.php -->
             <header class="navbar">
                 <div class="top-info-bar">
                     <div class="status-info">
@@ -482,12 +291,11 @@ if (isset($conn) && $conn instanceof mysqli) {
                     <div class="icon-wrapper">
                         <a href="#" id="notificationBell">
                             <i class="fas fa-bell"></i>
-                            <?php if ($new_complaints_count > 0): ?>
+                            <?php if (isset($new_complaints_count) && $new_complaints_count > 0): ?>
                                 <span class="notification-badge"><?php echo $new_complaints_count; ?></span>
                             <?php endif; ?>
                         </a>
                     </div>
-                    <a href="#"><i class="fas fa-comment"></i></a> <!-- Assuming a comment icon is desired -->
                     <div class="user-profile">
                         <img src="../../assets/img/admin_pfp.jpg" alt="User Avatar" class="avatar">
                         <span><?php echo htmlspecialchars($user_name); ?></span>
@@ -496,95 +304,124 @@ if (isset($conn) && $conn instanceof mysqli) {
                 </div>
             </header>
 
-            <!-- Konten Utama Halaman Aduan -->
             <section class="content-header">
-                <h2>Manajemen Aduan Fasilitas</h2>
-                <div class="header-actions">
-                    <button class="btn-secondary"><i class="fas fa-download"></i> Ekspor</button>
-                    <!-- No 'Tambah Aduan' button here, as it's for Jenis Aduan. If you need one, add it. -->
-                </div>
+                <h2>Detail Aduan</h2>
+                <?php 
+                // Tampilkan tombol update hanya jika peran adalah Admin dan status adalah Pending atau Diproses
+                if ($user_role === 'Admin' && $complaint_detail && 
+                    ($complaint_detail['status'] === 'Pending' || $complaint_detail['status'] === 'Diproses')): 
+                    
+                    $button_text = '';
+                    $confirm_text = '';
+                    if ($complaint_detail['status'] === 'Pending') {
+                        $button_text = 'Update ke "Diproses"';
+                        $confirm_text = "Apakah Anda yakin ingin mengubah status aduan ini menjadi 'Diproses'?";
+                    } elseif ($complaint_detail['status'] === 'Diproses') {
+                        $button_text = 'Update ke "Selesai"';
+                        $confirm_text = "Apakah Anda yakin ingin mengubah status aduan ini menjadi 'Selesai'?";
+                    }
+                ?>
+                    <form id="updateStatusForm" method="POST" action="">
+                        <input type="hidden" name="idpengaduan" value="<?php echo htmlspecialchars($complaint_detail['idpengaduan']); ?>">
+                        <input type="hidden" name="action" value="update_status">
+                        <input type="hidden" name="current_status" value="<?php echo htmlspecialchars($complaint_detail['status']); ?>">
+                        <button type="submit" class="update-status-button" data-confirm-text="<?php echo htmlspecialchars($confirm_text); ?>">
+                            <i class="fas fa-sync-alt"></i> <?php echo $button_text; ?>
+                        </button>
+                    </form>
+                <?php endif; ?>
             </section>
 
-            <div class="content-container">
-                <!-- Filter Bar - Replicating jenis_lihat.php style -->
-                <div class="filter-bar">
-                    <button class="btn-filter"><i class="fas fa-filter"></i> Filter</button>
-                    <div class="search-customer">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="customSearchInput" placeholder="Cari aduan...">
-                    </div>
-                    <!-- Moved the status filter here to be part of the filter-bar if desired, or keep it separate -->
-                    <select class="filter-select" id="statusFilter">
-                        <option value="">Semua Status</option>
-                        <option value="Masuk">Masuk</option>
-                        <option value="Diproses">Diproses</option>
-                        <option value="Selesai">Selesai</option>
-                        <option value="Pending">Pending</option> <!-- Added Pending as seen in screenshot -->
-                    </select>
+            <section style="padding: 20px; background-color: #f0f2f5;">
+                <div class="detail-container">
+                    <?php if ($complaint_detail): ?>
+                        <div class="detail-header">
+                            <h2><?php echo htmlspecialchars($complaint_detail['judul']); ?></h2>
+                        </div>
+
+                        <?php if (!empty($complaint_detail['gambar'])): ?>
+                            <div class="detail-image-top">
+                                <label>Gambar Aduan:</label>
+                                <img src="../../uploads/<?php echo htmlspecialchars($complaint_detail['gambar']); ?>" alt="Gambar Aduan" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e0e0/555555?text=Gambar+Tidak+Tersedia';">
+                            </div>
+                        <?php else: ?>
+                            <div class="detail-item detail-image-top">
+                                <label>Gambar Aduan:</label>
+                                <p>Tidak ada gambar terlampir.</p>
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="detail-content-columns">
+                            <div class="detail-left-column">
+                                <div class="detail-item">
+                                    <label>ID Aduan:</label>
+                                    <p><?php echo htmlspecialchars($complaint_detail['idpengaduan']); ?></p>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Pengadu:</label>
+                                    <p><?php echo htmlspecialchars($complaint_detail['nama_pengadu'] ?? 'N/A'); ?></p>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Jenis Aduan:</label>
+                                    <p><?php echo htmlspecialchars($complaint_detail['jenis_aduan'] ?? 'N/A'); ?></p>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Waktu Aduan:</label>
+                                    <p><?php echo htmlspecialchars($complaint_detail['waktu_aduan']); ?></p>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Nomor Telepon:</label>
+                                    <p><?php echo htmlspecialchars($complaint_detail['notelp']); ?></p>
+                                </div>
+                            </div>
+                            <div class="detail-right-column">
+                                <div class="detail-item">
+                                    <label>Keterangan:</label>
+                                    <p><?php echo nl2br(htmlspecialchars($complaint_detail['keterangan'])); ?></p>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Lokasi:</label>
+                                    <p><?php echo htmlspecialchars($complaint_detail['lokasi']); ?></p>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Tanggapan:</label>
+                                    <p><?php echo nl2br(htmlspecialchars($complaint_detail['tanggapan'] ?? 'Belum ada tanggapan.')); ?></p>
+                                </div>
+                                <div class="detail-item status-info">
+                                    <label>Status:</label>
+                                    <p class="status-<?php echo strtolower($complaint_detail['status']); ?>"><?php echo htmlspecialchars($complaint_detail['status']); ?></p>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Author:</label>
+                                    <p><?php echo htmlspecialchars($complaint_detail['author']); ?></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="back-button-container">
+                            <a href="javascript:history.back()" class="back-button">Kembali</a>
+                        </div>
+                    <?php else: ?>
+                        <div class="detail-header">
+                            <h2>Terjadi Kesalahan</h2>
+                        </div>
+                        <p style="text-align: center; color: red;"><?php echo htmlspecialchars($error_message); ?></p>
+                        <div class="back-button-container">
+                            <a href="javascript:history.back()" class="back-button">Kembali</a>
+                        </div>
+                    <?php endif; ?>
                 </div>
-
-                <section class="customer-table-section">
-                    <div class="table-container">
-                        <table id="aduanTable" class="display"> <!-- Changed ID to aduanTable -->
-                            <thead>
-                                <tr>
-                                    <th>ID Aduan</th>
-                                    <th>Pengadu</th>
-                                    <th>Judul Aduan</th>
-                                    <th>Waktu Kirim</th>
-                                    <th>Status</th>
-                                    <th>Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (!empty($pengaduan)): ?>
-                                    <?php foreach ($pengaduan as $aduan): ?>
-                                    <tr>
-                                        <td><?php echo htmlspecialchars($aduan['idpengaduan']); ?></td>
-                                        <td><?php echo htmlspecialchars($aduan['nama_pengadu']); ?></td>
-                                        <td><?php echo htmlspecialchars($aduan['judul']); ?></td>
-                                        <td><?php echo htmlspecialchars($aduan['waktu_aduan']); ?></td> <!-- Changed to raw value for DataTables sorting -->
-                                        <td>
-                                            <span class="status-badge <?php echo strtolower(htmlspecialchars($aduan['status'])); ?>">
-                                                <?php echo htmlspecialchars($aduan['status']); ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <a href="adu_detail.php?id=<?php echo $aduan['idpengaduan']; ?>" class="action-button detail" title="Lihat Detail">
-                                                    <i class="fas fa-eye"></i> Detail
-                                                </a>
-                                                <a href="adu_detail.php?id=<?php echo $aduan['idpengaduan']; ?>" class="action-button edit" title="Ubah Aduan">
-                                                    <i class="fas fa-edit"></i> Ubah
-                                                </a>
-                                                <a href="adu_hapus.php?id=<?php echo $aduan['idpengaduan']; ?>" class="action-button delete" title="Hapus Aduan">
-                                                    <i class="fas fa-trash-alt"></i> Hapus
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <tr>
-                                        <td colspan="6" style="text-align: center; padding: 20px;">Belum ada data aduan.</td>
-                                    </tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-                <!-- Pagination will be handled by DataTables automatically -->
-            </div>
-
+            </section>
         </main>
     </div>
-    <script src="../../assets/js/jquery-1.10.2.js"></script>
-    <script src="../../assets/js/dataTables/jquery.dataTables.js"></script>
-    <script src="../../assets/js/dataTables/dataTables.bootstrap.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
 
+    <!-- Updated script sources to use CDNs for reliability -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.3.0/raphael.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
     <script>
-        // Fungsi untuk mengupdate waktu dan tanggal saat ini
+        // Function to update current time and date
         function updateDateTime() {
             const now = new Date();
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
@@ -592,49 +429,16 @@ if (isset($conn) && $conn instanceof mysqli) {
         }
 
         $(document).ready(function() {
-            // Initial update for date and time
+            // Initial update
             updateDateTime();
             // Update every second
             setInterval(updateDateTime, 1000);
 
-            // Inisialisasi DataTables
-            const table = $('#aduanTable').DataTable({
-                "paging": true,      
-                "ordering": true,    
-                "info": true,        
-                "searching": true,   
-                "lengthChange": true,
-                "dom": 'rtip', // This hides the default search and lengthChange, but keeps table, info, paging
-                "order": [[ 3, "desc" ]], // Order by 'Waktu Kirim' (index 3) in descending order
-                "columnDefs": [
-                    { "type": "date", "targets": 3 } // Specify column 3 (Waktu Kirim) as date type for proper sorting
-                ]
-            });
-
-            // Hubungkan input search kustom dengan DataTables
-            $('#customSearchInput').on('keyup change', function() {
-                table.search(this.value).draw(); // Search across all columns
-            });
-
-            // Hubungkan filter status dengan DataTables
-            $('#statusFilter').on('change', function() {
-                const status = $(this).val();
-                if (status) {
-                    table.column(4).search(status).draw(); // Search 'Status' column (index 4)
-                } else {
-                    table.column(4).search('').draw(); // Clear search if 'Semua Status' is selected
-                }
-            });
-
-            // Sembunyikan search filter bawaan DataTables (karena kita pakai yang kustom)
-            $('.dataTables_filter').hide();
-            // Sembunyikan length change bawaan DataTables (jika tidak ingin pakai)
-            $('.dataTables_length').hide();
-
-            // Notifikasi Aduan Masuk (SweetAlert2)
+            // SweetAlert2 for notification bell click (if needed on this page)
             $('#notificationBell').on('click', function(e) {
                 e.preventDefault();
-                let newComplaints = <?php echo $new_complaints_count; ?>;
+                // Anda mungkin ingin mengambil new_complaints_count secara dinamis atau meneruskannya dari PHP
+                let newComplaints = 0; // Placeholder
                 let title = newComplaints > 0 ? 'Notifikasi Aduan Baru!' : 'Tidak Ada Aduan Baru';
                 let text = newComplaints > 0 ? `Anda memiliki ${newComplaints} aduan baru yang masuk.` : 'Belum ada aduan baru yang perlu ditindaklanjuti.';
                 let icon = newComplaints > 0 ? 'info' : 'success';
@@ -647,26 +451,42 @@ if (isset($conn) && $conn instanceof mysqli) {
                 });
             });
 
-            // Konfirmasi hapus dengan SweetAlert2
-            $('#aduanTable').on('click', '.action-button.delete', function(e) {
-                e.preventDefault(); // Mencegah langsung hapus
-                const deleteUrl = $(this).attr('href'); // Dapatkan URL hapus dari href
+            // SweetAlert2 for status update confirmation
+            $('#updateStatusForm').on('submit', function(e) {
+                e.preventDefault(); // Mencegah pengiriman formulir default
+
+                const form = this;
+                const confirmText = $(this).find('.update-status-button').data('confirm-text');
 
                 Swal.fire({
-                    title: 'Apakah Anda Yakin?',
-                    text: "Data aduan ini akan dihapus permanen!",
+                    title: 'Konfirmasi Perubahan Status',
+                    text: confirmText,
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Ya, Hapus!',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Ya, Lanjutkan!',
                     cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        window.location.href = deleteUrl; 
+                        form.submit(); // Kirim formulir jika dikonfirmasi
                     }
                 });
             });
+
+            // Tampilkan pesan update status jika ada (dari PHP session)
+            if (typeof Swal !== 'undefined' && <?php echo isset($_SESSION['update_message']) ? 'true' : 'false'; ?>) {
+                const message = <?php echo json_encode($_SESSION['update_message'] ?? null); ?>;
+                if (message) {
+                    Swal.fire({
+                        title: message.type === 'success' ? 'Berhasil!' : 'Gagal!',
+                        text: message.text,
+                        icon: message.type,
+                        confirmButtonText: 'Oke'
+                    });
+                    <?php unset($_SESSION['update_message']); // Hapus pesan setelah ditampilkan ?>
+                }
+            }
         });
     </script>
 </body>
