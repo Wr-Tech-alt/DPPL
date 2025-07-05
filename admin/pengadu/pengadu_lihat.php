@@ -40,12 +40,10 @@ if ($result) {
     echo "Error fetching users: " . $conn->error;
 }
 
-// *** BAGIAN YANG DIPINDAHKAN ***
-// Kode ini sebelumnya ada di sini, dan sekarang dihapus dari sini.
-// if (isset($conn) && $conn instanceof mysqli) {
-//     $conn->close(); 
-// }
-// *** AKHIR BAGIAN YANG DIPINDAHKAN ***
+// Close the connection after fetching data
+if (isset($conn) && $conn instanceof mysqli) {
+    $conn->close(); 
+}
 
 ?>
 <!DOCTYPE html>
@@ -492,12 +490,3 @@ if ($result) {
     </script>
 </body>
 </html>
-
-<?php
-// *** TUTUP KONEKSI DATABASE DI BAGIAN PALING AKHIR FILE PHP ***
-// Ini memastikan $conn masih tersedia untuk semua operasi di atas
-// dan untuk pengecekan status koneksi di bagian HTML header.
-if (isset($conn) && $conn instanceof mysqli) {
-    $conn->close(); 
-}
-?>
