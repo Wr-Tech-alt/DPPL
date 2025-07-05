@@ -159,13 +159,13 @@ if (isset($_POST['register_submit'])) {
                     <p>Silahkan Buat Akun barumu</p>
 
                     <?php if (!empty($success_message)): ?>
-                        <div style="color: green; text-align: center; margin-bottom: 15px; background-color: rgba(0,255,0,0.2); padding: 10px; border-radius: 5px;">
+                        <div style="color: white; text-align: center; margin-bottom: 15px; background-color: rgba(0,255,0,0.2); padding: 10px; border-radius: 5px;">
                             <?php echo htmlspecialchars($success_message); ?>
                         </div>
                     <?php endif; ?>
 
                     <?php if (!empty($error_message)): ?>
-                        <div style="color: red; text-align: center; margin-bottom: 15px; background-color: rgba(255,0,0,0.2); padding: 10px; border-radius: 5px;">
+                        <div style="color: white; text-align: center; margin-bottom: 15px; background-color: rgba(255,0,0,0.2); padding: 10px; border-radius: 5px;">
                             <?php echo htmlspecialchars($error_message); ?>
                         </div>
                     <?php endif; ?>
@@ -225,7 +225,7 @@ if (isset($_POST['register_submit'])) {
                     document.getElementById(targetTab + '-form-content').classList.add('active');
                 });
             });
-            
+
             <?php if ($redirect_to_login): ?>
                 setTimeout(function() {
                     window.location.href = 'index.php'; // Redirect ke halaman login
