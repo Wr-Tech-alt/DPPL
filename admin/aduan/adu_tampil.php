@@ -558,9 +558,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                                                 <a href="adu_detail.php?id=<?php echo $aduan['idpengaduan']; ?>" class="action-button detail" title="Lihat Detail">
                                                     <i class="fas fa-eye"></i> Detail
                                                 </a>
-                                                <a href="adu_detail.php?id=<?php echo $aduan['idpengaduan']; ?>" class="action-button edit" title="Ubah Aduan">
-                                                    <i class="fas fa-edit"></i> Ubah
-                                                </a>
                                                 <a href="adu_hapus.php?id=<?php echo $aduan['idpengaduan']; ?>" class="action-button delete" title="Hapus Aduan">
                                                     <i class="fas fa-trash-alt"></i> Hapus
                                                 </a>
