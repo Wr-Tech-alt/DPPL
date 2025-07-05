@@ -139,55 +139,129 @@ if (isset($_POST['register_submit'])) {
         .input-group input::placeholder {
             color: rgba(255, 255, 255, 0.7); /* Warna placeholder lebih terang */
         }
+        /* Style untuk tabs */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+        }
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 12px 25px;
+            color: rgba(255,255,255,0.7);
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            outline: none;
+        }
+        .tab-button.active {
+            color: #fff;
+            font-weight: 600;
+        }
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #fff;
+        }
+        .form-content {
+            display: none;
+            padding: 20px 0;
+        }
+        .form-content.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
     <div class="login-wrapper">
         <div class="login-container">
             <div class="login-form-panel">
-                <h1>Daftar Akun Baru</h1>
-                <p>Silakan isi detail Anda untuk mendaftar</p>
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="register">Daftar</button>
+                    <button class="tab-button" data-tab="info">Tentang SiCepu</button>
+                </div>
 
-                <?php if (!empty($success_message)): ?>
-                    <div style="color: green; text-align: center; margin-bottom: 15px; background-color: rgba(0,255,0,0.2); padding: 10px; border-radius: 5px;">
-                        <?php echo htmlspecialchars($success_message); ?>
-                    </div>
-                <?php endif; ?>
+                <div id="register-form-content" class="form-content active">
+                    <h1>Daftar Akun Baru</h1>
+                    <p>Silakan isi detail Anda untuk mendaftar</p>
 
-                <?php if (!empty($error_message)): ?>
-                    <div style="color: red; text-align: center; margin-bottom: 15px; background-color: rgba(255,0,0,0.2); padding: 10px; border-radius: 5px;">
-                        <?php echo htmlspecialchars($error_message); ?>
-                    </div>
-                <?php endif; ?>
+                    <?php if (!empty($success_message)): ?>
+                        <div style="color: green; text-align: center; margin-bottom: 15px; background-color: rgba(0,255,0,0.2); padding: 10px; border-radius: 5px;">
+                            <?php echo htmlspecialchars($success_message); ?>
+                        </div>
+                    <?php endif; ?>
 
-                <form action="" method="POST">
-                    <div class="input-group">
-                        <i class="fa-solid fa-user"></i>
-                        <input type="text" placeholder="Nama Pengguna (Username)" name="nama_pengguna" required value="<?php echo isset($_POST['nama_pengguna']) ? htmlspecialchars($_POST['nama_pengguna']) : ''; ?>">
-                    </div>
-                    <div class="input-group">
-                        <i class="fa-solid fa-lock"></i>
-                        <input type="password" placeholder="Password" name="password" required>
-                    </div>
-                    <div class="input-group">
-                        <i class="fa-solid fa-lock"></i>
-                        <input type="password" placeholder="Konfirmasi Password" name="confirm_password" required>
-                    </div>
-                    <div class="input-group">
-                        <i class="fa-solid fa-id-card"></i> <!-- Menggunakan ikon ID card untuk NIM -->
-                        <input type="email" placeholder="EMAIL" name="nim" required value="<?php echo isset($_POST['nim']) ? htmlspecialchars($_POST['nim']) : ''; ?>">
-                    </div>
-                    
-                    <button type="submit" class="login-button" name="register_submit">Daftar</button>
-                </form>
+                    <?php if (!empty($error_message)): ?>
+                        <div style="color: red; text-align: center; margin-bottom: 15px; background-color: rgba(255,0,0,0.2); padding: 10px; border-radius: 5px;">
+                            <?php echo htmlspecialchars($error_message); ?>
+                        </div>
+                    <?php endif; ?>
 
-                <a href="index.php" class="back-to-login">Sudah punya akun? Login di sini</a>
+                    <form action="" method="POST">
+                        <div class="input-group">
+                            <i class="fa-solid fa-user"></i>
+                            <input type="text" placeholder="Nama Pengguna (Username)" name="nama_pengguna" required value="<?php echo isset($_POST['nama_pengguna']) ? htmlspecialchars($_POST['nama_pengguna']) : ''; ?>">
+                        </div>
+                        <div class="input-group">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" placeholder="Password" name="password" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" placeholder="Konfirmasi Password" name="confirm_password" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fa-solid fa-id-card"></i> <!-- Menggunakan ikon ID card untuk NIM -->
+                            <input type="text" placeholder="NIM" name="nim" required value="<?php echo isset($_POST['nim']) ? htmlspecialchars($_POST['nim']) : ''; ?>">
+                        </div>
+                        
+                        <button type="submit" class="login-button" name="register_submit">Daftar</button>
+                    </form>
+
+                    <a href="index.php" class="back-to-login">Sudah punya akun? Login di sini</a>
+                </div>
+
+                <div id="info-form-content" class="form-content">
+                    <h1>Tentang SiCepu</h1>
+                    <p>Sistem Informasi Cepat Pengaduan Fasilitas Umum (SiCepu) adalah platform yang dirancang untuk memudahkan mahasiswa dalam melaporkan masalah terkait fasilitas kampus, seperti ac yang kurang sejuk, projektor bermasalah dan tidak menyala, kursi serta meja gabungan dalam keadaan tidak layak pakai dan segala hal lain yang mahasiswa temukan dalam kegiatan perkuliahan.</p>
+                    <p>Tujuan utama SiCepu adalah meningkatkan kualitas pelayanan mahasiswa dan responsibilitas kampus dalam menangani keluhan mahasiswanya. Kami berkomitmen untuk menciptakan lingkungan yang lebih baik dan nyaman bagi seluruh mahasiswa dalam menjalani kegiatan mereka dikampus.</p>
+                    <p style="text-align: center; margin-top: 30px; font-size: 0.9em; color: rgba(255,255,255,0.6);">
+                        &copy; 2025 SiCepu. All rights reserved.
+                    </p>
+                </div>
+
             </div>
             <div class="login-image-panel">
                 <img src="assets/img/scenery.jpg" alt="Mountain Landscape"> 
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const formContents = document.querySelectorAll('.form-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    formContents.forEach(content => content.classList.remove('active'));
+
+                    button.classList.add('active');
+
+                    const targetTab = button.dataset.tab;
+                    document.getElementById(targetTab + '-form-content').classList.add('active');
+                });
+            });
+        });
+    </script>
 </body>
 </html>
 <?php
