@@ -88,7 +88,7 @@ if (isset($_POST['register_submit'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SICepu Login</title>
+    <title>SICepu Regis</title>
     <link rel="stylesheet" href="assets/css/login.css"> 
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -151,7 +151,7 @@ if (isset($_POST['register_submit'])) {
         <div class="login-container">
             <div class="login-form-panel">
                 <div class="tabs">
-                    <button class="tab-button active" data-tab="login">Login</button>
+                    <button class="tab-button active" data-tab="login">Register</button>
                     <button class="tab-button" data-tab="info">Tentang SiCepu</button>
                 </div>
 
@@ -191,7 +191,7 @@ if (isset($_POST['register_submit'])) {
                         
                         <button type="submit" class="login-button" name="register_submit">Daftar</button>
                     </form>
-                    <a href="register.php" class="register-link">Belum punya akun? Daftar di sini</a>
+                    <a href="login.php" class="register-link">Udah punya akun? Login di sini</a>
                 </div>
 
                 <div id="info-form-content" class="form-content">
