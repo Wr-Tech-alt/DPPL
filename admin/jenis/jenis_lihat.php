@@ -383,10 +383,10 @@ if (isset($conn) && $conn instanceof mysqli) {
                 <div class="header-title">
                     <h2>Manajemen Jenis Pengaduan</h2>
                 </div>
-                <div class="header-actions">
-                    <a href="jenis_tambah.php" class="btn-primary"><i class="fas fa-plus"></i> Tambah Jenis</a>
-                </div>
             </section>
+            <div class="header-actions">
+                <a href="jenis_tambah.php" class="btn-primary"><i class="fas fa-plus"></i> Tambah Jenis</a>
+            </div>
 
             <section class="customer-table-section">
                 <div class="filter-bar">
