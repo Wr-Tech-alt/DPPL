@@ -9,4 +9,4 @@ define('EMAIL_SENDER_PASSWORD', 'B4n4gh3r333$#Ryuuga'); // Ganti dengan App Pass
 define('EMAIL_SENDER_NAME', 'SiCepu Kampus Pilihan Anda STMI :)'); // Nama pengirim yang akan muncul
 define('SMTP_HOST', 'smtp.gmail.com');
 define('SMTP_PORT', 587);
-define('SMTP_SECURE', PHPMailer::ENCRYPTION_STARTTLS); // Atau PHPMailer::ENCRYPTION_SMTPS untuk port 465
+//define('SMTP_SECURE', PHPMailer::ENCRYPTION_STARTTLS); // Atau PHPMailer::ENCRYPTION_SMTPS untuk port 465

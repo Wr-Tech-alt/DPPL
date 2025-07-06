@@ -6,7 +6,7 @@ use PHPMailer\PHPMailer\Exception;
 // Pastikan PATH ini benar relatif terhadap lokasi file functions.php
 require_once __DIR__ . '../PHPMailer-master/src/PHPMailer.php';
 require_once __DIR__ . '../PHPMailer-master/src/SMTP.php';
-require_once __DIR__ . '../PHPMailer-master/src/Exception.php';
+require_once __DIR__ . '/../PHPMailer-master/src/Exception.php';
 
 // Pastikan file konfigurasi email di-load di sini atau di file utama
 require_once __DIR__ . '/../inc/config_email.php'; // Path ke file config_email.php
@@ -23,6 +23,7 @@ function kirimEmailPengaduan($conn, $emailTujuan, $namaPengadu, $judulAduan, $st
         $mail->SMTPAuth   = true;
         $mail->Username   = EMAIL_SENDER_USERNAME; // Ambil dari konfigurasi
         $mail->Password   = EMAIL_SENDER_PASSWORD; // Ambil dari konfigurasi
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // <--- UBAH DI SINI
         $mail->SMTPSecure = SMTP_SECURE;
         $mail->Port       = SMTP_PORT;
 
