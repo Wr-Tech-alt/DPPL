@@ -343,13 +343,15 @@ if (isset($conn) && $conn instanceof mysqli) {
                 }
             }
 
-            /* Styles for Action Buttons Group (for back button) */
+                        /* Styles for Action Buttons Group (for back button) */
+                /* Styles for Action Buttons Group (for back button) */
             .form-actions {
                 display: flex;
-                justify-content: flex-end; /* Align buttons to the right */
+                justify-content: center; /* MODIFIKASI: Ubah dari flex-end menjadi center */
                 gap: 10px; /* Space between buttons */
                 margin-top: 20px;
             }
+            /* Bagian CSS untuk .btn-back dan .btn-submit tetap sama */
             .form-actions .btn-back,
             .form-actions .btn-submit { 
                 padding: 10px 20px;
@@ -358,13 +360,13 @@ if (isset($conn) && $conn instanceof mysqli) {
                 cursor: pointer;
                 font-size: 1em;
                 transition: all 0.2s ease;
-                width: auto; /* Override 100% width for submit button */
-                display: inline-flex; /* Ensure icon and text are aligned */
+                width: auto; 
+                display: inline-flex; 
                 align-items: center;
                 justify-content: center;
             }
             .form-actions .btn-back {
-                background-color: #6c757d; /* Abu-abu sekunder */
+                background-color: #6c757d; 
                 color: white;
                 border: 1px solid #6c757d;
             }
@@ -385,6 +387,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                 margin-right: 5px;
             }
 
+
         </style>
     </head>
     <body>
@@ -398,13 +401,14 @@ if (isset($conn) && $conn instanceof mysqli) {
                     <ul>
                         <li><a href="../../dashboard/dashboard_admin.php" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
                         <li><a href="#" class="nav-link"><i class="fas fa-boxes"></i> Aduan Fasilitas</a></li>
+                        <li><a href="../jenis/jenis_lihat.php" class="nav-link"><i class="fas fa-file-alt"></i> Jenis Aduan </a></li>
                         <li><a href="pengadu_lihat.php" class="nav-link active"><i class="fas fa-users"></i> Pengadu</a></li>
-                        <li><a href="../pengguna/pengguna_lihat.php" class="nav-link"><i class="fas fa-users"></i> Pengguna</a></li>
                     </ul>
                     <div class="nav-section-title">SETTINGS</div>
                     <ul>
                         <li><a href="#" class="nav-link"><i class="fas fa-cog"></i> Settings</a></li>
                         <li><a href="#" class="nav-link"><i class="fas fa-question-circle"></i> Help</a></li>
+                        <li><a href="../../logout.php" class="nav-link"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li> </ul>
                     </ul>
                 </nav>
             </aside>
@@ -417,13 +421,12 @@ if (isset($conn) && $conn instanceof mysqli) {
                             <span>Database: <?php echo (isset($conn) && $conn ? 'Connected' : 'Disconnected'); ?></span>
                         </div>
                         <div class="time-location-info">
-                            <span id="currentDateTime"></span> | <span>STMI JAKARTA, Dki Jakarta, Indonesia</span>
+                            <span id="currentDateTime"></span> 
                         </div>
                     </div>
 
                     <div class="nav-icons">
                         <a href="#"><i class="fas fa-bell"></i></a>
-                        <a href="#"><i class="fas fa-comment"></i></a>
                         <div class="user-profile">
                             <img src="../../assets/img/admin_pfp.jpg" alt="User Avatar" class="avatar"> 
                             <span><?php echo htmlspecialchars($admin_name); ?></span>
