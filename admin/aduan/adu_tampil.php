@@ -443,6 +443,22 @@ if (isset($conn) && $conn instanceof mysqli) {
         .status-badge.pending { /* Assuming 'Pending' might be a status */
             background-color: #6c757d; /* Gray */
         }
+        /* Pastikan section.content-header memusatkan kontennya */
+        section.content-header {
+            text-align: center; /* Ini akan memusatkan teks di dalamnya */
+            /* Jika sebelumnya ada display: flex; atau justify-content; di sini, hapus atau timpa */
+            /* Contoh lain yang mungkin perlu di-override: */
+            /* display: block; */ 
+            /* margin-bottom: 20px; */ /* Sesuaikan jarak bawah jika perlu */
+            /* width: 100%; */ /* Pastikan section mengambil lebar penuh */
+        }
+
+        /* Hapus margin default dari h2 agar pemusatan bekerja sempurna */
+        section.content-header h2 {
+            margin: 0; 
+            padding: 0; 
+            /* color: #333; */ /* Contoh warna teks jika ingin spesifik */
+        }
 
     </style>
 </head>
