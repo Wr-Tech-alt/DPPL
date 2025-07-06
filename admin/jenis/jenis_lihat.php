@@ -359,7 +359,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                 </div>
             </header>
 
-            <section class="content-header" style="display: flex; align-items: center; justify-content: space-between; position: relative;">
+            <section class="content-header" style="display: flex; justify-content: space-between; position: relative;">
                 <!-- Kolom Kosong (kiri) -->
                 <div style="flex: 1;"></div>
 
