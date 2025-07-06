@@ -92,6 +92,8 @@ if (isset($conn) && $conn instanceof mysqli) {
             /* Jika ingin mengatur posisi tombol secara spesifik, bisa diatur di sini */
             text-align: right; /* Pastikan judul tetap di tengah */
             margin: 0; /* Hapus margin default jika ada */
+            display: flex; /* Menggunakan flexbox untuk penataan */
+            flex-direction: column; 
         }
 
         /* Styles for action buttons */
