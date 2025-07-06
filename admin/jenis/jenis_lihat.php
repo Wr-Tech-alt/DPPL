@@ -86,6 +86,7 @@ if (isset($conn) && $conn instanceof mysqli) {
             flex-direction: column; /* Mengatur item dalam kolom */
             align-items: flex-end; /* Memusatkan item secara horizontal */
             gap: 15px; /* Memberi sedikit jarak antar elemen */
+            margin : 15px;
         }
 
         .header-title h2 {
