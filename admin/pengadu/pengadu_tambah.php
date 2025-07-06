@@ -316,6 +316,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                 <ul>
                     <li><a href="../../dashboard/dashboard_admin.php" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
                     <li><a href="#" class="nav-link"><i class="fas fa-boxes"></i> Aduan Fasilitas</a></li>
+                    <li><a href="../jenis/jenis_lihat.php" class="nav-link"><i class="fas fa-file-alt"></i> Jenis Aduan </a></li>
                     <li><a href="pengadu_lihat.php" class="nav-link active"><i class="fas fa-users"></i> Pengadu</a></li>
                 </ul>
                 <div class="nav-section-title">SETTINGS</div>
@@ -334,7 +335,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                         <span>Database: <?php echo (isset($conn) && $conn ? 'Connected' : 'Disconnected'); ?></span>
                     </div>
                     <div class="time-location-info">
-                        <span id="currentDateTime"></span>  <span>Bekasi Regency, West Java, Indonesia</span>
+                        <span id="currentDateTime"></span>  
                     </div>
                 </div>
 
