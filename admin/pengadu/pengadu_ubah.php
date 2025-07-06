@@ -434,8 +434,8 @@ if (isset($conn) && $conn instanceof mysqli) {
                     </div>
                 </header>
 
-                <section class="content-header">
-                    <h2>Ubah Data Pengadu</h2>
+                <section class="content-header" style="align-items: center; justify-content: center;">
+                    <h2 style="text-align: center;">Ubah Data Pengadu</h2>
                 </section>
 
                 <section class="form-section">

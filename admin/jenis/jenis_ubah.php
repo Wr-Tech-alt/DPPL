@@ -345,8 +345,11 @@ if (isset($conn) && $conn instanceof mysqli) {
                 </div>
             </header>
 
-            <section class="content-header">
-                <h2>Ubah Jenis Pengaduan</h2>
+            <section class="content-header" style="align-items: center; justify-content: center;">
+                <h2 style="text-align: center;">Edit jenis pengaduan</h2>
+                <div class="header-actions">
+                    <!-- No 'Tambah Aduan' button here, as it's for Jenis Aduan. If you need one, add it. -->
+                </div>
             </section>
 
             <section class="form-section">

@@ -356,11 +356,10 @@ if (isset($conn) && $conn instanceof mysqli) {
                 </div>
             </header>
 
-            <section class="content-header">
-                <div class="customer-tabs">
-                    <button class="tab-button active">Semua Pengadu</button> </div>
+            <section class="content-header" style="align-items: center; justify-content: center;">
+                <h2 style="text-align: center;">Manajemen Pengguna</h2>
                 <div class="header-actions">
-                    <a href="pengadu_tambah.php" class="btn-primary"><i class="fas fa-plus"></i>Tambah Pengadu</a> 
+                    <!-- No 'Tambah Aduan' button here, as it's for Jenis Aduan. If you need one, add it. -->
                 </div>
             </section>
 

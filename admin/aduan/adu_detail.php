@@ -302,7 +302,9 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
             </header>
 
             <section class="content-header">
-                <h2>Detail Aduan</h2>
+                <div class="" style="align-items: center; justify-content: center;">
+                    <h2 style="text-align: center;">Detail Aduan</h2>
+                </div>
                 <?php 
                 // Tampilkan tombol update hanya jika peran adalah Admin dan status adalah Pending atau Diproses
                 if ($user_role === 'Admin' && $complaint_detail && 

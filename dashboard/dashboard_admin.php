@@ -367,8 +367,8 @@ if ($conn) {
                 </div>
             </header>
 
-            <section class="content-header">
-                <h2>Selamat Datang, <?php echo htmlspecialchars($user_name); ?>!</h2>
+            <section class="content-header" style="align-items: center; justify-content: center;">
+                <h2 style="text-align: center;">Selamat Datang, <?php echo htmlspecialchars($user_name); ?>!</h2>
             </section>
 
             <section style="padding: 20px; background-color: #f0f2f5;">

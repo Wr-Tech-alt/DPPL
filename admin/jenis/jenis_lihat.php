@@ -361,7 +361,9 @@ if (isset($conn) && $conn instanceof mysqli) {
             </header>
 
             <section class="content-header">
-                <h2>Manajemen Jenis Pengaduan</h2>
+                <div class="" style="align-items: center; justify-content: center;">
+                    <h2 style="text-align: center;">Manajemen Jenis Pengaduan</h2>
+                </div>
                 <div class="header-actions">
                     <a href="jenis_tambah.php" class="btn-primary"><i class="fas fa-plus"></i>Tambah Jenis</a> 
                 </div>
