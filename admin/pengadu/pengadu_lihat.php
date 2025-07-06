@@ -355,13 +355,13 @@ if (isset($conn) && $conn instanceof mysqli) {
                 </div>
             </header>
 
-            <section class="content-header" style="align-items: center; justify-content: center;">
-                <h2 style="text-align: center;">Manajemen Pengguna</h2>
-                <div class="header-actions">
-                    <!-- No 'Tambah Aduan' button here, as it's for Jenis Aduan. If you need one, add it. -->
+            <section class="content-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <h2 style="flex: 1; text-align: center; margin: 0;">Manajemen Pengguna</h2>
+                <div class="header-actions" style="flex: 1; display: flex; justify-content: flex-end;">
                     <a href="pengadu_tambah.php" class="btn-primary"><i class="fas fa-plus"></i>Tambah Pengguna</a> 
                 </div>
             </section>
+
 
             <section class="customer-table-section">
                 <div class="filter-bar">
