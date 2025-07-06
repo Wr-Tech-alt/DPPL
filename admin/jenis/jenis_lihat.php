@@ -90,6 +90,8 @@ if (isset($conn) && $conn instanceof mysqli) {
         .header-actions {
             /* Tidak perlu properti text-align di sini karena align-items di parent sudah mengatur */
             /* Jika ingin mengatur posisi tombol secara spesifik, bisa diatur di sini */
+            text-align: right; /* Pastikan judul tetap di tengah */
+            margin: 0; /* Hapus margin default jika ada */
         }
 
         /* Styles for action buttons */
