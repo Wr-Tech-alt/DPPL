@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $id_pengaduan_to_update = mysqli_real_escape_string($conn, $_POST['idpengaduan']);
 
         // Ambil status saat ini dan detail laporan yang dibutuhkan untuk email
-        $current_status_query = mysqli_query($conn, "SELECT p.status, p.judul, p.deskripsi, p.lokasi, u.email, u.nama
+        $current_status_query = mysqli_query($conn, "SELECT p.status, p.judul, p.keterangan, p.lokasi, u.email, u.nama
                                                      FROM pengaduan p JOIN pengguna u ON p.iduser = u.iduser
                                                      WHERE p.idpengaduan = '$id_pengaduan_to_update'");
         $complaint_data = mysqli_fetch_assoc($current_status_query);
