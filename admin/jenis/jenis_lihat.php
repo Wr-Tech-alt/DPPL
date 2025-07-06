@@ -81,20 +81,22 @@ if (isset($conn) && $conn instanceof mysqli) {
             align-items: center; /* Memusatkan item secara horizontal */
             gap: 15px; /* Memberi sedikit jarak antar elemen */
         }
+        .content-header2 {
+            display: flex; /* Menggunakan flexbox untuk penataan */
+            flex-direction: column; /* Mengatur item dalam kolom */
+            align-items: flex-end; /* Memusatkan item secara horizontal */
+            gap: 15px; /* Memberi sedikit jarak antar elemen */
+        }
 
         .header-title h2 {
             text-align: center; /* Pastikan judul tetap di tengah */
             margin: 0; /* Hapus margin default jika ada */
         }
 
-        .header-actions {
-            display: flex; /* Menggunakan flexbox untuk penataan */
-            flex-direction: column; /* Mengatur item dalam kolom */
-            align-items: right; /* Memusatkan item secara horizontal */
-            gap: 15px;
-        }
         .header-actions a {
-            text-align: center; /* Pastikan judul tetap di tengah */
+            /* Tidak perlu properti text-align di sini karena align-items di parent sudah mengatur */
+            /* Jika ingin mengatur posisi tombol secara spesifik, bisa diatur di sini */
+            text-align: right; /* Pastikan judul tetap di tengah */
             margin: 0; /* Hapus margin default jika ada */
         }
 
@@ -387,10 +389,14 @@ if (isset($conn) && $conn instanceof mysqli) {
                 <div class="header-title">
                     <h2>Manajemen Jenis Pengaduan</h2>
                 </div>
+                
             </section>
-            <div class="header-actions">
-                <a href="jenis_tambah.php" class="btn-primary"><i class="fas fa-plus"></i> Tambah Jenis</a>
-            </div>
+            <section class="content-header2">
+                
+                <div class="header-actions">
+                    <a href="jenis_tambah.php" class="btn-primary"><i class="fas fa-plus"></i> Tambah Jenis</a>
+                </div>
+            </section>
 
             <section class="customer-table-section">
                 <div class="filter-bar">
