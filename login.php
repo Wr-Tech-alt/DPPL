@@ -166,13 +166,13 @@ if (isset($_POST['login_submit'])) {
                             <input type="password" placeholder="********" name="password" required>
                         </div>
 
-                        <div class="options">
+                        <!-- <div class="options">
                             <label class="remember-me">
                                 <input type="checkbox">
                                 Ingat saya
                             </label>
                             <a href="#" class="forgot-password">Lupa Password?</a>
-                        </div>
+                        </div> -->
 
                         <button type="submit" class="login-button" name="login_submit">Log In</button>
                     </form>
