@@ -22,24 +22,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if ($user_role === 'Admin' && isset($_POST['idpengaduan'])) {
         $id_pengaduan_to_update = mysqli_real_escape_string($conn, $_POST['idpengaduan']);
 
-        $current_status_query = mysqli_query($conn, "SELECT status FROM pengaduan WHERE idpengaduan = '$id_pengaduan_to_update'");
-        $current_status_row = mysqli_fetch_assoc($current_status_query);
-        $current_status = $current_status_row['status'];
+        // Ambil status saat ini dan detail laporan yang dibutuhkan untuk email
+        $current_status_query = mysqli_query($conn, "SELECT p.status, p.judul, p.deskripsi, p.lokasi, u.email, u.nama
+                                                     FROM pengaduan p JOIN pengguna u ON p.iduser = u.iduser
+                                                     WHERE p.idpengaduan = '$id_pengaduan_to_update'");
+        $complaint_data = mysqli_fetch_assoc($current_status_query);
+        $current_status = $complaint_data['status'];
+
+        $update_successful = false; // Flag untuk melacak keberhasilan update database
 
         if ($current_status === 'Pending') {
-            $update_query = mysqli_query($conn, "UPDATE pengaduan SET status = 'Diproses' WHERE idpengaduan = '$id_pengaduan_to_update'");
-            $_SESSION['update_message'] = ['type' => 'success', 'text' => 'Status aduan berhasil diperbarui menjadi "Diproses".'];
+            $new_status = 'Diproses';
+            $update_query = mysqli_query($conn, "UPDATE pengaduan SET status = '$new_status' WHERE idpengaduan = '$id_pengaduan_to_update'");
+            if ($update_query) {
+                $_SESSION['update_message'] = ['type' => 'success', 'text' => 'Status aduan berhasil diperbarui menjadi "Diproses".'];
+                $update_successful = true;
+            } else {
+                $_SESSION['update_message'] = ['type' => 'error', 'text' => 'Gagal memperbarui status aduan: ' . mysqli_error($conn)];
+            }
 
         } elseif ($current_status === 'Diproses') {
-            $update_query = mysqli_query($conn, "UPDATE pengaduan SET status = 'Selesai' WHERE idpengaduan = '$id_pengaduan_to_update'");
+            $new_status = 'Selesai';
+            $update_query = mysqli_query($conn, "UPDATE pengaduan SET status = '$new_status' WHERE idpengaduan = '$id_pengaduan_to_update'");
             if ($update_query) {
-                // Kirim email notifikasi ke pengguna
-                $query_email = mysqli_query($conn, "SELECT p.judul, u.email, u.nama FROM pengaduan p JOIN pengguna u ON p.iduser = u.iduser WHERE p.idpengaduan = '$id_pengaduan_to_update'");
-                if ($row = mysqli_fetch_assoc($query_email)) {
-                    kirimEmailPengaduan($row['email'], $row['nama'], $row['judul'], 'Selesai');
-                }
+                $update_successful = true;
+                // Panggil fungsi kirimEmailPengaduan setelah update database berhasil
+                // Pastikan $complaint_data berisi semua informasi yang dibutuhkan
+                $email_sent = kirimEmailPengaduan(
+                    $conn, // Teruskan objek koneksi
+                    $complaint_data['email'],
+                    $complaint_data['nama'],
+                    $complaint_data['judul'],
+                    $new_status, // Status baru: 'Selesai'
+                    $id_pengaduan_to_update,
+                    $complaint_data['deskripsi'],
+                    $complaint_data['lokasi']
+                );
 
-                $_SESSION['update_message'] = ['type' => 'success', 'text' => 'Status aduan berhasil diperbarui menjadi "Selesai". Email notifikasi telah dikirim.'];
+                if ($email_sent) {
+                    $_SESSION['update_message'] = ['type' => 'success', 'text' => 'Status aduan berhasil diperbarui menjadi "Selesai". Email notifikasi telah dikirim.'];
+                } else {
+                    $_SESSION['update_message'] = ['type' => 'warning', 'text' => 'Status aduan berhasil diperbarui menjadi "Selesai", tetapi email notifikasi gagal dikirim.'];
+                }
             } else {
                 $_SESSION['update_message'] = ['type' => 'error', 'text' => 'Gagal memperbarui status aduan: ' . mysqli_error($conn)];
             }
@@ -49,6 +73,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     } else {
         $_SESSION['update_message'] = ['type' => 'error', 'text' => 'Anda tidak memiliki izin untuk melakukan tindakan ini atau ID aduan tidak valid.'];
     }
+
+    // Redirect setelah semua proses selesai
     header("Location: adu_detail.php?id=" . $id_pengaduan_to_update);
     exit();
 }
