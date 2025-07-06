@@ -332,7 +332,7 @@ if ($conn) {
                 <div class="nav-section-title">SETTINGS</div>
                 <ul>
                     <li><a href="#" class="nav-link"><i class="fas fa-cog"></i> Settings</a></li>
-                    <li><a href="../../logout.php" class="nav-link"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li> </ul>
+                                    <li><a href="../../logout.php" class="nav-link"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li> </ul>
                 </ul>
             </nav>
         </aside>
@@ -399,22 +399,24 @@ if ($conn) {
                     </div>
                 </div>
 
-                <div class="chart-container">
-                    <h3 style="margin-bottom: 20px; color: #333;">Distribusi Status Aduan</h3>
-                    <div id="morris-donut-chart"></div>
-                </div>
-
-                <!-- New Section for Pending Complaints List -->
-                <div class="pending-complaints-section">
-                    <h3>Aduan Pending Terbaru</h3>
-                    <div id="pending-complaints-list" class="pending-complaints-list">
-                        <!-- Pending complaints will be loaded here by JavaScript -->
-                        <?php if (empty($pending_complaints_array)): ?>
-                            <p style="text-align: center; color: #666;">Tidak ada aduan pending saat ini.</p>
-                        <?php endif; ?>
+                <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
+                    <div id="chart-container" style="flex: 1; min-width: 300px; background: white; padding: 20px; border-radius: 10px;">
+                        <h3 style="margin-bottom: 20px; color: #333;">Distribusi Status Aduan</h3>
+                        <div id="morris-donut-chart"></div>
                     </div>
+
+                    <!-- New Section for Pending Complaints List -->
+                    <div id="pending-complaints" style="flex: 1; min-width: 300px; background: white; padding: 20px; border-radius: 10px;">
+                        <h3>Aduan Pending Terbaru</h3>
+                        <div id="pending-complaints-list" class="pending-complaints-list">
+                            <!-- Pending complaints will be loaded here by JavaScript -->
+                            <?php if (empty($pending_complaints_array)): ?>
+                                <p style="text-align: center; color: #666;">Tidak ada aduan pending saat ini.</p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <!-- End New Section -->
                 </div>
-                <!-- End New Section -->
 
             </section>
 
