@@ -70,7 +70,7 @@ if (isset($conn) && $conn instanceof mysqli) {
     
     <link rel="stylesheet" href="../../assets/js/dataTables/dataTables.bootstrap.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-<script src="../assets/js/sweetlogout.js"></script>     
+    
     <style>
         /* Tambahan style untuk memastikan konsistensi */
         .main-content {
@@ -579,7 +579,7 @@ if (isset($conn) && $conn instanceof mysqli) {
     <script src="../../assets/js/jquery-1.10.2.js"></script>
     <script src="../../assets/js/dataTables/jquery.dataTables.js"></script>
     <script src="../../assets/js/dataTables/dataTables.bootstrap.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script><script src="../assets/js/sweetlogout.js"></script> 
 
     <script>
         // Fungsi untuk mengupdate waktu dan tanggal saat ini
