@@ -359,12 +359,15 @@ if (isset($conn) && $conn instanceof mysqli) {
                 </div>
             </header>
 
-            <section class="content-header">
-                <div class="" style="align-items: center; justify-content: center;">
-                    <h2 style="text-align: center;">Manajemen Jenis Pengaduan</h2>
+            <section class="content-header" style="display: flex; align-items: center; justify-content: space-between;">
+                <!-- Kiri dan Tengah -->
+                <div style="flex: 1; text-align: center;">
+                    <h2 style="margin: 0;">Manajemen Jenis Pengaduan</h2>
                 </div>
+
+                <!-- Kanan (Tombol) -->
                 <div class="header-actions">
-                    <a href="jenis_tambah.php" class="btn-primary"><i class="fas fa-plus"></i>Tambah Jenis</a> 
+                    <a href="jenis_tambah.php" class="btn-primary"><i class="fas fa-plus"></i> Tambah Jenis</a> 
                 </div>
             </section>
 
