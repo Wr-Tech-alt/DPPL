@@ -300,10 +300,14 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
                 </div>
             </header>
 
-            <section class="content-header">
-                <div class="" style="align-items: center; justify-content: center;">
-                    <h2 style="text-align: center;">Detail Aduan</h2>
+            <section class="content-header1" style="align-items: center; justify-content: center;">
+                <h2 style="text-align: center;">Detail Pengaduan</h2>
+                <div class="header-actions">
+                    <!-- No 'Tambah Aduan' button here, as it's for Jenis Aduan. If you need one, add it. -->
                 </div>
+            </section>
+            
+            <section class="content-header">
                 <?php 
                 // Tampilkan tombol update hanya jika peran adalah Admin dan status adalah Pending atau Diproses
                 if ($user_role === 'Admin' && $complaint_detail && 
