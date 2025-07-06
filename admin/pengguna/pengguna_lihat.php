@@ -406,7 +406,7 @@ if (isset($conn) && $conn instanceof mysqli) {
     <script src="../../assets/js/jquery-1.10.2.js"></script>
     <script src="../../assets/js/dataTables/jquery.dataTables.js"></script>
     <script src="../../assets/js/dataTables/dataTables.bootstrap.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script><script src="../assets/js/sweetlogout.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script><script src="../../assets/js/sweetlogout.js"></script> 
 
     <script>
         function updateDateTime() {
