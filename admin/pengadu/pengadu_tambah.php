@@ -322,7 +322,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                 <div class="nav-section-title">SETTINGS</div>
                 <ul>
                     <li><a href="#" class="nav-link"><i class="fas fa-cog"></i> Settings</a></li>
-                    <li><a href="#" class="nav-link"><i class="fas fa-question-circle"></i> Help</a></li>
                     <li><a href="../../logout.php" class="nav-link"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li> </ul>
                 </ul>
             </nav>

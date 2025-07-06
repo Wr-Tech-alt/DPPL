@@ -444,21 +444,6 @@ if (isset($conn) && $conn instanceof mysqli) {
             background-color: #6c757d; /* Gray */
         }
         /* Pastikan section.content-header memusatkan kontennya */
-        section.content-header {
-            text-align: center; /* Ini akan memusatkan teks di dalamnya */
-            /* Jika sebelumnya ada display: flex; atau justify-content; di sini, hapus atau timpa */
-            /* Contoh lain yang mungkin perlu di-override: */
-            /* display: block; */ 
-            /* margin-bottom: 20px; */ /* Sesuaikan jarak bawah jika perlu */
-            /* width: 100%; */ /* Pastikan section mengambil lebar penuh */
-        }
-
-        /* Hapus margin default dari h2 agar pemusatan bekerja sempurna */
-        section.content-header h2 {
-            margin: 0; 
-            padding: 0; 
-            /* color: #333; */ /* Contoh warna teks jika ingin spesifik */
-        }
 
     </style>
 </head>
@@ -480,7 +465,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                 <div class="nav-section-title">SETTINGS</div>
                 <ul>
                     <li><a href="#" class="nav-link"><i class="fas fa-cog"></i> Settings</a></li>
-                    <li><a href="#" class="nav-link"><i class="fas fa-question-circle"></i> Help</a></li>
     <li><a href="../../logout.php" class="nav-link"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li> </ul>
                 </ul>
             </nav>
