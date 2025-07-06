@@ -359,6 +359,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                 <h2 style="text-align: center;">Manajemen Pengguna</h2>
                 <div class="header-actions">
                     <!-- No 'Tambah Aduan' button here, as it's for Jenis Aduan. If you need one, add it. -->
+                    <a href="pengadu_tambah.php" class="btn-primary"><i class="fas fa-plus"></i>Tambah Pengguna</a> 
                 </div>
             </section>
 
