@@ -281,7 +281,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
                         <span>Database: <?php echo (isset($conn) && $conn ? 'Connected' : 'Disconnected'); ?></span>
                     </div>
                     <div class="time-location-info">
-                        <span id="currentDateTime"></span> | <span>Bekasi Regency, West Java, Indonesia</span>
+                        <span id="currentDateTime"></span> 
                     </div>
                 </div>
 
