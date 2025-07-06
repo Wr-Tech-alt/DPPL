@@ -504,7 +504,6 @@ if (isset($conn) && $conn instanceof mysqli) {
             <section class="content-header">
                 <h2>Manajemen Aduan Fasilitas</h2>
                 <div class="header-actions">
-                    <button class="btn-secondary"><i class="fas fa-download"></i> Ekspor</button>
                     <!-- No 'Tambah Aduan' button here, as it's for Jenis Aduan. If you need one, add it. -->
                 </div>
             </section>

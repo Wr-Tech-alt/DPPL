@@ -364,7 +364,6 @@ if (isset($conn) && $conn instanceof mysqli) {
             <section class="content-header">
                 <h2>Manajemen Jenis Pengaduan</h2>
                 <div class="header-actions">
-                    <button class="btn-secondary"><i class="fas fa-download"></i>Ekspor</button>
                     <a href="jenis_tambah.php" class="btn-primary"><i class="fas fa-plus"></i>Tambah Jenis</a> 
                 </div>
             </section>

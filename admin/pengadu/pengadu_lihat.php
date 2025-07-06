@@ -361,7 +361,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                 <div class="customer-tabs">
                     <button class="tab-button active">Semua Pengadu</button> </div>
                 <div class="header-actions">
-                    <button class="btn-secondary"><i class="fas fa-download"></i>Ekspor</button>
                     <a href="pengadu_tambah.php" class="btn-primary"><i class="fas fa-plus"></i>Tambah Pengadu</a> 
                 </div>
             </section>
