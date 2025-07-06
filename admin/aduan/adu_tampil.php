@@ -501,7 +501,7 @@ if (isset($conn) && $conn instanceof mysqli) {
             </header>
 
             <!-- Konten Utama Halaman Aduan -->
-            <section class="content-header">
+            <section class="content-header" style="align-items: center; justify-content: center;">
                 <h2 style="text-align: center;">Manajemen Aduan Fasilitas</h2>
                 <div class="header-actions">
                     <!-- No 'Tambah Aduan' button here, as it's for Jenis Aduan. If you need one, add it. -->
