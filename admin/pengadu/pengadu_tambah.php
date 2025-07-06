@@ -260,46 +260,48 @@ if (isset($conn) && $conn instanceof mysqli) {
         }
 
         /* Styles for Action Buttons Group (for back button) */
-        .form-actions {
-            display: flex;
-            justify-content: flex-end; /* Align buttons to the right */
-            gap: 10px; /* Space between buttons */
-            margin-top: 20px;
-        }
-        .form-actions .btn-back,
-        .form-actions .btn-submit { 
-            padding: 10px 20px;
-            border-radius: 5px;
-            text-decoration: none;
-            cursor: pointer;
-            font-size: 1em;
-            transition: all 0.2s ease;
-            width: auto; /* Override 100% width for submit button */
-            display: inline-flex; /* Ensure icon and text are aligned */
-            align-items: center;
-            justify-content: center;
-        }
-        .form-actions .btn-back {
-            background-color: #6c757d; /* Abu-abu sekunder */
-            color: white;
-            border: 1px solid #6c757d;
-        }
-        .form-actions .btn-back:hover {
-            background-color: #5a6268;
-            border-color: #545b62;
-        }
-        .form-actions .btn-submit {
-            background-color: #007bff;
-            color: white;
-            border: 1px solid #007bff;
-        }
-        .form-actions .btn-submit:hover {
-            background-color: #0056b3;
-            border-color: #0056b3;
-        }
-        .form-actions .btn-submit i, .form-actions .btn-back i {
-            margin-right: 5px;
-        }
+       /* Styles for Action Buttons Group (for back button) */
+.form-actions {
+    display: flex;
+    justify-content: center; /* MODIFIKASI: Ubah dari flex-end menjadi center */
+    gap: 10px; /* Space between buttons */
+    margin-top: 20px;
+}
+/* Bagian CSS untuk .btn-back dan .btn-submit tetap sama */
+.form-actions .btn-back,
+.form-actions .btn-submit { 
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 1em;
+    transition: all 0.2s ease;
+    width: auto; 
+    display: inline-flex; 
+    align-items: center;
+    justify-content: center;
+}
+.form-actions .btn-back {
+    background-color: #6c757d; 
+    color: white;
+    border: 1px solid #6c757d;
+}
+.form-actions .btn-back:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+}
+.form-actions .btn-submit {
+    background-color: #007bff;
+    color: white;
+    border: 1px solid #007bff;
+}
+.form-actions .btn-submit:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+.form-actions .btn-submit i, .form-actions .btn-back i {
+    margin-right: 5px;
+}
 
     </style>
 </head>
