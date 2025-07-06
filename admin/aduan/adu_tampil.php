@@ -492,7 +492,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                             <?php endif; ?>
                         </a>
                     </div>
-                    <a href="#"><i class="fas fa-comment"></i></a> <!-- Assuming a comment icon is desired -->
                     <div class="user-profile">
                         <img src="../../assets/img/admin_pfp.jpg" alt="User Avatar" class="avatar">
                         <span><?php echo htmlspecialchars($user_name); ?></span>

@@ -338,7 +338,6 @@ if (isset($conn) && $conn instanceof mysqli) {
 
                 <div class="nav-icons">
                     <a href="#"><i class="fas fa-bell"></i></a>
-                    <a href="#"><i class="fas fa-comment"></i></a>
                     <div class="user-profile">
                         <img src="../../assets/img/admin_pfp.jpg" alt="User Avatar" class="avatar">
                         <span><?php echo htmlspecialchars($admin_name); ?></span>
