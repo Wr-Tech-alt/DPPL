@@ -123,7 +123,9 @@ if (isset($conn) && $conn instanceof mysqli) {
     <link rel="stylesheet" href="../../assets/css/users.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
     <style>
         /* Custom styles for this form */
         .form-section {
@@ -167,6 +169,7 @@ if (isset($conn) && $conn instanceof mysqli) {
             outline: none;
             box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
         }
+        /* MODIFIKASI: Hapus btn-submit width: 100%; dan margin-top */
         .btn-submit {
             background-color: #007bff;
             color: white;
@@ -176,29 +179,12 @@ if (isset($conn) && $conn instanceof mysqli) {
             cursor: pointer;
             font-size: 1.1em;
             transition: background-color 0.2s ease;
-            width: 100%;
+            /* width: 100%; */ /* Dihapus atau di override oleh form-actions */
+            /* margin-top: 20px; */ /* Dihapus atau di override oleh form-actions */
         }
         .btn-submit:hover {
             background-color: #0056b3;
         }
-        /* Hapus style .message karena akan diganti SweetAlert2 */
-        /* .message {
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 6px;
-            text-align: center;
-            font-weight: 600;
-        }
-        .message.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .message.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        } */
         .form-divider {
             text-align: center;
             margin: 30px 0;
@@ -240,7 +226,7 @@ if (isset($conn) && $conn instanceof mysqli) {
         }
 
         /* Styles for top-info-bar (copied from dashboard_admin.php) */
-        .navbar .top-info-bar {
+        .navbar .top-info-bar { 
             display: flex;
             align-items: center;
             gap: 20px;
@@ -267,12 +253,54 @@ if (isset($conn) && $conn instanceof mysqli) {
         .top-info-bar .status-disconnected {
             background-color: #dc3545; 
         }
-        /* Make sure it's responsive */
         @media (max-width: 992px) { 
             .navbar .top-info-bar {
                 display: none; 
             }
         }
+
+        /* Styles for Action Buttons Group (for back button) */
+        .form-actions {
+            display: flex;
+            justify-content: flex-end; /* Align buttons to the right */
+            gap: 10px; /* Space between buttons */
+            margin-top: 20px;
+        }
+        .form-actions .btn-back,
+        .form-actions .btn-submit { 
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s ease;
+            width: auto; /* Override 100% width for submit button */
+            display: inline-flex; /* Ensure icon and text are aligned */
+            align-items: center;
+            justify-content: center;
+        }
+        .form-actions .btn-back {
+            background-color: #6c757d; /* Abu-abu sekunder */
+            color: white;
+            border: 1px solid #6c757d;
+        }
+        .form-actions .btn-back:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+        }
+        .form-actions .btn-submit {
+            background-color: #007bff;
+            color: white;
+            border: 1px solid #007bff;
+        }
+        .form-actions .btn-submit:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .form-actions .btn-submit i, .form-actions .btn-back i {
+            margin-right: 5px;
+        }
+
     </style>
 </head>
 <body>
@@ -287,12 +315,12 @@ if (isset($conn) && $conn instanceof mysqli) {
                     <li><a href="../../dashboard/dashboard_admin.php" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
                     <li><a href="#" class="nav-link"><i class="fas fa-boxes"></i> Aduan Fasilitas</a></li>
                     <li><a href="pengadu_lihat.php" class="nav-link active"><i class="fas fa-users"></i> Pengadu</a></li>
+                    <li><a href="../pengguna/pengguna_lihat.php" class="nav-link"><i class="fas fa-users"></i> Pengguna</a></li>
                 </ul>
                 <div class="nav-section-title">SETTINGS</div>
                 <ul>
                     <li><a href="#" class="nav-link"><i class="fas fa-cog"></i> Settings</a></li>
                     <li><a href="#" class="nav-link"><i class="fas fa-question-circle"></i> Help</a></li>
-    <li><a href="../../logout.php" class="nav-link"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li> </ul>
                 </ul>
             </nav>
         </aside>
@@ -320,7 +348,17 @@ if (isset($conn) && $conn instanceof mysqli) {
                 </div>
             </header>
 
+            <section class="content-header">
+                <h2>Tambah Pengadu Baru</h2>
+            </section>
+
             <section class="form-section">
+                <?php if ($message_from_session): ?>
+                    <div class="message <?php echo $message_type_from_session; ?>">
+                        <?php echo htmlspecialchars($message_from_session); ?>
+                    </div>
+                <?php endif; ?>
+
                 <form action="" method="POST">
                     <h3>Data Pengadu</h3>
                     <div class="form-group">
@@ -347,21 +385,26 @@ if (isset($conn) && $conn instanceof mysqli) {
                         <input type="text" id="id_chat" name="id_chat" placeholder="Masukkan ID Chat Telegram" required>
                     </div>
                     
-                    <button type="submit" name="tambah_pengadu_submit" class="btn-submit">Tambah Pengadu</button>
+                    <div class="form-actions">
+                        <a href="pengadu_lihat.php" class="btn-back"><i class="fas fa-arrow-left"></i> Kembali</a>
+                        <button type="submit" name="tambah_pengadu_submit" class="btn-submit"><i class="fas fa-plus"></i> Tambah Pengadu</button>
+                    </div>
                 </form>
             </section>
         </main>
     </div>
     <script src="../../assets/js/jquery-1.10.2.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+
     <script>
+        // Fungsi untuk mengupdate waktu dan tanggal saat ini
         function updateDateTime() {
             const now = new Date();
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
             document.getElementById('currentDateTime').innerText = now.toLocaleDateString('id-ID', options);
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        $(document).ready(function() {
             // Initial update
             updateDateTime();
             // Update every second
@@ -377,13 +420,32 @@ if (isset($conn) && $conn instanceof mysqli) {
                     text: message,
                     icon: messageType, // 'success' atau 'error'
                     confirmButtonText: 'Oke'
-                }).then((result) => {
-                    // Jika pesan sukses, redirect ke pengadu_lihat.php setelah pop-up ditutup
-                    if (messageType === 'success' && result.isConfirmed) {
-                        window.location.href = 'pengadu_lihat.php';
-                    }
                 });
             }
+            
+            // Logika untuk menampilkan/menyembunyikan bagian Telegram berdasarkan pilihan role
+            function toggleTelegramFields() {
+                const selectedRole = $('input[name="role"]:checked').val();
+                const telegramSection = $('.form-divider:contains("Data Telegram")').add($('label[for="id_telegram"]').parent('.form-group')).add($('label[for="id_chat"]').parent('.form-group'));
+
+                if (selectedRole === 'Pengadu') {
+                    telegramSection.show();
+                    $('#id_telegram').prop('required', true);
+                    $('#id_chat').prop('required', true);
+                } else {
+                    telegramSection.hide();
+                    $('#id_telegram').prop('required', false).val(''); // Clear and remove required
+                    $('#id_chat').prop('required', false).val(''); // Clear and remove required
+                }
+            }
+
+            // Panggil saat halaman dimuat
+            // Perhatikan: Karena ini pengadu_tambah.php, radio button role tidak ada secara langsung.
+            // Fitur ini lebih relevan di pengguna_tambah.php atau pengguna_ubah.php
+            // Anda bisa menghapus fungsi toggleTelegramFields dan panggilannya di sini
+            // jika role pengadu_tambah memang selalu fix 'Pengadu'
+            // toggleTelegramFields(); 
+            // $('input[name="role"]').on('change', toggleTelegramFields); 
         });
     </script>
 </body>
