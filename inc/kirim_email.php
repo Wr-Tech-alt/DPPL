@@ -24,7 +24,6 @@ function kirimEmailPengaduan($conn, $emailTujuan, $namaPengadu, $judulAduan, $st
         $mail->Username   = EMAIL_SENDER_USERNAME; // Ambil dari konfigurasi
         $mail->Password   = EMAIL_SENDER_PASSWORD; // Ambil dari konfigurasi
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // <--- UBAH DI SINI
-        $mail->SMTPSecure = SMTP_SECURE;
         $mail->Port       = SMTP_PORT;
 
         $mail->setFrom(EMAIL_SENDER_USERNAME, EMAIL_SENDER_NAME); // Nama pengirim dari konfigurasi

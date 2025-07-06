@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $complaint_data['judul'],
                     $new_status, // Status baru: 'Selesai'
                     $id_pengaduan_to_update,
-                    $complaint_data['deskripsi'],
+                    $complaint_data['keterangan'],
                     $complaint_data['lokasi']
                 );
 
