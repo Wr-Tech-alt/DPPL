@@ -74,7 +74,24 @@ if (isset($conn) && $conn instanceof mysqli) {
     <link rel="stylesheet" href="../../assets/js/dataTables/dataTables.bootstrap.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
-    <style>
+    <style>    
+        .content-header {
+            display: flex; /* Menggunakan flexbox untuk penataan */
+            flex-direction: column; /* Mengatur item dalam kolom */
+            align-items: center; /* Memusatkan item secara horizontal */
+            gap: 15px; /* Memberi sedikit jarak antar elemen */
+        }
+
+        .header-title h2 {
+            text-align: center; /* Pastikan judul tetap di tengah */
+            margin: 0; /* Hapus margin default jika ada */
+        }
+
+        .header-actions {
+            /* Tidak perlu properti text-align di sini karena align-items di parent sudah mengatur */
+            /* Jika ingin mengatur posisi tombol secara spesifik, bisa diatur di sini */
+        }
+
         /* Styles for action buttons */
         .action-buttons {
             display: flex;
@@ -325,7 +342,8 @@ if (isset($conn) && $conn instanceof mysqli) {
                 </ul>
                 <div class="nav-section-title">SETTINGS</div>
                 <ul>
-                     <li><a href="../../logout.php" class="nav-link"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li> </ul>
+                    <li><a href="#" class="nav-link"><i class="fas fa-cog"></i> Settings</a></li>
+    <li><a href="../../logout.php" class="nav-link"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li> </ul>
                 </ul>
             </nav>
         </aside>
@@ -359,17 +377,11 @@ if (isset($conn) && $conn instanceof mysqli) {
                 </div>
             </header>
 
-            <section class="content-header" style="display: flex; justify-content: space-between; position: relative;">
-                <!-- Kolom Kosong (kiri) -->
-                <div style="flex: 1;"></div>
-
-                <!-- Judul Tengah -->
-                <div style="flex: 1; text-align: center;">
-                    <h2 style="margin: 0;">Manajemen Jenis Pengaduan</h2>
+            <section class="content-header">
+                <div class="header-title">
+                    <h2>Manajemen Jenis Pengaduan</h2>
                 </div>
-
-                <!-- Tombol Kanan -->
-                <div style="flex: 1; text-align: right;">
+                <div class="header-actions">
                     <a href="jenis_tambah.php" class="btn-primary"><i class="fas fa-plus"></i> Tambah Jenis</a>
                 </div>
             </section>
