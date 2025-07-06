@@ -371,7 +371,6 @@ if (isset($conn) && $conn instanceof mysqli) {
 
             <section class="customer-table-section">
                 <div class="filter-bar">
-                    <button class="btn-filter"><i class="fas fa-filter"></i> Filter</button>
                     <div class="search-customer">
                         <i class="fas fa-search"></i>
                         <input type="text" id="customSearchInput" placeholder="Cari jenis pengaduan..."> </div>

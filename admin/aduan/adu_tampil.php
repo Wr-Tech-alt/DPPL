@@ -512,7 +512,6 @@ if (isset($conn) && $conn instanceof mysqli) {
             <div class="content-container">
                 <!-- Filter Bar - Replicating jenis_lihat.php style -->
                 <div class="filter-bar">
-                    <button class="btn-filter"><i class="fas fa-filter"></i> Filter</button>
                     <div class="search-customer">
                         <i class="fas fa-search"></i>
                         <input type="text" id="customSearchInput" placeholder="Cari aduan...">
