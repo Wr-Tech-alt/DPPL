@@ -73,7 +73,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                 <ul>
                     <li><a href="#" class="nav-link"><i class="fas fa-cog"></i> Settings</a></li>
                     <li><a href="#" class="nav-link"><i class="fas fa-question-circle"></i> Help</a></li>
-    <li><a href="../../logout.php" class="nav-link"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li> </ul>
+    <li><a href="../../logout.php" class="nav-link" id="logoutSidebar"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li> </ul>
                 </ul>
             </nav>
         </aside>
@@ -91,7 +91,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                     <div class="user-profile">
                         <img src="../assets/img/user_avatar.jpg" alt="User Avatar" class="avatar"> 
                         <span><?php echo htmlspecialchars($admin_name); ?></span>
-                        <a href="../logout.php"><i class="fas fa-sign-out-alt"></i></a> 
+                        <a href="../logout.php" id="logoutNavbar"><i class="fas fa-sign-out-alt"></i></a> 
                     </div>
                 </div>
             </header>
