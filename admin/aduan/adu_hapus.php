@@ -82,7 +82,7 @@ if (isset($_GET['id'])) {
 
 // Redirect kembali ke halaman pengaduan_lihat.php setelah pemrosesan.
 // Pesan sesi akan ditampilkan di sana menggunakan SweetAlert2.
-header("Location: pengaduan_lihat.php");
+header("Location: adu_tampil.php");
 exit();
 
 // Tutup koneksi database utama.
