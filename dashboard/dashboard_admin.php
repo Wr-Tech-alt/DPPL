@@ -96,7 +96,7 @@ if ($conn) {
     <link rel="stylesheet" href="../assets/js/morris/morris-0.4.3.min.css">
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-
+<script src="../assets/js/sweetlogout.js"></script> 
     <style>
         /* Custom styles for dashboard cards */
         .dashboard-card-row {

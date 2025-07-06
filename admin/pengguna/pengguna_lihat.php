@@ -58,7 +58,7 @@ if (isset($conn) && $conn instanceof mysqli) {
     
     <link rel="stylesheet" href="../../assets/js/dataTables/dataTables.bootstrap.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-
+<script src="../assets/js/sweetlogout.js"></script> 
     <style>
         /* Styles for action buttons */
         .action-buttons {
